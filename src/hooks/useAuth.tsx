@@ -28,27 +28,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Simple bcrypt verification function for the client
-const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
-  try {
-    // For production, you would typically call an edge function to verify the password
-    // For now, we'll implement a basic check
-    const response = await supabase.functions.invoke('verify-password', {
-      body: { password, hash }
-    });
-    
-    if (response.error) {
-      // Fallback: if edge function doesn't exist, do simple comparison for development
-      return password === 'admin123' && hash.includes('$2b$');
-    }
-    
-    return response.data?.valid || false;
-  } catch (error) {
-    // Fallback for development - check if it's the demo password
-    return password === 'admin123' && hash.includes('$2b$');
-  }
-};
-
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,8 +40,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const checkUser = async () => {
     try {
-      // For now, we'll implement a simple session check
-      // In a real app, you'd want proper JWT token handling
       const storedUser = localStorage.getItem('tla_user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
@@ -99,39 +76,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log('Attempting login for:', email);
       
-      // Fetch user from database - use maybeSingle() instead of single() to handle no results
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
+      // Call the verify-password edge function to authenticate
+      const { data: authResult, error: authError } = await supabase.functions.invoke('verify-password', {
+        body: { 
+          email,
+          password 
+        }
+      });
 
-      console.log('Database query result:', { data, error });
+      console.log('Authentication result:', { authResult, authError });
 
-      if (error) {
-        console.error('Database error:', error);
-        return { success: false, error: 'Database error occurred' };
+      if (authError) {
+        console.error('Authentication error:', authError);
+        return { success: false, error: 'Authentication failed' };
       }
 
-      if (!data) {
-        console.log('No user found with email:', email);
-        return { success: false, error: 'Invalid email or password' };
-      }
-
-      // Verify password using bcrypt
-      const isPasswordValid = await verifyPassword(password, data.password_hash);
-      console.log('Password validation result:', isPasswordValid);
-      
-      if (!isPasswordValid) {
-        return { success: false, error: 'Invalid email or password' };
+      if (!authResult?.success) {
+        return { success: false, error: authResult?.error || 'Invalid email or password' };
       }
 
       // Store user session
-      localStorage.setItem('tla_user', JSON.stringify(data));
-      setUser(data);
-      await loadPermissions(data.role);
+      localStorage.setItem('tla_user', JSON.stringify(authResult.user));
+      setUser(authResult.user);
+      await loadPermissions(authResult.user.role);
 
-      console.log('Login successful for user:', data.name);
+      console.log('Login successful for user:', authResult.user.name);
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
