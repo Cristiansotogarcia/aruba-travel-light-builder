@@ -17,6 +17,7 @@ export interface Booking {
   end_date: string;
   status: string;
   total_amount: number;
+  delivery_failure_reason?: string;
   booking_items?: BookingItem[];
 }
 
