@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ export const EditUserModal = ({ open, onClose, user, onUserUpdated }: EditUserMo
   const { toast } = useToast();
 
   // Update form when user changes
-  useState(() => {
+  useEffect(() => {
     if (user) {
       setName(user.name);
       setRole(user.role);
