@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateBookingModal } from './CreateBookingModal';
 import { EditBookingModal } from './EditBookingModal';
+import { BookingViewModal } from './BookingViewModal';
 import { BookingCalendarView } from './BookingCalendarView';
 import { BookingFilters } from './BookingFilters';
 import { BookingsListView } from './BookingsListView';
@@ -39,6 +39,7 @@ export const BookingsList = () => {
   const [showListView, setShowListView] = useState(false);
   const [calendarView, setCalendarView] = useState<'day' | 'week'>('day');
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -131,8 +132,16 @@ export const BookingsList = () => {
     setEditingBooking(booking);
   };
 
+  const handleViewBooking = (booking: Booking) => {
+    setViewingBooking(booking);
+  };
+
   const handleCloseEdit = () => {
     setEditingBooking(null);
+  };
+
+  const handleCloseView = () => {
+    setViewingBooking(null);
   };
 
   if (loading) {
@@ -192,6 +201,7 @@ export const BookingsList = () => {
           bookings={filteredBookings}
           onStatusUpdate={updateBookingStatus}
           onEdit={handleEditBooking}
+          onView={handleViewBooking}
           searchTerm={searchTerm}
           statusFilter={statusFilter}
         />
@@ -210,6 +220,15 @@ export const BookingsList = () => {
           onBookingUpdated={fetchBookings}
           onClose={handleCloseEdit}
           open={!!editingBooking}
+        />
+      )}
+
+      {viewingBooking && (
+        <BookingViewModal
+          booking={viewingBooking}
+          onClose={handleCloseView}
+          onStatusUpdate={updateBookingStatus}
+          open={!!viewingBooking}
         />
       )}
     </div>

@@ -1,12 +1,12 @@
-
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Eye } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from 'date-fns';
 import { CreateBookingModal } from './CreateBookingModal';
+import { BookingViewModal } from './BookingViewModal';
 
 interface Booking {
   id: string;
@@ -32,6 +32,7 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCrea
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showDayPopup, setShowDayPopup] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -216,19 +217,13 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCrea
                   </div>
                   
                   <div className="space-y-1">
-                    {dayBookings.slice(0, 2).map((booking) => (
-                      <div
-                        key={booking.id}
-                        className="text-xs p-1 rounded bg-blue-100 text-blue-800"
-                      >
-                        {booking.customer_name}
+                    {dayBookings.length > 0 ? (
+                      <div className="text-center">
+                        <div className="text-xs p-1 rounded bg-blue-100 text-blue-800">
+                          {dayBookings.length} booking{dayBookings.length > 1 ? 's' : ''}
+                        </div>
                       </div>
-                    ))}
-                    {dayBookings.length > 2 && (
-                      <div className="text-xs text-gray-500">
-                        +{dayBookings.length - 2} more
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>
@@ -274,11 +269,20 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCrea
                           {format(new Date(booking.start_date), 'dd/MM/yyyy')} - {format(new Date(booking.end_date), 'dd/MM/yyyy')}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold">${booking.total_amount}</div>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {getStatusLabel(booking.status)}
-                        </Badge>
+                      <div className="text-right flex items-center gap-2">
+                        <div>
+                          <div className="font-bold">${booking.total_amount}</div>
+                          <Badge className={getStatusColor(booking.status)}>
+                            {getStatusLabel(booking.status)}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setViewingBooking(booking)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                     
@@ -323,6 +327,14 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCrea
     <>
       {viewMode === 'day' ? renderDayView() : renderWeekView()}
       {renderDayPopup()}
+      {viewingBooking && (
+        <BookingViewModal
+          booking={viewingBooking}
+          onClose={() => setViewingBooking(null)}
+          onStatusUpdate={onStatusUpdate}
+          open={!!viewingBooking}
+        />
+      )}
     </>
   );
 };

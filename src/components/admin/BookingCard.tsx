@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Phone, Mail, Edit } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Edit, Eye } from 'lucide-react';
 
 interface BookingItem {
   equipment_name: string;
@@ -27,9 +27,10 @@ interface BookingCardProps {
   booking: Booking;
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
   onEdit: (booking: Booking) => void;
+  onView?: (booking: Booking) => void;
 }
 
-export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProps) => {
+export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: BookingCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -52,6 +53,21 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
   const renderActionButtons = () => {
     const buttons = [];
 
+    // Add view button
+    if (onView) {
+      buttons.push(
+        <Button
+          key="view"
+          onClick={() => onView(booking)}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      );
+    }
+
     // Add edit button for all statuses except completed and cancelled
     if (!['completed', 'cancelled'].includes(booking.status)) {
       buttons.push(
@@ -59,10 +75,10 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
           key="edit"
           onClick={() => onEdit(booking)}
           variant="outline"
+          size="sm"
           className="flex items-center gap-2"
         >
           <Edit className="h-4 w-4" />
-          Edit
         </Button>
       );
     }
@@ -72,6 +88,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
         <Button
           key="confirm"
           onClick={() => onStatusUpdate(booking.id, 'confirmed')}
+          size="sm"
           className="bg-green-600 hover:bg-green-700"
         >
           Confirm
@@ -84,6 +101,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
         <Button
           key="out-for-delivery"
           onClick={() => onStatusUpdate(booking.id, 'out_for_delivery')}
+          size="sm"
           className="bg-blue-600 hover:bg-blue-700"
         >
           Mark Out for Delivery
@@ -96,6 +114,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
         <Button
           key="delivered"
           onClick={() => onStatusUpdate(booking.id, 'delivered')}
+          size="sm"
           className="bg-purple-600 hover:bg-purple-700"
         >
           Mark Delivered
@@ -108,6 +127,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
         <Button
           key="completed"
           onClick={() => onStatusUpdate(booking.id, 'completed')}
+          size="sm"
           className="bg-gray-600 hover:bg-gray-700"
         >
           Mark Completed
@@ -121,6 +141,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProp
           key="cancel"
           onClick={() => onStatusUpdate(booking.id, 'cancelled')}
           variant="destructive"
+          size="sm"
         >
           Cancel Order
         </Button>

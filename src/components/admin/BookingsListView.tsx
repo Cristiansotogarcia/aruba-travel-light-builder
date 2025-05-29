@@ -26,6 +26,7 @@ interface BookingsListViewProps {
   bookings: Booking[];
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
   onEdit: (booking: Booking) => void;
+  onView?: (booking: Booking) => void;
   searchTerm: string;
   statusFilter: string;
 }
@@ -34,6 +35,7 @@ export const BookingsListView = ({
   bookings, 
   onStatusUpdate, 
   onEdit,
+  onView,
   searchTerm, 
   statusFilter 
 }: BookingsListViewProps) => {
@@ -61,6 +63,7 @@ export const BookingsListView = ({
           booking={booking}
           onStatusUpdate={onStatusUpdate}
           onEdit={onEdit}
+          onView={onView}
         />
       ))}
     </div>

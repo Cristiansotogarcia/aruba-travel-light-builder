@@ -2,7 +2,8 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Search, ArrowLeft } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Search, ArrowLeft, ChevronDown } from 'lucide-react';
 
 interface BookingFiltersProps {
   searchTerm: string;
@@ -25,6 +26,18 @@ export const BookingFilters = ({
   calendarView,
   onCalendarViewChange
 }: BookingFiltersProps) => {
+  const statusOptions = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'confirmed', label: 'Confirmed' },
+    { value: 'out_for_delivery', label: 'Out for Delivery' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' }
+  ];
+
+  const currentStatusLabel = statusOptions.find(option => option.value === statusFilter)?.label || 'All Statuses';
+
   return (
     <div className="flex flex-wrap gap-4 items-start justify-between">
       <div className="flex gap-4 flex-wrap flex-1">
@@ -56,18 +69,33 @@ export const BookingFilters = ({
       
       {showListView && (
         <div className="flex flex-col gap-2 items-end">
-          <Button
-            variant="outline"
-            className="h-10 px-3 py-2"
-            onClick={() => onStatusFilterChange(statusFilter === 'all' ? 'pending' : 'all')}
-          >
-            {statusFilter === 'all' ? 'All Statuses' : `Filter: ${statusFilter}`}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-3 py-2 w-[180px] justify-between"
+              >
+                {currentStatusLabel}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              {statusOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => onStatusFilterChange(option.value)}
+                  className={statusFilter === option.value ? 'bg-accent' : ''}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <Button
             variant="outline"
             onClick={onReturnToCalendar}
-            className="h-10 px-3 py-2 flex items-center gap-2"
+            className="h-10 px-3 py-2 w-[180px] flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             Return to calendar
