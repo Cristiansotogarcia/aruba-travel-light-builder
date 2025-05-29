@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, MapPin, Phone, Mail, Search } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Search, ArrowLeft } from 'lucide-react';
 import { CreateBookingModal } from './CreateBookingModal';
 import { BookingCalendarView } from './BookingCalendarView';
 
@@ -153,7 +153,7 @@ export const BookingsList = () => {
           <Button 
             variant="outline" 
             className="text-lg px-3 py-1"
-            onClick={() => setShowListView(!showListView)}
+            onClick={() => setShowListView(true)}
           >
             {filteredBookings.length} bookings
           </Button>
@@ -166,6 +166,16 @@ export const BookingsList = () => {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex gap-4 flex-wrap flex-1">
+              {showListView && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowListView(false)}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Return to calendar
+                </Button>
+              )}
               <div className="flex-1 min-w-64">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -241,7 +251,7 @@ export const BookingsList = () => {
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                          {new Date(booking.start_date).toLocaleDateString('en-GB')} - {new Date(booking.end_date).toLocaleDateString('en-GB')}
                         </span>
                       </div>
                     </div>
@@ -332,6 +342,7 @@ export const BookingsList = () => {
           bookings={filteredBookings} 
           viewMode={calendarView}
           onStatusUpdate={updateBookingStatus}
+          onCreateBooking={fetchBookings}
         />
       )}
     </div>

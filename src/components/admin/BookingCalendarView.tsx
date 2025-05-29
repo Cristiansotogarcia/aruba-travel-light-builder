@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { format, startOfWeek, addDays, isSameDay, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
+import { format, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from 'date-fns';
+import { CreateBookingModal } from './CreateBookingModal';
 
 interface Booking {
   id: string;
@@ -23,10 +25,13 @@ interface BookingCalendarViewProps {
   bookings: Booking[];
   viewMode: 'day' | 'week';
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
+  onCreateBooking: () => void;
 }
 
-export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: BookingCalendarViewProps) => {
+export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCreateBooking }: BookingCalendarViewProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showDayPopup, setShowDayPopup] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -82,6 +87,11 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
     });
   };
 
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    setShowDayPopup(true);
+  };
+
   const renderDayView = () => {
     const dayBookings = getBookingsForDate(currentDate);
 
@@ -93,7 +103,7 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <h2 className="text-xl font-semibold">
-              {format(currentDate, 'EEEE, MMMM d, yyyy')}
+              {format(currentDate, 'EEEE, dd/MM/yyyy')}
             </h2>
             <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
               <ChevronRight className="h-4 w-4" />
@@ -113,7 +123,7 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
                     <div>
                       <h3 className="font-semibold text-lg">{booking.customer_name}</h3>
                       <p className="text-sm text-gray-500">
-                        {format(new Date(booking.start_date), 'MMM d')} - {format(new Date(booking.end_date), 'MMM d')}
+                        {format(new Date(booking.start_date), 'dd/MM/yyyy')} - {format(new Date(booking.end_date), 'dd/MM/yyyy')}
                       </p>
                     </div>
                     <div className="text-right">
@@ -175,7 +185,7 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <h2 className="text-xl font-semibold">
-              Week of {format(weekStart, 'MMMM d, yyyy')}
+              Week of {format(weekStart, 'dd/MM/yyyy')}
             </h2>
             <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
               <ChevronRight className="h-4 w-4" />
@@ -192,7 +202,11 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
             const isToday = isSameDay(day, new Date());
             
             return (
-              <Card key={day.toISOString()} className={`min-h-32 ${isToday ? 'ring-2 ring-blue-500' : ''}`}>
+              <Card 
+                key={day.toISOString()} 
+                className={`min-h-32 cursor-pointer hover:shadow-md transition-shadow ${isToday ? 'ring-2 ring-blue-500' : ''}`}
+                onClick={() => handleDayClick(day)}
+              >
                 <CardContent className="p-2">
                   <div className="text-center mb-2">
                     <div className="text-xs text-gray-500">{format(day, 'EEE')}</div>
@@ -205,17 +219,13 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
                     {dayBookings.slice(0, 2).map((booking) => (
                       <div
                         key={booking.id}
-                        className="text-xs p-1 rounded bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
-                        onClick={() => setCurrentDate(day)}
+                        className="text-xs p-1 rounded bg-blue-100 text-blue-800"
                       >
                         {booking.customer_name}
                       </div>
                     ))}
                     {dayBookings.length > 2 && (
-                      <div 
-                        className="text-xs text-gray-500 cursor-pointer hover:text-gray-700"
-                        onClick={() => setCurrentDate(day)}
-                      >
+                      <div className="text-xs text-gray-500">
                         +{dayBookings.length - 2} more
                       </div>
                     )}
@@ -238,5 +248,81 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate }: Book
     );
   };
 
-  return viewMode === 'day' ? renderDayView() : renderWeekView();
+  const renderDayPopup = () => {
+    if (!selectedDate) return null;
+    
+    const dayBookings = getBookingsForDate(selectedDate);
+
+    return (
+      <Dialog open={showDayPopup} onOpenChange={setShowDayPopup}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Bookings for {format(selectedDate, 'EEEE, dd/MM/yyyy')}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {dayBookings.length > 0 ? (
+              dayBookings.map((booking) => (
+                <Card key={booking.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-semibold">{booking.customer_name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {format(new Date(booking.start_date), 'dd/MM/yyyy')} - {format(new Date(booking.end_date), 'dd/MM/yyyy')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">${booking.total_amount}</div>
+                        <Badge className={getStatusColor(booking.status)}>
+                          {getStatusLabel(booking.status)}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {booking.booking_items && booking.booking_items.length > 0 && (
+                      <div className="border-t pt-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Equipment:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {booking.booking_items.map((item, index) => (
+                            <Badge key={index} variant="secondary">
+                              {item.equipment_name} × {item.quantity}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings for this day</h3>
+                <p className="text-gray-500 mb-4">
+                  Would you like to create a new booking for {format(selectedDate, 'dd/MM/yyyy')}?
+                </p>
+                <CreateBookingModal 
+                  onBookingCreated={() => {
+                    onCreateBooking();
+                    setShowDayPopup(false);
+                  }}
+                  preselectedDate={selectedDate}
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  return (
+    <>
+      {viewMode === 'day' ? renderDayView() : renderWeekView()}
+      {renderDayPopup()}
+    </>
+  );
 };

@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +17,7 @@ import { mockEquipment } from '@/data/mockEquipment';
 
 interface CreateBookingModalProps {
   onBookingCreated: () => void;
+  preselectedDate?: Date;
 }
 
 interface BookingItem {
@@ -25,7 +25,7 @@ interface BookingItem {
   quantity: number;
 }
 
-export const CreateBookingModal = ({ onBookingCreated }: CreateBookingModalProps) => {
+export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: CreateBookingModalProps) => {
   const [open, setOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -39,6 +39,12 @@ export const CreateBookingModal = ({ onBookingCreated }: CreateBookingModalProps
   const [bookingItems, setBookingItems] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (preselectedDate && open) {
+      setStartDate(preselectedDate);
+    }
+  }, [preselectedDate, open]);
 
   const addEquipment = () => {
     if (!selectedEquipment) return;
@@ -237,7 +243,7 @@ export const CreateBookingModal = ({ onBookingCreated }: CreateBookingModalProps
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : "Pick start date"}
+                      {startDate ? format(startDate, "dd/MM/yyyy") : "Pick start date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -262,7 +268,7 @@ export const CreateBookingModal = ({ onBookingCreated }: CreateBookingModalProps
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP") : "Pick end date"}
+                      {endDate ? format(endDate, "dd/MM/yyyy") : "Pick end date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
