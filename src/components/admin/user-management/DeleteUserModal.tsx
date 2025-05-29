@@ -2,9 +2,12 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Profile {
   id: string;
@@ -24,18 +27,58 @@ interface DeleteUserModalProps {
 }
 
 export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUserModalProps) => {
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const handleDeactivateUser = async () => {
     if (!user) return;
 
+    if (!password.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your password to confirm deactivation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!currentUser?.email) {
+      toast({
+        title: "Authentication Error",
+        description: "Unable to verify user credentials.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setDeleting(true);
 
     try {
+      // Verify password using Supabase auth with user's email
+      const { data, error: authError } = await supabase.functions.invoke('verify-password', {
+        body: { 
+          email: currentUser.email,
+          password 
+        }
+      });
+
+      if (authError || !data?.success) {
+        console.error('Password verification error:', authError);
+        toast({
+          title: "Invalid Password",
+          description: "The password you entered is incorrect.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       console.log('Calling admin user operations edge function for deactivation');
       
-      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+      const { data: adminData, error } = await supabase.functions.invoke('admin-user-operations', {
         body: {
           action: 'deactivate_user',
           userId: user.id
@@ -47,9 +90,9 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
         throw error;
       }
 
-      if (data.error) {
-        console.error('Admin operation error:', data.error);
-        throw new Error(data.error);
+      if (adminData.error) {
+        console.error('Admin operation error:', adminData.error);
+        throw new Error(adminData.error);
       }
 
       console.log('User deactivation successful');
@@ -59,7 +102,7 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
       });
 
       onUserDeleted();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Error deactivating user:', error);
       toast({
@@ -75,12 +118,57 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
   const handleDeleteUser = async () => {
     if (!user) return;
 
+    if (!password.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your password to confirm deletion.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (confirmationText.toLowerCase() !== 'delete') {
+      toast({
+        title: "Confirmation Required",
+        description: "Please type 'DELETE' to confirm permanent deletion.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!currentUser?.email) {
+      toast({
+        title: "Authentication Error",
+        description: "Unable to verify user credentials.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setDeleting(true);
 
     try {
+      // Verify password using Supabase auth with user's email
+      const { data, error: authError } = await supabase.functions.invoke('verify-password', {
+        body: { 
+          email: currentUser.email,
+          password 
+        }
+      });
+
+      if (authError || !data?.success) {
+        console.error('Password verification error:', authError);
+        toast({
+          title: "Invalid Password",
+          description: "The password you entered is incorrect.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       console.log('Calling admin user operations edge function for deletion');
       
-      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+      const { data: adminData, error } = await supabase.functions.invoke('admin-user-operations', {
         body: {
           action: 'delete_user',
           userId: user.id
@@ -92,9 +180,9 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
         throw error;
       }
 
-      if (data.error) {
-        console.error('Admin operation error:', data.error);
-        throw new Error(data.error);
+      if (adminData.error) {
+        console.error('Admin operation error:', adminData.error);
+        throw new Error(adminData.error);
       }
 
       console.log('User deletion successful');
@@ -104,7 +192,7 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
       });
 
       onUserDeleted();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
@@ -117,8 +205,15 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
     }
   };
 
+  const handleClose = () => {
+    setPassword('');
+    setConfirmationText('');
+    setShowPassword(false);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -126,41 +221,85 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
             Delete User: {user?.name}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <h4 className="font-medium text-red-800 mb-2">Choose an action:</h4>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <p className="text-sm text-red-700 mb-2">
+                <p className="text-sm text-red-700 mb-3">
                   <strong>Deactivate:</strong> User cannot login but data is preserved. Can be reactivated later.
                 </p>
-                <Button 
-                  variant="outline" 
-                  onClick={handleDeactivateUser} 
-                  disabled={deleting}
-                  className="w-full"
-                >
-                  {deleting ? 'Deactivating...' : 'Deactivate User'}
-                </Button>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="deactivate-password">Enter your password to confirm:</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        id="deactivate-password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Your account password"
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={handleDeactivateUser} 
+                    disabled={deleting || !password.trim()}
+                    className="w-full"
+                  >
+                    {deleting ? 'Deactivating...' : 'Deactivate User'}
+                  </Button>
+                </div>
               </div>
               
-              <div className="border-t pt-3">
-                <p className="text-sm text-red-700 mb-2">
+              <div className="border-t pt-4">
+                <p className="text-sm text-red-700 mb-3">
                   <strong>Permanent Delete:</strong> User and all associated data will be permanently removed. This cannot be undone.
                 </p>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDeleteUser} 
-                  disabled={deleting}
-                  className="w-full"
-                >
-                  {deleting ? 'Deleting...' : 'Permanently Delete User'}
-                </Button>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="delete-confirmation">Type "DELETE" to confirm:</Label>
+                    <Input
+                      id="delete-confirmation"
+                      value={confirmationText}
+                      onChange={(e) => setConfirmationText(e.target.value)}
+                      placeholder="Type DELETE to confirm"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleDeleteUser} 
+                    disabled={deleting || !password.trim() || confirmationText.toLowerCase() !== 'delete'}
+                    className="w-full"
+                  >
+                    {deleting ? 'Deleting...' : 'Permanently Delete User'}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
 
-          <Button variant="outline" onClick={onClose} className="w-full">
+          <Button variant="outline" onClick={handleClose} className="w-full">
             Cancel
           </Button>
         </div>
