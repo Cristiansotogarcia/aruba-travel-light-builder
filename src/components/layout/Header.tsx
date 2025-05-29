@@ -16,7 +16,7 @@ export const Header = () => {
             <img 
               src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
               alt="Travel Light Aruba" 
-              className="h-14 w-auto"
+              className="w-[198px] h-[94px] object-contain"
             />
           </Link>
 
