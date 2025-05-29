@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,25 +9,42 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Plus, Minus, X } from 'lucide-react';
+import { CalendarIcon, Plus, Minus, X, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { mockEquipment } from '@/data/mockEquipment';
 
-interface CreateBookingModalProps {
-  onBookingCreated: () => void;
-  preselectedDate?: Date;
-}
-
 interface BookingItem {
-  equipmentId: string;
+  equipment_name: string;
   quantity: number;
+  subtotal: number;
+  equipment_id: string;
+  equipment_price: number;
 }
 
-export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: CreateBookingModalProps) => {
-  const [open, setOpen] = useState(false);
+interface Booking {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  total_amount: number;
+  booking_items?: BookingItem[];
+}
+
+interface EditBookingModalProps {
+  booking: Booking;
+  onBookingUpdated: () => void;
+  onClose: () => void;
+  open: boolean;
+}
+
+export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: EditBookingModalProps) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [customerInfo, setCustomerInfo] = useState({
@@ -43,52 +60,74 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
   const { toast } = useToast();
 
   useEffect(() => {
-    if (preselectedDate && open) {
-      setStartDate(preselectedDate);
+    if (booking && open) {
+      setStartDate(new Date(booking.start_date));
+      setEndDate(new Date(booking.end_date));
+      setCustomerInfo({
+        name: booking.customer_name,
+        email: booking.customer_email,
+        phone: booking.customer_phone,
+        address: booking.customer_address
+      });
+      setBookingItems(booking.booking_items || []);
+      setDiscount(0);
     }
-  }, [preselectedDate, open]);
+  }, [booking, open]);
 
   const addEquipment = () => {
     if (!selectedEquipment) return;
     
-    const existingItem = bookingItems.find(item => item.equipmentId === selectedEquipment);
+    const equipment = mockEquipment.find(eq => eq.id === selectedEquipment);
+    if (!equipment) return;
+
+    const existingItem = bookingItems.find(item => item.equipment_id === selectedEquipment);
     if (existingItem) {
       setBookingItems(items =>
         items.map(item =>
-          item.equipmentId === selectedEquipment
-            ? { ...item, quantity: item.quantity + 1 }
+          item.equipment_id === selectedEquipment
+            ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.equipment_price * calculateDays() }
             : item
         )
       );
     } else {
-      setBookingItems(items => [...items, { equipmentId: selectedEquipment, quantity: 1 }]);
+      const days = calculateDays();
+      setBookingItems(items => [...items, {
+        equipment_id: selectedEquipment,
+        equipment_name: equipment.name,
+        equipment_price: equipment.price,
+        quantity: 1,
+        subtotal: equipment.price * days
+      }]);
     }
     setSelectedEquipment('');
   };
 
   const updateQuantity = (equipmentId: string, change: number) => {
+    const days = calculateDays();
     setBookingItems(items =>
       items.map(item =>
-        item.equipmentId === equipmentId
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
+        item.equipment_id === equipmentId
+          ? { 
+              ...item, 
+              quantity: Math.max(1, item.quantity + change),
+              subtotal: Math.max(1, item.quantity + change) * item.equipment_price * days
+            }
           : item
       )
     );
   };
 
   const removeItem = (equipmentId: string) => {
-    setBookingItems(items => items.filter(item => item.equipmentId !== equipmentId));
+    setBookingItems(items => items.filter(item => item.equipment_id !== equipmentId));
+  };
+
+  const calculateDays = () => {
+    if (!startDate || !endDate) return 1;
+    return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
   };
 
   const calculateSubtotal = () => {
-    if (!startDate || !endDate) return 0;
-    
-    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    return bookingItems.reduce((total, item) => {
-      const equipment = mockEquipment.find(eq => eq.id === item.equipmentId);
-      return total + (equipment ? equipment.price * item.quantity * days : 0);
-    }, 0);
+    return bookingItems.reduce((total, item) => total + item.subtotal, 0);
   };
 
   const calculateTotal = () => {
@@ -110,12 +149,11 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
 
     try {
       const totalAmount = calculateTotal();
-      const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      // Create the booking record
-      const { data: booking, error: bookingError } = await supabase
+      // Update the booking record
+      const { error: bookingError } = await supabase
         .from('bookings')
-        .insert({
+        .update({
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
@@ -123,27 +161,29 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
           start_date: format(startDate, 'yyyy-MM-dd'),
           end_date: format(endDate, 'yyyy-MM-dd'),
           total_amount: totalAmount,
-          status: 'confirmed'
+          updated_at: new Date().toISOString()
         })
-        .select()
-        .single();
+        .eq('id', booking.id);
 
       if (bookingError) throw bookingError;
 
-      // Create booking items
-      const bookingItemsData = bookingItems.map(item => {
-        const equipment = mockEquipment.find(eq => eq.id === item.equipmentId);
-        const subtotal = equipment ? equipment.price * item.quantity * days : 0;
-        
-        return {
-          booking_id: booking.id,
-          equipment_id: item.equipmentId,
-          equipment_name: equipment?.name || '',
-          equipment_price: equipment?.price || 0,
-          quantity: item.quantity,
-          subtotal: subtotal
-        };
-      });
+      // Delete existing booking items
+      const { error: deleteError } = await supabase
+        .from('booking_items')
+        .delete()
+        .eq('booking_id', booking.id);
+
+      if (deleteError) throw deleteError;
+
+      // Create new booking items
+      const bookingItemsData = bookingItems.map(item => ({
+        booking_id: booking.id,
+        equipment_id: item.equipment_id,
+        equipment_name: item.equipment_name,
+        equipment_price: item.equipment_price,
+        quantity: item.quantity,
+        subtotal: item.subtotal
+      }));
 
       const { error: itemsError } = await supabase
         .from('booking_items')
@@ -152,24 +192,18 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
       if (itemsError) throw itemsError;
 
       toast({
-        title: "Booking Created Successfully!",
-        description: `Booking #${booking.id.substring(0, 8)} has been created.`,
+        title: "Booking Updated Successfully!",
+        description: `Booking #${booking.id.substring(0, 8)} has been updated.`,
       });
 
-      // Reset form
-      setStartDate(undefined);
-      setEndDate(undefined);
-      setCustomerInfo({ name: '', email: '', phone: '', address: '' });
-      setBookingItems([]);
-      setDiscount(0);
-      setOpen(false);
-      onBookingCreated();
+      onBookingUpdated();
+      onClose();
 
     } catch (error) {
-      console.error('Error creating booking:', error);
+      console.error('Error updating booking:', error);
       toast({
-        title: "Error Creating Booking",
-        description: "There was an error creating the booking. Please try again.",
+        title: "Error Updating Booking",
+        description: "There was an error updating the booking. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -178,16 +212,10 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Booking
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Booking</DialogTitle>
+          <DialogTitle>Edit Booking #{booking.id.substring(0, 8)}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -316,47 +344,44 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
             {/* Selected Equipment Items */}
             {bookingItems.length > 0 && (
               <div className="space-y-2">
-                {bookingItems.map((item) => {
-                  const equipment = mockEquipment.find(eq => eq.id === item.equipmentId);
-                  return (
-                    <Card key={item.equipmentId}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="font-medium">{equipment?.name}</span>
-                            <Badge variant="outline" className="ml-2">
-                              ${equipment?.price}/day
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.equipmentId, -1)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="mx-2 font-medium">{item.quantity}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.equipmentId, 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeItem(item.equipmentId)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
+                {bookingItems.map((item) => (
+                  <Card key={item.equipment_id}>
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-medium">{item.equipment_name}</span>
+                          <Badge variant="outline" className="ml-2">
+                            ${item.equipment_price}/day
+                          </Badge>
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.equipment_id, -1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="mx-2 font-medium">{item.quantity}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.equipment_id, 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeItem(item.equipment_id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
@@ -397,11 +422,11 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
+            <Button variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={loading} className="flex-1">
-              {loading ? 'Creating...' : 'Create Booking'}
+              {loading ? 'Updating...' : 'Update Booking'}
             </Button>
           </div>
         </div>

@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Phone, Mail } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Edit } from 'lucide-react';
 
 interface BookingItem {
   equipment_name: string;
@@ -26,9 +26,10 @@ interface Booking {
 interface BookingCardProps {
   booking: Booking;
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
+  onEdit: (booking: Booking) => void;
 }
 
-export const BookingCard = ({ booking, onStatusUpdate }: BookingCardProps) => {
+export const BookingCard = ({ booking, onStatusUpdate, onEdit }: BookingCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -50,6 +51,21 @@ export const BookingCard = ({ booking, onStatusUpdate }: BookingCardProps) => {
 
   const renderActionButtons = () => {
     const buttons = [];
+
+    // Add edit button for all statuses except completed and cancelled
+    if (!['completed', 'cancelled'].includes(booking.status)) {
+      buttons.push(
+        <Button
+          key="edit"
+          onClick={() => onEdit(booking)}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Edit className="h-4 w-4" />
+          Edit
+        </Button>
+      );
+    }
 
     if (booking.status === 'pending') {
       buttons.push(

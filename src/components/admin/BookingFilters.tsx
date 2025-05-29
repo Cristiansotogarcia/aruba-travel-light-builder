@@ -39,33 +39,6 @@ export const BookingFilters = ({
             />
           </div>
         </div>
-      </div>
-      
-      <div className="flex flex-col gap-2 items-end">
-        <select
-          value={statusFilter}
-          onChange={(e) => onStatusFilterChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md"
-        >
-          <option value="all">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="out_for_delivery">Out for Delivery</option>
-          <option value="delivered">Delivered</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        
-        {showListView && (
-          <Button
-            variant="outline"
-            onClick={onReturnToCalendar}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Return to calendar
-          </Button>
-        )}
         
         {!showListView && (
           <div className="flex items-center gap-2">
@@ -80,6 +53,27 @@ export const BookingFilters = ({
           </div>
         )}
       </div>
+      
+      {showListView && (
+        <div className="flex flex-col gap-2 items-end">
+          <Button
+            variant="outline"
+            className="h-10 px-3 py-2"
+            onClick={() => onStatusFilterChange(statusFilter === 'all' ? 'pending' : 'all')}
+          >
+            {statusFilter === 'all' ? 'All Statuses' : `Filter: ${statusFilter}`}
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={onReturnToCalendar}
+            className="h-10 px-3 py-2 flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Return to calendar
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

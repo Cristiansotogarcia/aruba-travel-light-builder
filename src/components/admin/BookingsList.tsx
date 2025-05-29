@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateBookingModal } from './CreateBookingModal';
+import { EditBookingModal } from './EditBookingModal';
 import { BookingCalendarView } from './BookingCalendarView';
 import { BookingFilters } from './BookingFilters';
 import { BookingsListView } from './BookingsListView';
@@ -14,6 +15,7 @@ interface BookingItem {
   quantity: number;
   equipment_price: number;
   subtotal: number;
+  equipment_id: string;
 }
 
 interface Booking {
@@ -36,6 +38,7 @@ export const BookingsList = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showListView, setShowListView] = useState(false);
   const [calendarView, setCalendarView] = useState<'day' | 'week'>('day');
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -57,7 +60,8 @@ export const BookingsList = () => {
             equipment_name,
             quantity,
             equipment_price,
-            subtotal
+            subtotal,
+            equipment_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -123,6 +127,14 @@ export const BookingsList = () => {
     }
   };
 
+  const handleEditBooking = (booking: Booking) => {
+    setEditingBooking(booking);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingBooking(null);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -179,6 +191,7 @@ export const BookingsList = () => {
         <BookingsListView
           bookings={filteredBookings}
           onStatusUpdate={updateBookingStatus}
+          onEdit={handleEditBooking}
           searchTerm={searchTerm}
           statusFilter={statusFilter}
         />
@@ -188,6 +201,15 @@ export const BookingsList = () => {
           viewMode={calendarView}
           onStatusUpdate={updateBookingStatus}
           onCreateBooking={fetchBookings}
+        />
+      )}
+
+      {editingBooking && (
+        <EditBookingModal
+          booking={editingBooking}
+          onBookingUpdated={fetchBookings}
+          onClose={handleCloseEdit}
+          open={!!editingBooking}
         />
       )}
     </div>
