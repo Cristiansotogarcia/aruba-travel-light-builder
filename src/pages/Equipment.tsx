@@ -1,9 +1,9 @@
-
 import { useState, useMemo } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
+import { QuickBooking } from '@/components/booking/QuickBooking';
 import { mockEquipment, getAvailableCategories, getAvailabilityOptions, getPriceRange } from '@/data/mockEquipment';
 
 const Equipment = () => {
@@ -72,19 +72,22 @@ const Equipment = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-4 gap-8">
+          <div className="grid lg:grid-cols-5 gap-8">
             {/* Filters Sidebar */}
             <div className="lg:col-span-1">
-              <EquipmentFilters
-                filters={filterOptions}
-                activeFilters={filters}
-                onFiltersChange={setFilters}
-                onClearFilters={clearFilters}
-              />
+              <div className="space-y-6">
+                <EquipmentFilters
+                  filters={filterOptions}
+                  activeFilters={filters}
+                  onFiltersChange={setFilters}
+                  onClearFilters={clearFilters}
+                />
+                <QuickBooking />
+              </div>
             </div>
 
             {/* Equipment Grid */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-4">
               <div className="mb-6 flex justify-between items-center">
                 <p className="text-gray-600">
                   Showing {filteredEquipment.length} of {mockEquipment.length} items
