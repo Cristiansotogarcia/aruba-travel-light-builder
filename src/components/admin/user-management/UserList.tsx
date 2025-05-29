@@ -1,8 +1,12 @@
 
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash2, Key, Clock } from 'lucide-react';
+import { Edit, Trash2, Key, Clock, UserX } from 'lucide-react';
+import { EditUserModal } from './EditUserModal';
+import { ResetPasswordModal } from './ResetPasswordModal';
+import { DeleteUserModal } from './DeleteUserModal';
 
 interface Profile {
   id: string;
@@ -11,14 +15,21 @@ interface Profile {
   created_at: string;
   needs_password_change?: boolean;
   email?: string;
+  is_deactivated?: boolean;
 }
 
 interface UserListProps {
   profiles: Profile[];
   loading: boolean;
+  onRefreshProfiles: () => void;
 }
 
-export const UserList = ({ profiles, loading }: UserListProps) => {
+export const UserList = ({ profiles, loading, onRefreshProfiles }: UserListProps) => {
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'SuperUser':
@@ -32,6 +43,21 @@ export const UserList = ({ profiles, loading }: UserListProps) => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleEditUser = (user: Profile) => {
+    setSelectedUser(user);
+    setEditModalOpen(true);
+  };
+
+  const handleResetPassword = (user: Profile) => {
+    setSelectedUser(user);
+    setResetPasswordModalOpen(true);
+  };
+
+  const handleDeleteUser = (user: Profile) => {
+    setSelectedUser(user);
+    setDeleteModalOpen(true);
   };
 
   if (loading) {
@@ -50,54 +76,101 @@ export const UserList = ({ profiles, loading }: UserListProps) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Users ({profiles.length})</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {profiles.length > 0 ? (
-            profiles.map((profile) => (
-              <div key={profile.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="font-medium text-gray-900">{profile.name}</p>
-                      <p className="text-sm text-gray-500">
-                        Created: {new Date(profile.created_at).toLocaleDateString()}
-                      </p>
-                      {profile.needs_password_change && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <Clock className="h-3 w-3 text-orange-500" />
-                          <span className="text-xs text-orange-600">Needs password change</span>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Users ({profiles.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {profiles.length > 0 ? (
+              profiles.map((profile) => (
+                <div key={profile.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{profile.name}</p>
+                          {profile.is_deactivated && (
+                            <Badge variant="destructive" className="text-xs">
+                              <UserX className="h-3 w-3 mr-1" />
+                              Deactivated
+                            </Badge>
+                          )}
                         </div>
-                      )}
+                        <p className="text-sm text-gray-500">
+                          Created: {new Date(profile.created_at).toLocaleDateString()}
+                        </p>
+                        {profile.needs_password_change && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="h-3 w-3 text-orange-500" />
+                            <span className="text-xs text-orange-600">Needs password change</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Badge className={getRoleBadgeColor(profile.role)}>
+                      {profile.role}
+                    </Badge>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditUser(profile)}
+                        title="Edit user"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleResetPassword(profile)}
+                        title="Reset password"
+                      >
+                        <Key className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteUser(profile)}
+                        title="Delete/Deactivate user"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Badge className={getRoleBadgeColor(profile.role)}>
-                    {profile.role}
-                  </Badge>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Key className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center py-8">No users found</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8">No users found</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <EditUserModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        user={selectedUser}
+        onUserUpdated={onRefreshProfiles}
+      />
+
+      <ResetPasswordModal
+        open={resetPasswordModalOpen}
+        onClose={() => setResetPasswordModalOpen(false)}
+        user={selectedUser}
+        onPasswordReset={onRefreshProfiles}
+      />
+
+      <DeleteUserModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        user={selectedUser}
+        onUserDeleted={onRefreshProfiles}
+      />
+    </>
   );
 };

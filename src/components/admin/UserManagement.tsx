@@ -15,6 +15,7 @@ interface Profile {
   created_at: string;
   needs_password_change?: boolean;
   email?: string;
+  is_deactivated?: boolean;
 }
 
 interface TempPasswordResult {
@@ -90,7 +91,11 @@ export const UserManagement = () => {
         onRefreshProfiles={fetchProfiles}
       />
 
-      <UserList profiles={profiles} loading={loading} />
+      <UserList 
+        profiles={profiles} 
+        loading={loading} 
+        onRefreshProfiles={fetchProfiles}
+      />
 
       {/* Temporary Password Display Dialog */}
       <TempPasswordDialog
