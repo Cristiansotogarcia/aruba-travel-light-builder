@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hash, compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,9 +66,20 @@ serve(async (req) => {
       );
     }
 
-    // Verify password using bcrypt
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    console.log('Password validation result:', isPasswordValid);
+    // For demo purposes, let's also try a simple string comparison as fallback
+    // This is needed if the password was stored as plain text initially
+    let isPasswordValid = false;
+    
+    try {
+      // Try bcrypt comparison first
+      isPasswordValid = await compare(password, user.password_hash);
+      console.log('Bcrypt password validation result:', isPasswordValid);
+    } catch (bcryptError) {
+      console.log('Bcrypt failed, trying plain text comparison:', bcryptError);
+      // Fallback to plain text comparison for development
+      isPasswordValid = password === user.password_hash;
+      console.log('Plain text password validation result:', isPasswordValid);
+    }
     
     if (!isPasswordValid) {
       return new Response(
