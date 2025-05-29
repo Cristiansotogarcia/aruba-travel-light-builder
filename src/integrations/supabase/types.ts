@@ -9,7 +9,89 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      booking_items: {
+        Row: {
+          booking_id: string
+          created_at: string
+          equipment_id: string
+          equipment_name: string
+          equipment_price: number
+          id: string
+          quantity: number
+          subtotal: number
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          equipment_id: string
+          equipment_name: string
+          equipment_price: number
+          id?: string
+          quantity: number
+          subtotal: number
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          equipment_id?: string
+          equipment_name?: string
+          equipment_price?: number
+          id?: string
+          quantity?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_items_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          created_at: string
+          customer_address: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_address: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          end_date: string
+          id?: string
+          start_date: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_address?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Phone, Mail, Trash2 } from 'lucide-react';
 import { mockEquipment } from '@/data/mockEquipment';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface BookingItem {
   equipmentId: string;
@@ -40,6 +42,8 @@ export const BookingForm = () => {
 
   const [selectedEquipment, setSelectedEquipment] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const addEquipment = () => {
     if (!selectedEquipment) return;
@@ -102,10 +106,87 @@ export const BookingForm = () => {
     return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Booking submitted:', bookingData);
-    alert('Booking request submitted! We will contact you shortly.');
+    setIsSubmitting(true);
+
+    try {
+      const totalAmount = calculateTotal();
+      const days = getDays();
+
+      // Create the booking record
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          customer_name: bookingData.customerInfo.name,
+          customer_email: bookingData.customerInfo.email,
+          customer_phone: bookingData.customerInfo.phone,
+          customer_address: bookingData.customerInfo.address,
+          start_date: bookingData.startDate,
+          end_date: bookingData.endDate,
+          total_amount: totalAmount,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (bookingError) {
+        console.error('Error creating booking:', bookingError);
+        throw bookingError;
+      }
+
+      // Create booking items
+      const bookingItems = bookingData.items.map(item => {
+        const equipment = mockEquipment.find(eq => eq.id === item.equipmentId);
+        const subtotal = equipment ? equipment.price * item.quantity * days : 0;
+        
+        return {
+          booking_id: booking.id,
+          equipment_id: item.equipmentId,
+          equipment_name: equipment?.name || '',
+          equipment_price: equipment?.price || 0,
+          quantity: item.quantity,
+          subtotal: subtotal
+        };
+      });
+
+      const { error: itemsError } = await supabase
+        .from('booking_items')
+        .insert(bookingItems);
+
+      if (itemsError) {
+        console.error('Error creating booking items:', itemsError);
+        throw itemsError;
+      }
+
+      toast({
+        title: "Booking Submitted Successfully!",
+        description: `Your booking request #${booking.id.substring(0, 8)} has been submitted. We will contact you shortly to confirm the details.`,
+      });
+
+      // Reset form
+      setBookingData({
+        startDate: '',
+        endDate: '',
+        items: [],
+        customerInfo: {
+          name: '',
+          email: '',
+          phone: '',
+          address: ''
+        }
+      });
+
+    } catch (error) {
+      console.error('Error submitting booking:', error);
+      toast({
+        title: "Error Submitting Booking",
+        description: "There was an error submitting your booking request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const availableEquipment = mockEquipment.filter(eq => eq.availability !== 'unavailable');
@@ -304,9 +385,9 @@ export const BookingForm = () => {
           type="submit" 
           className="w-full" 
           size="lg"
-          disabled={bookingData.items.length === 0 || !bookingData.startDate || !bookingData.endDate}
+          disabled={bookingData.items.length === 0 || !bookingData.startDate || !bookingData.endDate || isSubmitting}
         >
-          Submit Booking Request
+          {isSubmitting ? 'Submitting...' : 'Submit Booking Request'}
         </Button>
       </form>
     </div>
