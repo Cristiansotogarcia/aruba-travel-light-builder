@@ -97,19 +97,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Fetch user from database
+      console.log('Attempting login for:', email);
+      
+      // Fetch user from database - use maybeSingle() instead of single() to handle no results
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      console.log('Database query result:', { data, error });
+
+      if (error) {
+        console.error('Database error:', error);
+        return { success: false, error: 'Database error occurred' };
+      }
+
+      if (!data) {
+        console.log('No user found with email:', email);
         return { success: false, error: 'Invalid email or password' };
       }
 
       // Verify password using bcrypt
       const isPasswordValid = await verifyPassword(password, data.password_hash);
+      console.log('Password validation result:', isPasswordValid);
       
       if (!isPasswordValid) {
         return { success: false, error: 'Invalid email or password' };
@@ -120,6 +131,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(data);
       await loadPermissions(data.role);
 
+      console.log('Login successful for user:', data.name);
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
