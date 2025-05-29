@@ -28,10 +28,11 @@ interface BookingViewModalProps {
   booking: Booking;
   onClose: () => void;
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
+  onEdit: (booking: Booking) => void;
   open: boolean;
 }
 
-export const BookingViewModal = ({ booking, onClose, onStatusUpdate, open }: BookingViewModalProps) => {
+export const BookingViewModal = ({ booking, onClose, onStatusUpdate, onEdit, open }: BookingViewModalProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -91,6 +92,10 @@ export const BookingViewModal = ({ booking, onClose, onStatusUpdate, open }: Boo
       buttons.push(
         <Button
           key="edit"
+          onClick={() => {
+            onEdit(booking);
+            onClose();
+          }}
           variant="outline"
           className="flex items-center gap-2"
         >

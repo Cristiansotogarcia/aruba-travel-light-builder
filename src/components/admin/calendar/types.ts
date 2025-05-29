@@ -3,7 +3,7 @@ export interface BookingItem {
   equipment_name: string;
   quantity: number;
   equipment_price?: number;
-  subtotal?: number;
+  subtotal: number;
   equipment_id?: string;
 }
 

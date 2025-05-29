@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateBookingModal } from './CreateBookingModal';
-import { EditBookingModal } from './EditBookingModal';
+import { CompactEditBookingModal } from './CompactEditBookingModal';
 import { BookingViewModal } from './BookingViewModal';
 import { BookingCalendarView } from './BookingCalendarView';
 import { BookingFilters } from './BookingFilters';
@@ -215,7 +215,7 @@ export const BookingsList = () => {
       )}
 
       {editingBooking && (
-        <EditBookingModal
+        <CompactEditBookingModal
           booking={editingBooking}
           onBookingUpdated={fetchBookings}
           onClose={handleCloseEdit}
@@ -228,6 +228,7 @@ export const BookingsList = () => {
           booking={viewingBooking}
           onClose={handleCloseView}
           onStatusUpdate={updateBookingStatus}
+          onEdit={handleEditBooking}
           open={!!viewingBooking}
         />
       )}

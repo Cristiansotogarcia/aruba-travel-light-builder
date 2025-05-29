@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
-import { BookingCard } from './BookingCard';
+import { BookingSquareCard } from './BookingSquareCard';
 
 interface BookingItem {
   equipment_name: string;
@@ -56,14 +56,12 @@ export const BookingsListView = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-3 gap-4">
       {bookings.map((booking) => (
-        <BookingCard
+        <BookingSquareCard
           key={booking.id}
           booking={booking}
-          onStatusUpdate={onStatusUpdate}
-          onEdit={onEdit}
-          onView={onView}
+          onView={onView || (() => {})}
         />
       ))}
     </div>
