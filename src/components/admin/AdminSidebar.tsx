@@ -37,7 +37,14 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
   return (
     <div className="w-64 bg-white border-r border-gray-200">
       <div className="p-6">
-        <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
+        <div className="flex items-center mb-4">
+          <img 
+            src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
+            alt="Travel Light Aruba" 
+            className="h-8 w-auto mr-3"
+          />
+          <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
+        </div>
         <p className="text-sm text-gray-600 mt-1">
           {profile?.name} ({profile?.role})
         </p>

@@ -13,8 +13,13 @@ export const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <div className="text-2xl font-bold text-blue-600">
-              ArubaRentals
+            <img 
+              src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
+              alt="Travel Light Aruba" 
+              className="h-10 w-auto"
+            />
+            <div className="ml-3 text-xl font-bold text-gray-900">
+              Travel Light Aruba
             </div>
           </Link>
 

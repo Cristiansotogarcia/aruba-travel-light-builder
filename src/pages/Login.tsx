@@ -56,7 +56,14 @@ const Login = () => {
         <div className="w-full max-w-md px-4">
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+              <div className="flex justify-center mb-4">
+                <img 
+                  src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
+                  alt="Travel Light Aruba" 
+                  className="h-16 w-auto"
+                />
+              </div>
+              <CardTitle className="text-2xl font-bold">Welcome to Travel Light Aruba</CardTitle>
               <p className="text-gray-600">Sign in to your account</p>
             </CardHeader>
             <CardContent>
