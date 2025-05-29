@@ -4,7 +4,7 @@ export interface BookingItem {
   quantity: number;
   equipment_price?: number;
   subtotal: number;
-  equipment_id?: string;
+  equipment_id: string;
 }
 
 export interface Booking {
