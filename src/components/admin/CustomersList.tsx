@@ -3,11 +3,10 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Mail, Phone, MapPin, Calendar, Search, Edit, Eye } from 'lucide-react';
-import { EditCustomerModal } from './customer-management/EditCustomerModal';
+import { Users, Phone, Calendar, Search } from 'lucide-react';
+import { CustomerDetailsModal } from './customer-management/CustomerDetailsModal';
 
 interface Customer {
   customer_email: string;
@@ -24,8 +23,8 @@ export const CustomersList = () => {
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,21 +102,22 @@ export const CustomersList = () => {
     setFilteredCustomers(filtered);
   };
 
-  const handleEditCustomer = (customer: Customer) => {
+  const handleCustomerClick = (customer: Customer) => {
     setSelectedCustomer(customer);
-    setEditModalOpen(true);
-  };
-
-  const handleViewBookings = (customer: Customer) => {
-    // Navigate to bookings with customer filter - for now just show toast
-    toast({
-      title: "View Bookings",
-      description: `Viewing bookings for ${customer.customer_name}`,
-    });
+    setDetailsModalOpen(true);
   };
 
   const handleCustomerUpdated = () => {
     fetchCustomers(); // Refresh the customers list
+  };
+
+  const handleNavigateToBooking = (bookingId: string) => {
+    // This would typically navigate to the bookings page with a filter or highlight
+    // For now, we'll show a toast indicating the functionality
+    toast({
+      title: "Navigate to Booking",
+      description: `Would navigate to booking ${bookingId} in the bookings list`,
+    });
   };
 
   if (loading) {
@@ -218,12 +218,13 @@ export const CustomersList = () => {
       {filteredCustomers.length > 0 ? (
         <div className="grid grid-cols-3 gap-4">
           {filteredCustomers.map((customer) => (
-            <Card key={customer.customer_email} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card 
+              key={customer.customer_email} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleCustomerClick(customer)}
+            >
               <CardContent className="p-4 space-y-3">
                 <div className="space-y-2">
-                  <div className="text-xs font-mono text-gray-500">
-                    #{customer.customer_email.substring(0, 8)}...
-                  </div>
                   <div className="text-sm font-medium text-gray-900 truncate">
                     {customer.customer_name}
                   </div>
@@ -244,32 +245,6 @@ export const CustomersList = () => {
                     Total: ${customer.total_spent} • {customer.bookings.length} bookings
                   </div>
                 </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewBookings(customer);
-                    }}
-                    className="h-7 text-xs"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    View Bookings
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditCustomer(customer);
-                    }}
-                    className="h-7 w-7 p-0"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -288,11 +263,12 @@ export const CustomersList = () => {
         </Card>
       )}
 
-      <EditCustomerModal
-        open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+      <CustomerDetailsModal
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
         customer={selectedCustomer}
         onCustomerUpdated={handleCustomerUpdated}
+        onNavigateToBooking={handleNavigateToBooking}
       />
     </div>
   );
