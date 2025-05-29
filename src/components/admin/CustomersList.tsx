@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Mail, Phone, MapPin, Calendar, Search, Edit } from 'lucide-react';
+import { Users, Mail, Phone, MapPin, Calendar, Search, Edit, Eye } from 'lucide-react';
 import { EditCustomerModal } from './customer-management/EditCustomerModal';
 
 interface Customer {
@@ -108,20 +108,28 @@ export const CustomersList = () => {
     setEditModalOpen(true);
   };
 
+  const handleViewBookings = (customer: Customer) => {
+    // Navigate to bookings with customer filter - for now just show toast
+    toast({
+      title: "View Bookings",
+      description: `Viewing bookings for ${customer.customer_name}`,
+    });
+  };
+
   const handleCustomerUpdated = () => {
     fetchCustomers(); // Refresh the customers list
   };
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
+      <div className="grid grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => (
           <Card key={i}>
             <CardContent className="p-6">
               <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                 <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
               </div>
             </CardContent>
           </Card>
@@ -206,85 +214,79 @@ export const CustomersList = () => {
         </Card>
       </div>
 
-      {/* Customers List */}
-      <div className="space-y-4">
-        {filteredCustomers.length > 0 ? (
-          filteredCustomers.map((customer) => (
-            <Card key={customer.customer_email}>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-lg text-gray-900">{customer.customer_name}</h3>
-                    <p className="text-sm text-gray-500">Customer since {new Date(customer.last_booking).toLocaleDateString()}</p>
+      {/* Customers Grid */}
+      {filteredCustomers.length > 0 ? (
+        <div className="grid grid-cols-3 gap-4">
+          {filteredCustomers.map((customer) => (
+            <Card key={customer.customer_email} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4 space-y-3">
+                <div className="space-y-2">
+                  <div className="text-xs font-mono text-gray-500">
+                    #{customer.customer_email.substring(0, 8)}...
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="font-bold text-xl text-gray-900">${customer.total_spent}</p>
-                      <p className="text-sm text-gray-500">{customer.bookings.length} bookings</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditCustomer(customer)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  <div className="text-sm font-medium text-gray-900 truncate">
+                    {customer.customer_name}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {customer.customer_email}
+                  </div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {customer.customer_phone}
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="h-4 w-4" />
-                      <span>{customer.customer_email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="h-4 w-4" />
-                      <span>{customer.customer_phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span>{customer.customer_address}</span>
-                    </div>
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-gray-700">
+                    Recent Booking: {new Date(customer.last_booking).toLocaleDateString()}
                   </div>
+                  <div className="text-xs text-gray-500">
+                    Total: ${customer.total_spent} • {customer.bookings.length} bookings
+                  </div>
+                </div>
 
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Recent Booking Status:</h4>
-                    <div className="space-y-2">
-                      {customer.bookings.slice(0, 3).map((booking, index) => (
-                        <div key={index} className="flex justify-between items-center text-sm">
-                          <span>{new Date(booking.created_at).toLocaleDateString()}</span>
-                          <Badge className={
-                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                            booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-blue-100 text-blue-800'
-                          }>
-                            {booking.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <div className="flex justify-between items-center pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewBookings(customer);
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Bookings
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCustomer(customer);
+                    }}
+                    className="h-7 w-7 p-0"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          ))
-        ) : (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No customers found</h3>
-              <p className="text-gray-500">
-                {searchTerm
-                  ? 'Try adjusting your search criteria.'
-                  : 'Customer data will appear here as bookings are made.'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No customers found</h3>
+            <p className="text-gray-500">
+              {searchTerm
+                ? 'Try adjusting your search criteria.'
+                : 'Customer data will appear here as bookings are made.'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <EditCustomerModal
         open={editModalOpen}
