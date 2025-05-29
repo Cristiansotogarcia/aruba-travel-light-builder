@@ -16,7 +16,7 @@ export const BookingsList = () => {
   const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [showListView, setShowListView] = useState(false);
   const [calendarView, setCalendarView] = useState<'day' | 'week'>('day');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -150,9 +150,13 @@ export const BookingsList = () => {
           <p className="text-gray-600 mt-1">Manage customer bookings and rental requests</p>
         </div>
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="text-lg px-3 py-1">
+          <Button 
+            variant="outline" 
+            className="text-lg px-3 py-1"
+            onClick={() => setShowListView(!showListView)}
+          >
             {filteredBookings.length} bookings
-          </Badge>
+          </Button>
           <CreateBookingModal onBookingCreated={fetchBookings} />
         </div>
       </div>
@@ -188,31 +192,20 @@ export const BookingsList = () => {
               </select>
             </div>
             
-            <div className="flex items-center gap-2">
-              <ToggleGroup value={viewMode} onValueChange={(value) => value && setViewMode(value as 'list' | 'calendar')} type="single">
-                <ToggleGroupItem value="calendar">Calendar</ToggleGroupItem>
-                <ToggleGroupItem value="list">List</ToggleGroupItem>
-              </ToggleGroup>
-              
-              {viewMode === 'calendar' && (
+            {!showListView && (
+              <div className="flex items-center gap-2">
                 <ToggleGroup value={calendarView} onValueChange={(value) => value && setCalendarView(value as 'day' | 'week')} type="single">
                   <ToggleGroupItem value="day">Day</ToggleGroupItem>
                   <ToggleGroupItem value="week">Week</ToggleGroupItem>
                 </ToggleGroup>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Bookings Display */}
-      {viewMode === 'calendar' ? (
-        <BookingCalendarView 
-          bookings={filteredBookings} 
-          viewMode={calendarView}
-          onStatusUpdate={updateBookingStatus}
-        />
-      ) : (
+      {showListView ? (
         <div className="space-y-4">
           {filteredBookings.length > 0 ? (
             filteredBookings.map((booking) => (
@@ -280,9 +273,17 @@ export const BookingsList = () => {
                           onClick={() => updateBookingStatus(booking.id, 'cancelled')}
                           variant="destructive"
                         >
-                          Cancel
+                          Cancel Order
                         </Button>
                       </>
+                    )}
+                    {(booking.status === 'confirmed' || booking.status === 'out_for_delivery' || booking.status === 'delivered') && (
+                      <Button
+                        onClick={() => updateBookingStatus(booking.id, 'cancelled')}
+                        variant="destructive"
+                      >
+                        Cancel Order
+                      </Button>
                     )}
                     {booking.status === 'confirmed' && (
                       <Button
@@ -326,6 +327,12 @@ export const BookingsList = () => {
             </Card>
           )}
         </div>
+      ) : (
+        <BookingCalendarView 
+          bookings={filteredBookings} 
+          viewMode={calendarView}
+          onStatusUpdate={updateBookingStatus}
+        />
       )}
     </div>
   );
