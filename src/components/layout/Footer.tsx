@@ -9,14 +9,14 @@ export const Footer = () => {
           {/* Company Info */}
           <div className="col-span-1">
             <div className="text-2xl font-bold text-blue-400 mb-4">
-              ArubaRentals
+              Travel Light Aruba
             </div>
             <p className="text-gray-400 mb-4">
               Your trusted partner for beach and baby equipment rentals in Aruba.
             </p>
             <div className="text-sm text-gray-400">
               <p>📞 +297 123-4567</p>
-              <p>📧 info@arubarentals.com</p>
+              <p>📧 info@travellightaruba.com</p>
             </div>
           </div>
 
@@ -53,7 +53,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 ArubaRentals. All rights reserved.</p>
+          <p>&copy; 2024 Travel Light Aruba. All rights reserved.</p>
         </div>
       </div>
     </footer>

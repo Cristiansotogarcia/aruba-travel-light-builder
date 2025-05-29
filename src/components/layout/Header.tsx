@@ -16,11 +16,8 @@ export const Header = () => {
             <img 
               src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
               alt="Travel Light Aruba" 
-              className="h-10 w-auto"
+              className="h-14 w-auto"
             />
-            <div className="ml-3 text-xl font-bold text-gray-900">
-              Travel Light Aruba
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
