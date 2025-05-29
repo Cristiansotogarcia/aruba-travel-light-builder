@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Mail, Phone, MapPin, Calendar, Search } from 'lucide-react';
+import { Users, Mail, Phone, MapPin, Calendar, Search, Edit } from 'lucide-react';
+import { EditCustomerModal } from './customer-management/EditCustomerModal';
 
 interface Customer {
   customer_email: string;
@@ -22,6 +24,8 @@ export const CustomersList = () => {
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -97,6 +101,15 @@ export const CustomersList = () => {
     );
 
     setFilteredCustomers(filtered);
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setEditModalOpen(true);
+  };
+
+  const handleCustomerUpdated = () => {
+    fetchCustomers(); // Refresh the customers list
   };
 
   if (loading) {
@@ -204,9 +217,19 @@ export const CustomersList = () => {
                     <h3 className="font-bold text-lg text-gray-900">{customer.customer_name}</h3>
                     <p className="text-sm text-gray-500">Customer since {new Date(customer.last_booking).toLocaleDateString()}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-xl text-gray-900">${customer.total_spent}</p>
-                    <p className="text-sm text-gray-500">{customer.bookings.length} bookings</p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-bold text-xl text-gray-900">${customer.total_spent}</p>
+                      <p className="text-sm text-gray-500">{customer.bookings.length} bookings</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditCustomer(customer)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -262,6 +285,13 @@ export const CustomersList = () => {
           </Card>
         )}
       </div>
+
+      <EditCustomerModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        customer={selectedCustomer}
+        onCustomerUpdated={handleCustomerUpdated}
+      />
     </div>
   );
 };
