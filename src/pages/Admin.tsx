@@ -44,12 +44,14 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen flex w-full">
-      <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-      <main className="flex-1 p-6 bg-gray-50">
-        {renderActiveSection()}
-      </main>
-    </div>
+    <DashboardLayout>
+      <div className="min-h-screen flex w-full">
+        <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+        <main className="flex-1 p-6 bg-gray-50">
+          {renderActiveSection()}
+        </main>
+      </div>
+    </DashboardLayout>
   );
 };
 

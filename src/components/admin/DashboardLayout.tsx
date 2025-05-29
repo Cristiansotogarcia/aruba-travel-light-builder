@@ -1,8 +1,6 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardLayoutProps {
@@ -34,10 +32,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <div className="flex-1">
         {profile ? children : (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full min-h-screen">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading your profile...</p>
@@ -45,7 +42,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         )}
       </div>
-      <Footer />
     </div>
   );
 };
