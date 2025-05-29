@@ -7,25 +7,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { UserPlus, Edit, Trash2, Key } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Key, Copy, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 interface Profile {
   id: string;
   name: string;
   role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
   created_at: string;
+  needs_password_change?: boolean;
   email?: string;
+}
+
+interface TempPasswordResult {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+  };
+  tempPassword: string;
 }
 
 export const UserManagement = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Driver' as const });
-  const { hasPermission } = useAuth();
+  const [createdUserResult, setCreatedUserResult] = useState<TempPasswordResult | null>(null);
+  const [showTempPasswordDialog, setShowTempPasswordDialog] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const { hasPermission, profile: currentProfile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,6 +49,13 @@ export const UserManagement = () => {
       fetchProfiles();
     }
   }, [hasPermission]);
+
+  useEffect(() => {
+    // Check if current user needs to change password
+    if (currentProfile?.needs_password_change) {
+      setIsPasswordModalOpen(true);
+    }
+  }, [currentProfile]);
 
   const fetchProfiles = async () => {
     try {
@@ -56,21 +79,61 @@ export const UserManagement = () => {
   };
 
   const handleCreateUser = async () => {
-    try {
-      // Note: In a real implementation, you'd want to use Supabase Auth Admin API
-      // For now, we'll just show the form structure
+    if (!newUser.name.trim() || !newUser.email.trim()) {
       toast({
-        title: "Feature Coming Soon",
-        description: "User creation will be implemented with proper authentication flow",
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
       });
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-user-with-otp', {
+        body: {
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role
+        }
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || 'Failed to create user');
+      }
+
+      setCreatedUserResult(data);
+      setShowTempPasswordDialog(true);
       setIsCreateDialogOpen(false);
       setNewUser({ name: '', email: '', role: 'Driver' });
+      
+      // Refresh profiles list
+      await fetchProfiles();
+
+      toast({
+        title: "User Created Successfully",
+        description: `User ${data.user.name} has been created with a temporary password.`,
+      });
+
     } catch (error) {
       console.error('Error creating user:', error);
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: error instanceof Error ? error.message : "Failed to create user",
         variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const copyTempPassword = () => {
+    if (createdUserResult?.tempPassword) {
+      navigator.clipboard.writeText(createdUserResult.tempPassword);
+      toast({
+        title: "Copied",
+        description: "Temporary password copied to clipboard",
       });
     }
   };
@@ -168,8 +231,8 @@ export const UserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleCreateUser} className="w-full">
-                Create User
+              <Button onClick={handleCreateUser} className="w-full" disabled={creating}>
+                {creating ? 'Creating User...' : 'Create User'}
               </Button>
             </div>
           </DialogContent>
@@ -192,6 +255,12 @@ export const UserManagement = () => {
                         <p className="text-sm text-gray-500">
                           Created: {new Date(profile.created_at).toLocaleDateString()}
                         </p>
+                        {profile.needs_password_change && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="h-3 w-3 text-orange-500" />
+                            <span className="text-xs text-orange-600">Needs password change</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -219,6 +288,60 @@ export const UserManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Temporary Password Display Dialog */}
+      <Dialog open={showTempPasswordDialog} onOpenChange={setShowTempPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>User Created Successfully</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-green-700 mb-2">
+                User <strong>{createdUserResult?.user.name}</strong> has been created successfully.
+              </p>
+              <p className="text-sm text-green-700">
+                Please share the following temporary password with the user. It will expire in 48 hours.
+              </p>
+            </div>
+            
+            <div className="bg-gray-50 border rounded-lg p-4">
+              <Label className="text-sm font-medium text-gray-700">Temporary Password (OTP)</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Input
+                  value={createdUserResult?.tempPassword || ''}
+                  readOnly
+                  className="font-mono text-lg"
+                />
+                <Button variant="outline" size="sm" onClick={copyTempPassword}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-700">
+                <strong>Important:</strong> The user must change this temporary password on their first login. 
+                The temporary password will expire in 48 hours.
+              </p>
+            </div>
+
+            <Button onClick={() => setShowTempPasswordDialog(false)} className="w-full">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Change Modal for current user */}
+      <ChangePasswordModal
+        open={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onPasswordChanged={() => {
+          // Refresh user profile after password change
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

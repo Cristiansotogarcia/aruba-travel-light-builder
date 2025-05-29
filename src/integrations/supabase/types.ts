@@ -163,6 +163,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          needs_password_change: boolean | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string | null
         }
@@ -170,6 +171,7 @@ export type Database = {
           created_at?: string | null
           id: string
           name: string
+          needs_password_change?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
         }
@@ -177,8 +179,36 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          needs_password_change?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_temp_passwords: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          is_used: boolean
+          temp_password: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          temp_password: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          temp_password?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -187,6 +217,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_temp_passwords: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
