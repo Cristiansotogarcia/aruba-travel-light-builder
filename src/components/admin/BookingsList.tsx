@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,7 @@ export const BookingsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showListView, setShowListView] = useState(false);
-  const [calendarView, setCalendarView] = useState<'day' | 'week'>('day');
+  const [calendarView, setCalendarView] = useState<'day' | 'week'>('week'); // Default to week view
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -230,6 +231,7 @@ export const BookingsList = () => {
           onClose={handleCloseView}
           onStatusUpdate={updateBookingStatus}
           onEdit={handleEditBooking}
+          onBookingDeleted={fetchBookings}
           open={!!viewingBooking}
         />
       )}
