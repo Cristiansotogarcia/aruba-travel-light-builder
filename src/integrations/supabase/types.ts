@@ -93,15 +93,7 @@ export type Database = {
           total_amount?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       component_visibility: {
         Row: {
@@ -130,33 +122,27 @@ export type Database = {
         }
         Relationships: []
       }
-      users: {
+      profiles: {
         Row: {
-          created_at: string
-          email: string
+          created_at: string | null
           id: string
           name: string
-          password_hash: string
           role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          email: string
-          id?: string
+          created_at?: string | null
+          id: string
           name: string
-          password_hash: string
           role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          email?: string
+          created_at?: string | null
           id?: string
           name?: string
-          password_hash?: string
           role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

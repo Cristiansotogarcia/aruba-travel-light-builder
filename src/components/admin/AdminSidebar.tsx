@@ -10,7 +10,7 @@ interface AdminSidebarProps {
 }
 
 export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarProps) => {
-  const { user, hasPermission, logout } = useAuth();
+  const { profile, hasPermission, signOut } = useAuth();
   const [currentSection, setCurrentSection] = useState(activeSection || 'dashboard');
 
   const handleSectionChange = (section: string) => {
@@ -39,7 +39,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
       <div className="p-6">
         <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
         <p className="text-sm text-gray-600 mt-1">
-          {user?.name} ({user?.role})
+          {profile?.name} ({profile?.role})
         </p>
       </div>
       <nav className="px-4 pb-4 space-y-2">
@@ -63,7 +63,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
       </nav>
       <div className="absolute bottom-4 left-4 right-4">
         <Button 
-          onClick={logout} 
+          onClick={signOut} 
           variant="outline" 
           className="w-full"
         >
