@@ -2,8 +2,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { DeleteBookingModal } from './DeleteBookingModal';
+import { UndeliverableModal } from './UndeliverableModal';
 import { BookingDetailsCard } from './BookingDetailsCard';
 import { BookingActionButtons } from './BookingActionButtons';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Booking } from './calendar/types';
 
 interface BookingViewModalProps {
@@ -24,11 +27,46 @@ export const BookingViewModal = ({
   open 
 }: BookingViewModalProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUndeliverableModal, setShowUndeliverableModal] = useState(false);
+  const { toast } = useToast();
 
   const handleBookingDeleted = () => {
     setShowDeleteModal(false);
     onBookingDeleted?.();
     onClose();
+  };
+
+  const handleMarkUndeliverable = async (bookingId: string, reason: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'confirmed',
+          delivery_failure_reason: reason,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Delivery Marked as Failed",
+        description: `Booking has been marked as undeliverable. Reason: ${reason}`,
+        variant: "destructive"
+      });
+
+      // Update the booking status in the parent component
+      onStatusUpdate(bookingId, 'confirmed');
+      onClose();
+
+    } catch (error) {
+      console.error('Error marking delivery as undeliverable:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark delivery as undeliverable. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -47,6 +85,7 @@ export const BookingViewModal = ({
               onStatusUpdate={onStatusUpdate}
               onEdit={onEdit}
               onShowDeleteModal={() => setShowDeleteModal(true)}
+              onShowUndeliverableModal={() => setShowUndeliverableModal(true)}
               onClose={onClose}
             />
           </div>
@@ -59,6 +98,15 @@ export const BookingViewModal = ({
           onBookingDeleted={handleBookingDeleted}
           onClose={() => setShowDeleteModal(false)}
           open={showDeleteModal}
+        />
+      )}
+
+      {showUndeliverableModal && (
+        <UndeliverableModal
+          booking={booking}
+          onMarkUndeliverable={handleMarkUndeliverable}
+          onClose={() => setShowUndeliverableModal(false)}
+          open={showUndeliverableModal}
         />
       )}
     </>

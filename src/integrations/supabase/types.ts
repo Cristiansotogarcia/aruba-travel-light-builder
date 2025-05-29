@@ -58,6 +58,7 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone: string
+          delivery_failure_reason: string | null
           end_date: string
           id: string
           start_date: string
@@ -72,6 +73,7 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone: string
+          delivery_failure_reason?: string | null
           end_date: string
           id?: string
           start_date: string
@@ -86,6 +88,7 @@ export type Database = {
           customer_email?: string
           customer_name?: string
           customer_phone?: string
+          delivery_failure_reason?: string | null
           end_date?: string
           id?: string
           start_date?: string

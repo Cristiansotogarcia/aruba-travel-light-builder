@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Truck, CheckCircle, Edit, X, Trash2 } from 'lucide-react';
+import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Booking } from './calendar/types';
 
@@ -9,6 +9,7 @@ interface BookingActionButtonsProps {
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
   onEdit: (booking: Booking) => void;
   onShowDeleteModal: () => void;
+  onShowUndeliverableModal: () => void;
   onClose: () => void;
 }
 
@@ -17,6 +18,7 @@ export const BookingActionButtons = ({
   onStatusUpdate, 
   onEdit, 
   onShowDeleteModal, 
+  onShowUndeliverableModal,
   onClose 
 }: BookingActionButtonsProps) => {
   const { profile } = useAuth();
@@ -55,6 +57,17 @@ export const BookingActionButtons = ({
         >
           <CheckCircle className="h-4 w-4" />
           Mark Delivered
+        </Button>
+      );
+
+      buttons.push(
+        <Button
+          key="undeliverable"
+          onClick={onShowUndeliverableModal}
+          className="bg-orange-600 hover:bg-orange-700 flex items-center gap-2"
+        >
+          <AlertTriangle className="h-4 w-4" />
+          Mark Undeliverable
         </Button>
       );
     }
