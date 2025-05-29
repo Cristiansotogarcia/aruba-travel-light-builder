@@ -8,27 +8,7 @@ import { AlertTriangle, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-
-interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  subtotal: number;
-  equipment_id: string;
-  equipment_price: number;
-}
-
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  booking_items?: BookingItem[];
-}
+import { Booking } from './calendar/types';
 
 interface DeleteBookingModalProps {
   booking: Booking;

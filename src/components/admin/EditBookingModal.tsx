@@ -15,27 +15,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { mockEquipment } from '@/data/mockEquipment';
-
-interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  subtotal: number;
-  equipment_id: string;
-  equipment_price: number;
-}
-
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  booking_items?: BookingItem[];
-}
+import { Booking, BookingItem } from './calendar/types';
 
 interface EditBookingModalProps {
   booking: Booking;
@@ -85,7 +65,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
       setBookingItems(items =>
         items.map(item =>
           item.equipment_id === selectedEquipment
-            ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.equipment_price * calculateDays() }
+            ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * (item.equipment_price || equipment.price) * calculateDays() }
             : item
         )
       );
@@ -110,7 +90,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
           ? { 
               ...item, 
               quantity: Math.max(1, item.quantity + change),
-              subtotal: Math.max(1, item.quantity + change) * item.equipment_price * days
+              subtotal: Math.max(1, item.quantity + change) * (item.equipment_price || 0) * days
             }
           : item
       )
@@ -180,7 +160,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
         booking_id: booking.id,
         equipment_id: item.equipment_id,
         equipment_name: item.equipment_name,
-        equipment_price: item.equipment_price,
+        equipment_price: item.equipment_price || 0,
         quantity: item.quantity,
         subtotal: item.subtotal
       }));
@@ -351,7 +331,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
                         <div>
                           <span className="font-medium">{item.equipment_name}</span>
                           <Badge variant="outline" className="ml-2">
-                            ${item.equipment_price}/day
+                            ${item.equipment_price || 0}/day
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2">
