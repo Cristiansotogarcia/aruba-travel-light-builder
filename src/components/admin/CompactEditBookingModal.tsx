@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ interface Booking {
   end_date: string;
   status: string;
   total_amount: number;
+  delivery_failure_reason?: string | null;
   booking_items?: BookingItem[];
 }
 
@@ -145,16 +145,16 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
     try {
       const totalAmount = calculateTotal();
       
-      // Determine new status based on current status and date changes
-      let newStatus = booking.status;
+      // Check if dates have changed
       const dateChanged = startDate !== booking.start_date || endDate !== booking.end_date;
       
-      // If rescheduling an undeliverable booking, reset to confirmed
+      // Determine new status - if rescheduling an undeliverable booking with date changes, set to confirmed
+      let newStatus = booking.status;
       if (booking.status === 'undeliverable' && dateChanged) {
         newStatus = 'confirmed';
       }
 
-      // Update the booking record
+      // Prepare update data
       const updateData: any = {
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
@@ -167,8 +167,8 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
         updated_at: new Date().toISOString()
       };
 
-      // Clear delivery failure reason if rescheduling undeliverable booking
-      if (booking.status === 'undeliverable' && dateChanged) {
+      // Clear delivery failure reason if status is changing away from undeliverable
+      if (newStatus !== 'undeliverable') {
         updateData.delivery_failure_reason = null;
       }
 
@@ -203,6 +203,7 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
 
       if (itemsError) throw itemsError;
 
+      // Show appropriate success message
       const statusMessage = booking.status === 'undeliverable' && dateChanged 
         ? `Booking #${booking.id.substring(0, 8)} has been rescheduled and status updated to confirmed.`
         : `Booking #${booking.id.substring(0, 8)} has been updated.`;

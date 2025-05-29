@@ -26,10 +26,8 @@ export const BookingActionButtons = ({
   // Check if user can delete bookings
   const canDelete = profile?.role === 'SuperUser' || profile?.role === 'Admin';
 
-  const handleRescheduleDelivery = async () => {
-    // When rescheduling an undeliverable booking, reset it to confirmed status
-    // and clear the delivery failure reason
-    await onStatusUpdate(booking.id, 'confirmed');
+  const handleRescheduleDelivery = () => {
+    // Open the edit modal - the CompactEditBookingModal will handle status changes
     onEdit(booking);
     onClose();
   };
