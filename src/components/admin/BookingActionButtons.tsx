@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle, Undo } from 'lucide-react';
+import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle, Undo, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Booking } from './calendar/types';
 
@@ -88,6 +88,23 @@ export const BookingActionButtons = ({
       );
     }
 
+    // Add Reschedule Delivery button for undeliverable bookings
+    if (booking.status === 'undeliverable') {
+      buttons.push(
+        <Button
+          key="reschedule"
+          onClick={() => {
+            onEdit(booking);
+            onClose();
+          }}
+          className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+        >
+          <Calendar className="h-4 w-4" />
+          Reschedule Delivery
+        </Button>
+      );
+    }
+
     // Add Edit button for all non-final statuses
     if (!['completed', 'cancelled'].includes(booking.status)) {
       buttons.push(
@@ -106,7 +123,7 @@ export const BookingActionButtons = ({
       );
     }
 
-    // Add Cancel button for active bookings
+    // Add Cancel button for active bookings (but not undeliverable ones)
     if (['pending', 'confirmed', 'out_for_delivery', 'delivered'].includes(booking.status)) {
       buttons.push(
         <Button

@@ -45,6 +45,8 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
         return 'bg-gray-100 text-gray-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'undeliverable':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -79,6 +81,21 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
           className="flex items-center gap-2"
         >
           <Edit className="h-4 w-4" />
+        </Button>
+      );
+    }
+
+    // Add Reschedule button for undeliverable bookings
+    if (booking.status === 'undeliverable') {
+      buttons.push(
+        <Button
+          key="reschedule"
+          onClick={() => onEdit(booking)}
+          size="sm"
+          className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+        >
+          <Calendar className="h-4 w-4" />
+          Reschedule
         </Button>
       );
     }
@@ -161,7 +178,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
           </div>
           <div className="flex items-center gap-3">
             <Badge className={getStatusColor(booking.status)}>
-              {booking.status}
+              {booking.status === 'undeliverable' ? 'Undeliverable' : booking.status}
             </Badge>
             <span className="font-bold text-xl text-gray-900">${booking.total_amount}</span>
           </div>

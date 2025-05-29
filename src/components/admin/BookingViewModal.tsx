@@ -41,7 +41,7 @@ export const BookingViewModal = ({
       const { error } = await supabase
         .from('bookings')
         .update({ 
-          status: 'confirmed',
+          status: 'undeliverable',
           delivery_failure_reason: reason,
           updated_at: new Date().toISOString()
         })
@@ -50,13 +50,13 @@ export const BookingViewModal = ({
       if (error) throw error;
 
       toast({
-        title: "Delivery Marked as Failed",
+        title: "Delivery Marked as Undeliverable",
         description: `Booking has been marked as undeliverable. Reason: ${reason}`,
         variant: "destructive"
       });
 
       // Update the booking status in the parent component
-      onStatusUpdate(bookingId, 'confirmed');
+      onStatusUpdate(bookingId, 'undeliverable');
       onClose();
 
     } catch (error) {
