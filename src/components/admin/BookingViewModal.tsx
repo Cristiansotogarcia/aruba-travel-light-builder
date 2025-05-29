@@ -7,25 +7,7 @@ import { Calendar, MapPin, Phone, Mail, Edit, Truck, CheckCircle, X, Trash2 } fr
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 import { DeleteBookingModal } from './DeleteBookingModal';
-
-interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  subtotal: number;
-}
-
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  booking_items?: BookingItem[];
-}
+import { Booking } from './calendar/types';
 
 interface BookingViewModalProps {
   booking: Booking;
