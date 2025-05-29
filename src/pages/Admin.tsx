@@ -1,10 +1,8 @@
 
 import { useState } from 'react';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { BookingsList } from '@/components/admin/BookingsList';
+import { DashboardLayout } from '@/components/admin/DashboardLayout';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { BookingsList } from '@/components/admin/BookingsList';
 import { CustomersList } from '@/components/admin/CustomersList';
 
 const Admin = () => {
@@ -18,25 +16,31 @@ const Admin = () => {
         return <BookingsList />;
       case 'customers':
         return <CustomersList />;
+      case 'assignment':
+        return <div className="text-center py-12"><p className="text-gray-500">Booking Assignment coming soon...</p></div>;
+      case 'equipment':
+        return <div className="text-center py-12"><p className="text-gray-500">Equipment Management coming soon...</p></div>;
+      case 'users':
+        return <div className="text-center py-12"><p className="text-gray-500">User Management coming soon...</p></div>;
+      case 'visibility':
+        return <div className="text-center py-12"><p className="text-gray-500">Visibility Settings coming soon...</p></div>;
+      case 'tasks':
+        return <div className="text-center py-12"><p className="text-gray-500">Driver Tasks coming soon...</p></div>;
+      case 'settings':
+        return <div className="text-center py-12"><p className="text-gray-500">Settings coming soon...</p></div>;
       default:
         return <AdminDashboard />;
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    <DashboardLayout>
       <div className="flex-1 flex">
-        <AdminSidebar 
-          activeSection={activeSection} 
-          onSectionChange={setActiveSection} 
-        />
-        <main className="flex-1 p-6 bg-gray-50">
+        <div className="flex-1">
           {renderActiveSection()}
-        </main>
+        </div>
       </div>
-      <Footer />
-    </div>
+    </DashboardLayout>
   );
 };
 

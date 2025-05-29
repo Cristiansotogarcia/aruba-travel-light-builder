@@ -52,6 +52,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          assigned_to: string | null
           created_at: string
           customer_address: string
           customer_email: string
@@ -65,6 +66,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           customer_address: string
           customer_email: string
@@ -78,6 +80,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           customer_address?: string
           customer_email?: string
@@ -90,6 +93,71 @@ export type Database = {
           total_amount?: number
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      component_visibility: {
+        Row: {
+          component_name: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          component_name: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          component_name?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          password_hash: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          password_hash: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          password_hash?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
         Relationships: []
       }
     }
@@ -100,7 +168,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role: "SuperUser" | "Admin" | "Booker" | "Driver"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -215,6 +283,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["SuperUser", "Admin", "Booker", "Driver"],
+    },
   },
 } as const
