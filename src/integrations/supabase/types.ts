@@ -122,6 +122,42 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          availability: boolean
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          images: string[] | null
+          name: string
+          price_per_day: number
+          updated_at: string
+        }
+        Insert: {
+          availability?: boolean
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          name: string
+          price_per_day?: number
+          updated_at?: string
+        }
+        Update: {
+          availability?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          name?: string
+          price_per_day?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
