@@ -211,6 +211,7 @@ export const BookingsList = () => {
           viewMode={calendarView}
           onStatusUpdate={updateBookingStatus}
           onCreateBooking={fetchBookings}
+          onEdit={handleEditBooking}
         />
       )}
 

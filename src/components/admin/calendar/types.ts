@@ -25,4 +25,5 @@ export interface CalendarViewProps {
   viewMode: 'day' | 'week';
   onStatusUpdate: (bookingId: string, newStatus: string) => void;
   onCreateBooking: () => void;
+  onEdit: (booking: Booking) => void;
 }

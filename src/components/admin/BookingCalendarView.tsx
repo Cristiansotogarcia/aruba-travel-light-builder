@@ -8,7 +8,7 @@ import { CalendarWeekView } from './calendar/CalendarWeekView';
 import { DayPopupDialog } from './calendar/DayPopupDialog';
 import { Booking, CalendarViewProps } from './calendar/types';
 
-export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCreateBooking }: CalendarViewProps) => {
+export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCreateBooking, onEdit }: CalendarViewProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showDayPopup, setShowDayPopup] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -69,6 +69,7 @@ export const BookingCalendarView = ({ bookings, viewMode, onStatusUpdate, onCrea
           booking={viewingBooking}
           onClose={() => setViewingBooking(null)}
           onStatusUpdate={onStatusUpdate}
+          onEdit={onEdit}
           open={!!viewingBooking}
         />
       )}
