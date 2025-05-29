@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle, Undo } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Booking } from './calendar/types';
 
@@ -68,6 +68,22 @@ export const BookingActionButtons = ({
         >
           <AlertTriangle className="h-4 w-4" />
           Mark Undeliverable
+        </Button>
+      );
+    }
+
+    if (booking.status === 'delivered') {
+      buttons.push(
+        <Button
+          key="undo-delivery"
+          onClick={() => {
+            onStatusUpdate(booking.id, 'out_for_delivery');
+            onClose();
+          }}
+          className="bg-amber-600 hover:bg-amber-700 flex items-center gap-2"
+        >
+          <Undo className="h-4 w-4" />
+          Undo Delivery
         </Button>
       );
     }
