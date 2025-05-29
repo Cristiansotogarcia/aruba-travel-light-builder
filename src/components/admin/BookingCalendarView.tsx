@@ -11,6 +11,9 @@ import { BookingViewModal } from './BookingViewModal';
 interface Booking {
   id: string;
   customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
   start_date: string;
   end_date: string;
   status: string;
