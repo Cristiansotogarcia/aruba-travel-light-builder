@@ -63,37 +63,29 @@ export const ResetPasswordModal = ({ open, onClose, user, onPasswordReset }: Res
     setResetting(true);
 
     try {
-      // Update the user's password using Supabase admin
-      const { error: updateError } = await supabase.auth.admin.updateUserById(
-        user.id,
-        { password: newPassword }
-      );
+      console.log('Calling admin user operations edge function for password reset');
+      
+      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+        body: {
+          action: 'reset_password',
+          userId: user.id,
+          data: {
+            password: newPassword
+          }
+        }
+      });
 
-      if (updateError) throw updateError;
-
-      // Mark user as needing password change
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ needs_password_change: true })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Store the temporary password record
-      const { error: tempPasswordError } = await supabase
-        .from('user_temp_passwords')
-        .insert({
-          user_id: user.id,
-          temp_password: newPassword,
-          expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-          is_used: false
-        });
-
-      if (tempPasswordError) {
-        console.error('Error storing temp password:', tempPasswordError);
-        // Don't fail the operation if temp password tracking fails
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
       }
 
+      if (data.error) {
+        console.error('Admin operation error:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('Password reset successful');
       toast({
         title: "Password Reset",
         description: `Password has been reset for ${user.name}. They will need to change it on next login.`,

@@ -33,13 +33,26 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
     setDeleting(true);
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_deactivated: true })
-        .eq('id', user.id);
+      console.log('Calling admin user operations edge function for deactivation');
+      
+      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+        body: {
+          action: 'deactivate_user',
+          userId: user.id
+        }
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
+      if (data.error) {
+        console.error('Admin operation error:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('User deactivation successful');
       toast({
         title: "User Deactivated",
         description: `${user.name} has been deactivated successfully.`,
@@ -65,11 +78,26 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
     setDeleting(true);
 
     try {
-      // Delete the user from Supabase auth (this will cascade to profiles table)
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      console.log('Calling admin user operations edge function for deletion');
+      
+      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+        body: {
+          action: 'delete_user',
+          userId: user.id
+        }
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
+      if (data.error) {
+        console.error('Admin operation error:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('User deletion successful');
       toast({
         title: "User Deleted",
         description: `${user.name} has been permanently deleted.`,
