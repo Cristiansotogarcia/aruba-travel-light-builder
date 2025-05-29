@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
-import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,75 +26,56 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role key for admin access
+    // Create Supabase client for authentication
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Looking up user with email:', email);
+    console.log('Attempting to verify password for email:', email);
 
-    // Query the user from the public.users table using admin client
-    const { data: user, error: userError } = await supabaseAdmin
-      .from('users')
+    // Try to sign in with the provided credentials to verify the password
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    console.log('Authentication result:', { 
+      success: !!authData.user, 
+      error: authError?.message 
+    });
+
+    if (authError || !authData.user) {
+      console.log('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid email or password' }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Get user profile information
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
       .select('*')
-      .eq('email', email)
+      .eq('id', authData.user.id)
       .maybeSingle();
 
-    console.log('User lookup result:', { user: user ? 'found' : 'not found', error: userError });
-
-    if (userError) {
-      console.error('Database error:', userError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Database error occurred' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+    if (profileError) {
+      console.error('Profile lookup error:', profileError);
     }
 
-    if (!user) {
-      console.log('No user found with email:', email);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid email or password' }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Verify password using bcryptjs (synchronous)
-    let isPasswordValid = false;
-    
-    try {
-      // Try bcrypt comparison first
-      isPasswordValid = bcrypt.compareSync(password, user.password_hash);
-      console.log('Bcrypt password validation result:', isPasswordValid);
-    } catch (bcryptError) {
-      console.log('Bcrypt failed, trying plain text comparison:', bcryptError);
-      // Fallback to plain text comparison for development
-      isPasswordValid = password === user.password_hash;
-      console.log('Plain text password validation result:', isPasswordValid);
-    }
-    
-    if (!isPasswordValid) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid email or password' }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Return success with user data (excluding password hash)
-    const { password_hash, ...userWithoutPassword } = user;
+    // Return success with user data
     return new Response(
       JSON.stringify({ 
         success: true, 
-        user: userWithoutPassword 
+        user: {
+          id: authData.user.id,
+          email: authData.user.email,
+          profile: profile
+        }
       }),
       { 
         status: 200, 
