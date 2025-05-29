@@ -37,7 +37,27 @@ export const DayPopupDialog = ({
     onClose(); // Auto-close the day popup for cleaner flow
   };
 
-  const renderBookingSection = (sectionBookings: Booking[], title: string, icon: React.ReactNode, emptyMessage: string) => {
+  const getDeliveryStatusLabel = (status: string) => {
+    switch (status) {
+      case 'out_for_delivery':
+        return 'Out for Delivery';
+      case 'delivered':
+        return 'Delivered';
+      default:
+        return 'Scheduled';
+    }
+  };
+
+  const getPickupStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'Picked Up';
+      default:
+        return 'Scheduled';
+    }
+  };
+
+  const renderBookingSection = (sectionBookings: Booking[], title: string, icon: React.ReactNode, emptyMessage: string, isDelivery: boolean = true) => {
     if (sectionBookings.length === 0) {
       return (
         <div className="text-center py-4 text-gray-500 text-sm">
@@ -62,7 +82,7 @@ export const DayPopupDialog = ({
                   <div>
                     <div className="font-bold">${booking.total_amount}</div>
                     <Badge className={getStatusColor(booking.status)}>
-                      {getStatusLabel(booking.status)}
+                      {isDelivery ? getDeliveryStatusLabel(booking.status) : getPickupStatusLabel(booking.status)}
                     </Badge>
                   </div>
                   <Button
@@ -74,19 +94,6 @@ export const DayPopupDialog = ({
                   </Button>
                 </div>
               </div>
-              
-              {booking.booking_items && booking.booking_items.length > 0 && (
-                <div className="border-t pt-3">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Equipment:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {booking.booking_items.map((item, index) => (
-                      <Badge key={index} variant="secondary">
-                        {item.equipment_name} × {item.quantity}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}
@@ -117,7 +124,8 @@ export const DayPopupDialog = ({
                 deliveries, 
                 "Deliveries", 
                 <Truck className="h-5 w-5 text-green-600" />,
-                "No deliveries scheduled for this day"
+                "No deliveries scheduled for this day",
+                true
               )}
             </div>
 
@@ -133,7 +141,8 @@ export const DayPopupDialog = ({
                 pickups, 
                 "Pickups", 
                 <Package className="h-5 w-5 text-orange-600" />,
-                "No pickups scheduled for this day"
+                "No pickups scheduled for this day",
+                false
               )}
             </div>
           </div>
