@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -54,9 +55,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else {
           setProfile(null);
           setPermissions({});
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -83,10 +83,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error loading profile:', error);
+        setLoading(false);
         return;
       }
 
@@ -94,9 +95,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('Profile loaded:', profileData);
         setProfile(profileData);
         await loadPermissions(profileData.role);
+      } else {
+        console.log('No profile found for user, they may need to complete registration');
+        setProfile(null);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
