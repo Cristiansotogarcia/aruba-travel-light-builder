@@ -23,7 +23,7 @@ export const DeleteBookingModal = ({ booking, onBookingDeleted, onClose, open }:
   const [loading, setLoading] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
 
   // Check if user has permission to delete bookings
   const canDelete = profile?.role === 'SuperUser' || profile?.role === 'Admin';
@@ -56,15 +56,27 @@ export const DeleteBookingModal = ({ booking, onBookingDeleted, onClose, open }:
       return;
     }
 
+    if (!user?.email) {
+      toast({
+        title: "Authentication Error",
+        description: "Unable to verify user credentials.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Verify password using Supabase auth
-      const { error: authError } = await supabase.functions.invoke('verify-password', {
-        body: { password }
+      // Verify password using Supabase auth with user's email
+      const { data, error: authError } = await supabase.functions.invoke('verify-password', {
+        body: { 
+          email: user.email,
+          password 
+        }
       });
 
-      if (authError) {
+      if (authError || !data?.success) {
         console.error('Password verification error:', authError);
         toast({
           title: "Invalid Password",
