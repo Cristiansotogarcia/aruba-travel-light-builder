@@ -144,20 +144,37 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
 
     try {
       const totalAmount = calculateTotal();
+      
+      // Determine new status based on current status and date changes
+      let newStatus = booking.status;
+      const dateChanged = startDate !== booking.start_date || endDate !== booking.end_date;
+      
+      // If rescheduling an undeliverable booking, reset to confirmed
+      if (booking.status === 'undeliverable' && dateChanged) {
+        newStatus = 'confirmed';
+      }
 
       // Update the booking record
+      const updateData: any = {
+        customer_name: customerInfo.name,
+        customer_email: customerInfo.email,
+        customer_phone: customerInfo.phone,
+        customer_address: customerInfo.address,
+        start_date: startDate,
+        end_date: endDate,
+        total_amount: totalAmount,
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      // Clear delivery failure reason if rescheduling undeliverable booking
+      if (booking.status === 'undeliverable' && dateChanged) {
+        updateData.delivery_failure_reason = null;
+      }
+
       const { error: bookingError } = await supabase
         .from('bookings')
-        .update({
-          customer_name: customerInfo.name,
-          customer_email: customerInfo.email,
-          customer_phone: customerInfo.phone,
-          customer_address: customerInfo.address,
-          start_date: startDate,
-          end_date: endDate,
-          total_amount: totalAmount,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', booking.id);
 
       if (bookingError) throw bookingError;
@@ -186,9 +203,13 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
 
       if (itemsError) throw itemsError;
 
+      const statusMessage = booking.status === 'undeliverable' && dateChanged 
+        ? `Booking #${booking.id.substring(0, 8)} has been rescheduled and status updated to confirmed.`
+        : `Booking #${booking.id.substring(0, 8)} has been updated.`;
+
       toast({
         title: "Booking Updated Successfully!",
-        description: `Booking #${booking.id.substring(0, 8)} has been updated.`,
+        description: statusMessage,
       });
 
       onBookingUpdated();
@@ -210,7 +231,9 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-[500px] sm:w-[540px] overflow-hidden">
         <SheetHeader>
-          <SheetTitle>Edit Booking #{booking.id.substring(0, 8)}</SheetTitle>
+          <SheetTitle>
+            {booking.status === 'undeliverable' ? 'Reschedule Delivery' : 'Edit Booking'} #{booking.id.substring(0, 8)}
+          </SheetTitle>
         </SheetHeader>
         
         <div className="h-full flex flex-col py-4">
@@ -390,7 +413,7 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
                 Cancel
               </Button>
               <Button onClick={handleSubmit} disabled={loading} className="flex-1">
-                {loading ? 'Updating...' : 'Update'}
+                {loading ? 'Updating...' : (booking.status === 'undeliverable' ? 'Reschedule' : 'Update')}
               </Button>
             </div>
           </div>

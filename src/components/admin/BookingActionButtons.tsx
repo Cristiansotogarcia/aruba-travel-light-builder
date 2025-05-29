@@ -26,6 +26,14 @@ export const BookingActionButtons = ({
   // Check if user can delete bookings
   const canDelete = profile?.role === 'SuperUser' || profile?.role === 'Admin';
 
+  const handleRescheduleDelivery = async () => {
+    // When rescheduling an undeliverable booking, reset it to confirmed status
+    // and clear the delivery failure reason
+    await onStatusUpdate(booking.id, 'confirmed');
+    onEdit(booking);
+    onClose();
+  };
+
   const getActionButtons = () => {
     const buttons = [];
 
@@ -93,10 +101,7 @@ export const BookingActionButtons = ({
       buttons.push(
         <Button
           key="reschedule"
-          onClick={() => {
-            onEdit(booking);
-            onClose();
-          }}
+          onClick={handleRescheduleDelivery}
           className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
         >
           <Calendar className="h-4 w-4" />

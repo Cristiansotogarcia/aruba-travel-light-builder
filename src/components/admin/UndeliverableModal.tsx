@@ -19,7 +19,9 @@ const FAILURE_REASONS = [
   'missed flight',
   'no answer at door',
   'order was cancelled',
-  'wrong delivery date'
+  'wrong delivery date',
+  'customer unreachable',
+  'address not found'
 ];
 
 export const UndeliverableModal = ({ 
@@ -33,9 +35,9 @@ export const UndeliverableModal = ({
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    const reason = selectedReason === 'other' ? customReason : selectedReason;
+    const reason = selectedReason === 'other' ? customReason.trim() : selectedReason;
     
-    if (!reason.trim()) {
+    if (!reason) {
       return;
     }
 

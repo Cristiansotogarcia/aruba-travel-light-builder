@@ -34,8 +34,8 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
           </div>
         </div>
 
-        {/* Delivery Failure Alert */}
-        {booking.delivery_failure_reason && (
+        {/* Delivery Failure Alert - Only show for undeliverable bookings */}
+        {booking.status === 'undeliverable' && booking.delivery_failure_reason && (
           <Alert className="border-orange-200 bg-orange-50">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
