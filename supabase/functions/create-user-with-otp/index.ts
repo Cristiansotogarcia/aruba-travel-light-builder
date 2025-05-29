@@ -24,7 +24,7 @@ serve(async (req) => {
   }
 
   try {
-    const { name, email, role } = await req.json();
+    const { name, email, role, password } = await req.json();
 
     if (!name || !email || !role) {
       return new Response(
@@ -44,14 +44,14 @@ serve(async (req) => {
 
     console.log('Creating user with email:', email);
 
-    // Generate temporary password
-    const tempPassword = generateTempPassword();
-    console.log('Generated temp password for user:', tempPassword);
+    // Use provided password or generate one if not provided
+    const userPassword = password || generateTempPassword();
+    console.log('Using password for user creation');
 
-    // Create user with temporary password
+    // Create user with the specified password
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: tempPassword,
+      password: userPassword,
       user_metadata: {
         name: name
       },
@@ -85,32 +85,24 @@ serve(async (req) => {
       // Don't fail the entire operation, but log the error
     }
 
-    // Store the temporary password
+    // Store the temporary password record for tracking
     const { error: tempPasswordError } = await supabaseAdmin
       .from('user_temp_passwords')
       .insert({
         user_id: authData.user.id,
-        temp_password: tempPassword,
+        temp_password: userPassword,
         expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // 48 hours from now
         is_used: false
       });
 
     if (tempPasswordError) {
       console.error('Error storing temp password:', tempPasswordError);
-      // Clean up: delete the created user if we can't store the temp password
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Failed to store temporary password' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      // Don't fail the operation if temp password tracking fails
     }
 
     console.log('User creation process completed successfully');
 
-    // Return success with user data and temp password
+    // Return success with user data and the password used
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -120,7 +112,7 @@ serve(async (req) => {
           name: name,
           role: role
         },
-        tempPassword: tempPassword
+        tempPassword: userPassword
       }),
       { 
         status: 200, 
