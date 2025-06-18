@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, BookingFormData, BookingItem, CustomerInfo, AvailabilityStatus, SupabaseBookingData } from '../types/types'; // Removed SupabaseBookingItemData, added SupabaseBookingData
+import { Product, BookingFormData, BookingItem, CustomerInfo, AvailabilityStatus, SupabaseBookingData } from '../types/types';
+import { SupabaseBookingItemData } from '../types/booking'; // Import from the new file
 import { useToast } from '@/components/ui/use-toast';
 
 // All interfaces like Product, BookingFormData, BookingItem, CustomerInfo, 
@@ -316,7 +317,7 @@ const useBooking = () => {
     updateCustomerInfo,
     updateDates,
     calculateTotal,
-    calculateDays, // Add calculateDays here
+    calculateDays,
     submitBooking,
     setSelectedEquipment,
     setQuantity,

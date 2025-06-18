@@ -125,6 +125,78 @@ export type Database = {
         }
         Relationships: []
       }
+      content_blocks: {
+        Row: {
+          block_key: string
+          block_type: string
+          content: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          page_slug: string
+          sort_order: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          block_key: string
+          block_type?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          page_slug: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          block_key?: string
+          block_type?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          page_slug?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          file_path: string
+          file_size: number | null
+          id: string
+          image_key: string
+          mime_type: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          image_key: string
+          mime_type?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          image_key?: string
+          mime_type?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           availability: boolean
@@ -135,6 +207,7 @@ export type Database = {
           images: string[] | null
           name: string
           price_per_day: number
+          stock_quantity: number
           updated_at: string
         }
         Insert: {
@@ -146,6 +219,7 @@ export type Database = {
           images?: string[] | null
           name: string
           price_per_day?: number
+          stock_quantity?: number
           updated_at?: string
         }
         Update: {
@@ -157,6 +231,7 @@ export type Database = {
           images?: string[] | null
           name?: string
           price_per_day?: number
+          stock_quantity?: number
           updated_at?: string
         }
         Relationships: []
@@ -164,6 +239,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          email: string | null
           id: string
           is_deactivated: boolean | null
           name: string
@@ -173,6 +249,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
           id: string
           is_deactivated?: boolean | null
           name: string
@@ -182,6 +259,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          email?: string | null
           id?: string
           is_deactivated?: boolean | null
           name?: string
@@ -190,6 +268,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          last_activity: string
+          session_token: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity?: string
+          session_token: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity?: string
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_temp_passwords: {
         Row: {
