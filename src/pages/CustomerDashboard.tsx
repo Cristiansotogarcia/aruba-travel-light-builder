@@ -1,8 +1,9 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import Header from '@/components/layout/Header'; // Changed from Navigation
+import { Header } from '@/components/layout/Header'; // Changed to named import
 import { useAuth } from '@/hooks/useAuth';
 
 const CustomerDashboard = () => {
