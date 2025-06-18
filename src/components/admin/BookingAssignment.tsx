@@ -1,24 +1,15 @@
-
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LoadingState } from '@/components/ui/LoadingState';
+import LoadingState from '@/components/common/LoadingState';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserCheck, Calendar, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
-// import { mockDeliveryPersonnel } from '@/data/mockDeliveryPersonnel'; // Removed this line
 import { Booking } from './calendar/types';
 import { getStatusColor } from './calendar/statusUtils';
-
-/* // Removed this interface
-interface BookingAssignmentProps {
-  bookings: Booking[];
-  onAssign: (bookingId: string, personnelId: string) => void;
-}
-*/
 
 interface Driver {
   id: string;
@@ -91,7 +82,7 @@ export const BookingAssignment = () => {
       setBookings(prev =>
         prev.map(booking =>
           booking.id === bookingId
-            ? { ...booking, assigned_to: driverId, booking_items: booking.booking_items || [] } // Ensure booking_items default here too
+            ? { ...booking, assigned_to: driverId, booking_items: booking.booking_items || [] }
             : booking
         )
       );
