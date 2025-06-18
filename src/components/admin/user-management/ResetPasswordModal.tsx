@@ -13,9 +13,10 @@ interface Profile {
   id: string;
   name: string;
   role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string;
-  needs_password_change?: boolean;
+  created_at: string | null;
+  needs_password_change?: boolean | null;
   email?: string;
+  // is_deactivated is not used in this modal's Profile definition, so no change needed here for that
 }
 
 interface ResetPasswordModalProps {

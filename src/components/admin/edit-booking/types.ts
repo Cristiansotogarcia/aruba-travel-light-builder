@@ -1,24 +1,20 @@
 
-export interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  subtotal: number;
-  equipment_id: string;
-  equipment_price: number;
+import { Booking as CalendarBooking, BookingItem as CalendarBookingItem } from '@/components/admin/calendar/types';
+
+// This file can define types specific to the edit booking process,
+// potentially extending or adapting the canonical Booking/BookingItem types.
+
+// Example: If you need a specific version of BookingItem for the edit form:
+export interface EditBookingItem extends CalendarBookingItem {
+  // Add any additional properties specific to editing an item
+  original_quantity?: number;
 }
 
-export interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
+// Example: If the Booking type for editing needs slight modifications:
+export interface EditBooking extends CalendarBooking {
+  // Add any additional properties specific to editing a booking
+  is_editing?: boolean;
   delivery_failure_reason?: string | null;
-  booking_items?: BookingItem[];
 }
 
 export interface CustomerInfo {
@@ -27,3 +23,8 @@ export interface CustomerInfo {
   phone: string;
   address: string;
 }
+
+// You can also re-export the canonical types if they are used directly
+// without modification in the edit booking context.
+export type Booking = CalendarBooking;
+export type BookingItem = CalendarBookingItem;

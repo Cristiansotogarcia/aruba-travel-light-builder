@@ -12,10 +12,10 @@ interface Profile {
   id: string;
   name: string;
   role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string;
-  needs_password_change?: boolean;
+  created_at: string | null;
+  needs_password_change?: boolean | null;
   email?: string;
-  is_deactivated?: boolean;
+  is_deactivated?: boolean | null;
 }
 
 interface EditUserModalProps {

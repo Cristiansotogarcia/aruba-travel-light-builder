@@ -6,8 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Eye, Truck, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { CreateBookingModal } from '../CreateBookingModal';
-import { Booking } from './types';
-import { getStatusColor, getStatusLabel } from './statusUtils';
+import { Booking } from '@/components/admin/calendar/types';
+import { getStatusColor } from './statusUtils';
 import { getBookingsByTypeForDate } from './bookingUtils';
 
 interface DayPopupDialogProps {
@@ -57,7 +57,7 @@ export const DayPopupDialog = ({
     }
   };
 
-  const renderBookingSection = (sectionBookings: Booking[], title: string, icon: React.ReactNode, emptyMessage: string, isDelivery: boolean = true) => {
+  const renderBookingSection = (sectionBookings: Booking[], emptyMessage: string, isDelivery: boolean = true) => {
     if (sectionBookings.length === 0) {
       return (
         <div className="text-center py-4 text-gray-500 text-sm">
@@ -122,8 +122,6 @@ export const DayPopupDialog = ({
               </div>
               {renderBookingSection(
                 deliveries, 
-                "Deliveries", 
-                <Truck className="h-5 w-5 text-green-600" />,
                 "No deliveries scheduled for this day",
                 true
               )}
@@ -139,8 +137,6 @@ export const DayPopupDialog = ({
               </div>
               {renderBookingSection(
                 pickups, 
-                "Pickups", 
-                <Package className="h-5 w-5 text-orange-600" />,
                 "No pickups scheduled for this day",
                 false
               )}

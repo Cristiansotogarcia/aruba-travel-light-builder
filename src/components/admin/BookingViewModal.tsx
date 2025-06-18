@@ -7,12 +7,12 @@ import { BookingDetailsCard } from './BookingDetailsCard';
 import { BookingActionButtons } from './BookingActionButtons';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Booking } from './calendar/types';
+import { Booking, BookingStatus } from './calendar/types'; // Added BookingStatus
 
 interface BookingViewModalProps {
   booking: Booking;
   onClose: () => void;
-  onStatusUpdate: (bookingId: string, newStatus: string) => void;
+  onStatusUpdate: (bookingId: string, newStatus: BookingStatus) => void; // Changed to BookingStatus
   onEdit: (booking: Booking) => void;
   onBookingDeleted?: () => void;
   open: boolean;

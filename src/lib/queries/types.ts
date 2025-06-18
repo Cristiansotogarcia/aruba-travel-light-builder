@@ -1,4 +1,4 @@
-export interface Booking {
+export interface SupabaseBooking {
   id: string;
   customer_id: string;
   equipment_id: string;

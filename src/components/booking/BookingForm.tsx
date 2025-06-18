@@ -1,14 +1,15 @@
 
 import { Button } from '@/components/ui/button';
 import { DateSelection } from './DateSelection';
-import { EquipmentSelection } from './EquipmentSelection';
+import EquipmentSelection from './EquipmentSelection';
 import { CustomerInformation } from './CustomerInformation';
 import { BookingSummary } from './BookingSummary';
-import { useBooking } from '@/hooks/useBooking';
+import useBooking from '@/hooks/useBooking';
 
 export const BookingForm = () => {
   const {
     bookingData,
+    products, // Destructure products from useBooking
     selectedEquipment,
     quantity,
     isSubmitting,
@@ -36,13 +37,15 @@ export const BookingForm = () => {
         />
 
         <EquipmentSelection
+          products={products} // Pass products to EquipmentSelection
           selectedEquipment={selectedEquipment}
           quantity={quantity}
           bookingItems={bookingData.items}
-          onEquipmentChange={setSelectedEquipment}
-          onQuantityChange={setQuantity}
-          onAddEquipment={addEquipment}
-          onRemoveEquipment={removeEquipment}
+          setSelectedEquipment={setSelectedEquipment}
+          setQuantity={setQuantity}
+          addEquipment={addEquipment}
+          removeEquipment={removeEquipment}
+          currentSelectedDate={bookingData.startDate ? new Date(bookingData.startDate) : undefined}
         />
 
         <CustomerInformation

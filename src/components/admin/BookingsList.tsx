@@ -10,27 +10,10 @@ import { BookingViewModal } from './BookingViewModal';
 import { BookingCalendarView } from './BookingCalendarView';
 import { BookingFilters } from './BookingFilters';
 import { BookingsListView } from './BookingsListView';
+import Spinner from '@/components/common/Spinner'; // Added Spinner import
 
-interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  equipment_price: number;
-  subtotal: number;
-  equipment_id: string;
-}
-
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  booking_items?: BookingItem[];
-}
+import { Booking, BookingStatus } from './calendar/types'; // Removed BookingItem, kept BookingStatus
+import { useQueryClient } from '@tanstack/react-query'; // Added import for useQueryClient
 
 export const BookingsList = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -43,6 +26,7 @@ export const BookingsList = () => {
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient(); // Initialize queryClient
 
   useEffect(() => {
     fetchBookings();
@@ -69,12 +53,20 @@ export const BookingsList = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
-    } catch (error) {
+      // Cast status to BookingStatus
+      const typedBookings = data ? data.map(b => ({ ...b, status: b.status as BookingStatus })) : [];
+      setBookings(typedBookings);
+    } catch (error: any) {
       console.error('Error fetching bookings:', error);
+      let description = "Failed to fetch bookings.";
+      if (error && error.message && error.message.includes('permission denied')) {
+        description = "You do not have permission to view all bookings. Please contact an administrator if you believe this is an error.";
+      } else if (error && error.code === 'PGRST116') { // Example: Supabase RLS violation code
+        description = "Access to some bookings is restricted due to security policies.";
+      }
       toast({
-        title: "Error",
-        description: "Failed to fetch bookings",
+        title: "Error Fetching Bookings",
+        description,
         variant: "destructive"
       });
     } finally {
@@ -100,32 +92,69 @@ export const BookingsList = () => {
     setFilteredBookings(filtered);
   };
 
-  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+  const updateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => { // Changed newStatus type
     try {
-      const { error } = await supabase
+      const { data: updatedBooking, error } = await supabase
         .from('bookings')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', bookingId);
+        .eq('id', bookingId)
+        .select('*, booking_items(*, equipment(*))') // Select the updated booking details
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        // toast.error(`Error updating booking status: ${error.message}`);
+        toast({
+          title: "Error Updating Status",
+          description: `Error updating booking status: ${error.message}`,
+          variant: "destructive"
+        });
+        console.error('Error updating booking status:', error);
+        return;
+      }
 
-      setBookings(bookings.map(booking =>
-        booking.id === bookingId
-          ? { ...booking, status: newStatus }
-          : booking
-      ));
-
+      // toast.success(`Booking ${bookingId} status updated to ${newStatus}`);
       toast({
-        title: "Success",
-        description: `Booking status updated to ${newStatus}`,
+        title: "Status Updated",
+        description: `Booking ${bookingId} status updated to ${newStatus}`,
+        // variant: "default" // Or remove for default success styling
       });
-    } catch (error) {
-      console.error('Error updating booking status:', error);
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['driverBookings'] }); // Also invalidate driver bookings if applicable
+
+      // Call the email notification function
+      if (updatedBooking && updatedBooking.customer_email) {
+        const equipmentDetails = updatedBooking.booking_items?.map(item => `${item.equipment_name} (x${item.quantity})`).join(', ') || 'N/A';
+        const { error: functionError } = await supabase.functions.invoke('booking-status-update-email', {
+          body: {
+            customer_email: updatedBooking.customer_email,
+            customer_name: updatedBooking.customer_name,
+            booking_id: updatedBooking.id,
+            new_status: newStatus,
+            // old_status: could be passed if we fetch the booking before updating
+            start_date: updatedBooking.start_date,
+            equipment_details: equipmentDetails,
+          },
+        });
+
+        if (functionError) {
+          // toast.error(`Failed to send status update email: ${functionError.message}`);
+          toast({
+            title: "Email Error",
+            description: `Failed to send status update email: ${functionError.message}`,
+            variant: "destructive"
+          });
+          console.error('Error invoking email function:', functionError);
+        }
+      }
+
+    } catch (err) {
+      // toast.error('An unexpected error occurred while updating status.');
       toast({
-        title: "Error",
-        description: "Failed to update booking status",
+        title: "Unexpected Error",
+        description: 'An unexpected error occurred while updating status.',
         variant: "destructive"
       });
+      console.error('Unexpected error in updateBookingStatus:', err);
     }
   };
 
@@ -147,18 +176,8 @@ export const BookingsList = () => {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex justify-center items-center h-64">
+        <Spinner size="lg" message="Loading bookings..." />
       </div>
     );
   }
@@ -202,7 +221,7 @@ export const BookingsList = () => {
           bookings={filteredBookings}
           onStatusUpdate={updateBookingStatus}
           onEdit={handleEditBooking}
-          onView={handleViewBooking}
+          onView={handleViewBooking} // This was already correct, BookingsListViewProps expects onView
           searchTerm={searchTerm}
           statusFilter={statusFilter}
         />

@@ -12,10 +12,10 @@ interface Profile {
   id: string;
   name: string;
   role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string;
-  needs_password_change?: boolean;
+  created_at: string | null; // Allow null for created_at
+  needs_password_change?: boolean | null; // Allow null for needs_password_change
   email?: string;
-  is_deactivated?: boolean;
+  is_deactivated?: boolean | null; // Allow null for is_deactivated
 }
 
 interface TempPasswordResult {
@@ -76,22 +76,6 @@ export const UserManagement = () => {
     setShowTempPasswordDialog(true);
   };
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId);
-  
-    if (!error) {
-      setUsers(users.map(user =>
-        user.id === userId ? { ...user, role: newRole as User['role'] } : user
-      ));
-    } else {
-      console.error('Role update failed:', error);
-      alert('Failed to update role: ' + error.message);
-    }
-  };
-
   if (!hasPermission('UserManagement')) {
     return (
       <div className="text-center py-12">
@@ -132,8 +116,3 @@ export const UserManagement = () => {
     </div>
   );
 };
-
-<SelectItem value="admin">Admin</SelectItem>
-<SelectItem value="driver">Driver</SelectItem>
-<SelectItem value="booking">Booking Manager</SelectItem>
-<SelectItem value="driver_booking">Driver + Booking</SelectItem>

@@ -1,21 +1,21 @@
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash2, Key, Clock, UserX } from 'lucide-react';
+import { Edit, Trash2, Key, UserX } from 'lucide-react';
 import { EditUserModal } from './EditUserModal';
 import { ResetPasswordModal } from './ResetPasswordModal';
 import { DeleteUserModal } from './DeleteUserModal';
+import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
   name: string;
   role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string;
-  needs_password_change?: boolean;
+  created_at: string | null; // Allow null for created_at
+  needs_password_change?: boolean | null; // Allow null for needs_password_change
   email?: string;
-  is_deactivated?: boolean;
+  is_deactivated?: boolean | null; // Allow null for is_deactivated
 }
 
 interface UserListProps {
@@ -98,15 +98,12 @@ export const UserList = ({ profiles, loading, onRefreshProfiles }: UserListProps
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">
-                          Created: {new Date(profile.created_at).toLocaleDateString()}
-                        </p>
-                        {profile.needs_password_change && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock className="h-3 w-3 text-orange-500" />
-                            <span className="text-xs text-orange-600">Needs password change</span>
-                          </div>
-                        )}
+                        <div className="text-sm text-gray-500">
+                          ID: {profile.id}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Created: {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
+                        </div>
                       </div>
                     </div>
                   </div>

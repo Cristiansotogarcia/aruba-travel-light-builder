@@ -16,12 +16,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { mockEquipment } from '@/data/mockEquipment';
 
+// import { BookingItem as CalendarBookingItem } from './calendar/types'; // Removed unused import
+
 interface CreateBookingModalProps {
   onBookingCreated: () => void;
   preselectedDate?: Date;
 }
 
-interface BookingItem {
+// Local BookingItem for form state, may differ from the canonical BookingItem
+interface BookingItemFormState {
   equipmentId: string;
   quantity: number;
 }
@@ -37,7 +40,7 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
     address: ''
   });
   const [selectedEquipment, setSelectedEquipment] = useState('');
-  const [bookingItems, setBookingItems] = useState<BookingItem[]>([]);
+  const [bookingItems, setBookingItems] = useState<BookingItemFormState[]>([]);
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -112,7 +115,6 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
       const totalAmount = calculateTotal();
       const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      // Create the booking record
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
@@ -130,11 +132,10 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
 
       if (bookingError) throw bookingError;
 
-      // Create booking items
       const bookingItemsData = bookingItems.map(item => {
         const equipment = mockEquipment.find(eq => eq.id === item.equipmentId);
         const subtotal = equipment ? equipment.price * item.quantity * days : 0;
-        
+
         return {
           booking_id: booking.id,
           equipment_id: item.equipmentId,
@@ -156,7 +157,6 @@ export const CreateBookingModal = ({ onBookingCreated, preselectedDate }: Create
         description: `Booking #${booking.id.substring(0, 8)} has been created.`,
       });
 
-      // Reset form
       setStartDate(undefined);
       setEndDate(undefined);
       setCustomerInfo({ name: '', email: '', phone: '', address: '' });

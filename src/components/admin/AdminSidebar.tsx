@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin } from 'lucide-react';
+import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
@@ -24,9 +24,11 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     { id: 'assignment', label: 'Assignments', icon: UserPlus, permission: 'BookingAssignment' },
     { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
     { id: 'equipment', label: 'Equipment', icon: Package, permission: 'ProductManagement' },
+    { id: 'reports', label: 'Reports', icon: FileText, permission: 'ReportingAccess' }, // Added Reports
     { id: 'users', label: 'User Management', icon: Users, permission: 'UserManagement' },
     { id: 'visibility', label: 'Visibility Settings', icon: Eye, permission: 'VisibilitySettings' },
     { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
+    { id: 'taskmaster', label: 'Task Management', icon: CheckSquare, permission: 'TaskMaster' },
     { id: 'settings', label: 'Settings', icon: Settings, permission: null },
   ];
 

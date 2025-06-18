@@ -1,57 +1,20 @@
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Phone, Mail, Edit, Eye } from 'lucide-react';
-
-interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  subtotal: number;
-}
-
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  booking_items?: BookingItem[];
-}
+import { Card, CardContent } from '@/components/ui/card'; // Removed CardFooter, CardHeader, CardTitle
+import { Booking } from './calendar/types'; // Removed BookingItem
+import { Eye, Edit, Mail, Phone, MapPin, CalendarDays } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
+import { getStatusColor } from './calendar/statusUtils'; // Added back getStatusColor import
 
 interface BookingCardProps {
   booking: Booking;
-  onStatusUpdate: (bookingId: string, newStatus: string) => void;
   onEdit: (booking: Booking) => void;
-  onView?: (booking: Booking) => void;
+  onView: (booking: Booking) => void;
+  onStatusUpdate: (bookingId: string, status: string) => void; // Added onStatusUpdate
 }
 
 export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: BookingCardProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'out_for_delivery':
-        return 'bg-blue-100 text-blue-800';
-      case 'delivered':
-        return 'bg-purple-100 text-purple-800';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'undeliverable':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
+  // Removed local getStatusColor function
   const renderActionButtons = () => {
     const buttons = [];
 
@@ -90,11 +53,11 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
       buttons.push(
         <Button
           key="reschedule"
-          onClick={() => onEdit(booking)}
+          onClick={() => onEdit(booking)} // Assuming reschedule also uses onEdit logic for now
           size="sm"
           className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
         >
-          <Calendar className="h-4 w-4" />
+          <CalendarDays className="h-4 w-4" /> {/* Changed to CalendarDays */}
           Reschedule
         </Button>
       );
@@ -199,7 +162,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
               <span>{booking.customer_address}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600">
-              <Calendar className="h-4 w-4" />
+              <CalendarDays className="h-4 w-4" /> {/* Changed to CalendarDays */}
               <span>
                 {new Date(booking.start_date).toLocaleDateString('en-GB')} - {new Date(booking.end_date).toLocaleDateString('en-GB')}
               </span>

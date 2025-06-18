@@ -6,11 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-interface QuickBookingProps {
-  equipmentId?: string;
-}
+// interface QuickBookingProps { // Removed unused interface
+//   // equipmentId?: string; // Removed unused prop
+// }
 
-export const QuickBooking = ({ equipmentId }: QuickBookingProps) => {
+export const QuickBooking = (/*{ equipmentId }: QuickBookingProps*/) => { // Removed unused prop
   const [selectedDates, setSelectedDates] = useState({
     startDate: '',
     endDate: ''

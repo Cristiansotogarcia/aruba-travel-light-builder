@@ -50,36 +50,48 @@ Application Type: This is a booking management SaaS.
 User Roles: The following users and their access levels should be configured:
 
 •
-Meldrick: Full Access
+Meldrick Solognier
+Rights: Full Access
+Email: m.solognier88@gmail.com
 
-•
-Roxanne: Full Access
+Roxanne Van Dinter
+Rights: Full Access
+Email: roxanne.vandinter@travelightaruba.com
 
-•
-Angelique Bagheri: Full Access
+Angelique Bagheri
+Rights: Full Access 
+Email: Angelique.bagheri@hotmail.com
 
-•
-Cristian Soto Garcia: Admin
+Xerxes Croes
+Rights: Booking access & driver
+Email: xcroes@gmail.com
+(Note: If easier for implementation, create two separate accounts for Xerxes Croes: one for 'Booking access' and one for 'Driver'.)
 
-•
-Xerxes Croes: Booking access & Driver (Note: If easier for implementation, create two separate accounts for Xerxes Croes: one for 'Booking access' and one for 'Driver'.)
+Kenya Donata
+Rights: Booking
+Email: donatostephanys@gmail.com
 
-•
-Kenya Donata: Booking
+Lyrick Pourier
+Rights: Driver
+Email: Lyrick_pourier@icloud.com
 
-•
-Lyrick Pourier: Driver
+Vania Dirksz
+Rights: Driver
+Email: vaniadirksz@hotmail.com
 
-•
-Steven Daza: Driver
+Jocey Dirksz
+Rights: Driver
+Email: joceydirksz@icloud.com
 
-•
-Vania Dirksz: Driver
+Vincent Van Dinter
+Rights: Driver
+Email: vincentvandinter@gmail.com
 
-•
-Jocey Dirksz: Driver
+Cristian Soto Garcia
+Rights: Full Access
+Email: cristiansotogarcia@gmail.com
+
 Consider existing roles (Admin, drivers/bookers) and any new roles as features are added.
-
 
 
 3.

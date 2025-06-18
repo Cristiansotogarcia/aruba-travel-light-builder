@@ -2,11 +2,11 @@
 import { Button } from '@/components/ui/button';
 import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle, Undo, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Booking } from './calendar/types';
+import { Booking, BookingStatus } from './calendar/types'; // Added BookingStatus import
 
 interface BookingActionButtonsProps {
   booking: Booking;
-  onStatusUpdate: (bookingId: string, newStatus: string) => void;
+  onStatusUpdate: (bookingId: string, newStatus: BookingStatus) => void; // Changed string to BookingStatus
   onEdit: (booking: Booking) => void;
   onShowDeleteModal: () => void;
   onShowUndeliverableModal: () => void;

@@ -1,0 +1,335 @@
+{
+  "categories": [
+    {
+      "id": "reporting-analytics",
+      "name": "Reporting and Analytics",
+      "description": "Enhance the system with comprehensive reporting and analytics capabilities",
+      "tasks": [
+        {
+          "id": "RA-001",
+          "title": "Booking Analytics Dashboard",
+          "description": "Create a dedicated dashboard showing booking trends, revenue metrics, and equipment utilization over time. Include filters for date ranges and equipment categories.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "large",
+          "components": ["BookingAnalyticsDashboard.tsx", "BookingChart.tsx", "RevenueChart.tsx", "UtilizationChart.tsx"]
+        },
+        {
+          "id": "RA-002",
+          "title": "Exportable Reports",
+          "description": "Add functionality to export booking and revenue data as CSV/PDF reports. Include options for different report types and date ranges.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["ReportExporter.tsx", "CSVGenerator.ts", "PDFGenerator.ts"],
+          "dependencies": ["RA-001"]
+        },
+        {
+          "id": "RA-003",
+          "title": "Customer Insights",
+          "description": "Implement customer analytics showing booking frequency, average spend, and retention metrics. Include visualizations for customer segments.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "large",
+          "components": ["CustomerInsights.tsx", "CustomerSegments.tsx", "RetentionChart.tsx"],
+          "dependencies": ["RA-001"]
+        },
+        {
+          "id": "RA-004",
+          "title": "Revenue Forecasting",
+          "description": "Develop a revenue forecasting feature that predicts future revenue based on historical booking data and current reservations.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "large",
+          "components": ["RevenueForecast.tsx", "ForecastingModel.ts"],
+          "dependencies": ["RA-001", "RA-002"]
+        },
+        {
+          "id": "RA-005",
+          "title": "Equipment Utilization Reports",
+          "description": "Create detailed reports on equipment utilization rates, identifying peak usage periods and underutilized inventory.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["EquipmentUtilizationReport.tsx", "UtilizationHeatmap.tsx"],
+          "dependencies": ["RA-001", "IM-001"]
+        }
+      ]
+    },
+    {
+      "id": "inventory-management",
+      "name": "Inventory Management",
+      "description": "Improve inventory tracking and management capabilities",
+      "tasks": [
+        {
+          "id": "IM-001",
+          "title": "Equipment Availability Calendar",
+          "description": "Create a visual calendar showing equipment availability and conflicts. Allow filtering by equipment type and date range.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "medium",
+          "components": ["EquipmentCalendar.tsx", "AvailabilityView.tsx"]
+        },
+        {
+          "id": "IM-002",
+          "title": "Inventory Alerts",
+          "description": "Implement alerts for low inventory, maintenance needs, and booking conflicts. Include notification preferences for different alert types.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["InventoryAlerts.tsx", "AlertSettings.tsx"],
+          "dependencies": ["NS-001"]
+        },
+        {
+          "id": "IM-003",
+          "title": "Equipment Maintenance Tracking",
+          "description": "Add functionality to track equipment maintenance history and schedule future maintenance. Include maintenance logs and reminders.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "large",
+          "components": ["MaintenanceTracker.tsx", "MaintenanceSchedule.tsx", "MaintenanceLog.tsx"]
+        },
+        {
+          "id": "IM-004",
+          "title": "Inventory Batch Updates",
+          "description": "Create functionality for batch updates to inventory items, including price changes, availability, and descriptions.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "medium",
+          "components": ["BatchUpdater.tsx", "BulkEditForm.tsx"]
+        },
+        {
+          "id": "IM-005",
+          "title": "Equipment Categories Management",
+          "description": "Enhance the equipment categorization system with hierarchical categories, tags, and improved filtering options.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "small",
+          "components": ["CategoryManager.tsx", "TagSystem.tsx"]
+        }
+      ]
+    },
+    {
+      "id": "customer-portal",
+      "name": "Customer Portal",
+      "description": "Develop a customer-facing portal for self-service booking management",
+      "tasks": [
+        {
+          "id": "CP-001",
+          "title": "Customer Account Creation",
+          "description": "Implement customer registration and account management. Include profile creation, password reset, and account settings.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "medium",
+          "components": ["CustomerRegistration.tsx", "CustomerProfile.tsx", "AccountSettings.tsx"]
+        },
+        {
+          "id": "CP-002",
+          "title": "Booking Self-Service",
+          "description": "Allow customers to view, modify, and cancel their bookings. Include booking confirmation and modification emails.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "large",
+          "components": ["CustomerBookings.tsx", "BookingModification.tsx"],
+          "dependencies": ["CP-001", "NS-001"]
+        },
+        {
+          "id": "CP-003",
+          "title": "Booking History",
+          "description": "Provide customers with access to their booking history and receipts. Include downloadable invoices and receipt PDFs.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["BookingHistory.tsx", "InvoiceGenerator.ts"],
+          "dependencies": ["CP-001"]
+        },
+        {
+          "id": "CP-004",
+          "title": "Customer Feedback System",
+          "description": "Implement a system for customers to provide feedback on their rental experience and equipment quality.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "small",
+          "components": ["FeedbackForm.tsx", "RatingSystem.tsx"],
+          "dependencies": ["CP-001"]
+        },
+        {
+          "id": "CP-005",
+          "title": "Saved Payment Methods",
+          "description": "Allow customers to save and manage payment methods for faster checkout on future bookings.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["PaymentMethodsManager.tsx", "SecureCardStorage.ts"],
+          "dependencies": ["CP-001"]
+        }
+      ]
+    },
+    {
+      "id": "notification-system",
+      "name": "Notification System",
+      "description": "Implement a comprehensive notification system for users and customers",
+      "tasks": [
+        {
+          "id": "NS-001",
+          "title": "Email Notifications",
+          "description": "Set up automated email notifications for booking confirmations, reminders, and updates. Include customizable email templates.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "medium",
+          "components": ["EmailService.ts", "EmailTemplates.tsx", "NotificationTriggers.ts"]
+        },
+        {
+          "id": "NS-002",
+          "title": "In-App Notifications",
+          "description": "Implement an in-app notification center for users. Include read/unread status, notification preferences, and dismissal options.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["NotificationCenter.tsx", "NotificationItem.tsx", "NotificationPreferences.tsx"],
+          "dependencies": ["NS-001"]
+        },
+        {
+          "id": "NS-003",
+          "title": "SMS Notifications",
+          "description": "Add SMS notification capabilities for delivery updates and reminders. Include opt-in/opt-out functionality and message templates.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "medium",
+          "components": ["SMSService.ts", "SMSTemplates.ts", "PhoneVerification.tsx"],
+          "dependencies": ["NS-001"]
+        },
+        {
+          "id": "NS-004",
+          "title": "Notification Scheduling",
+          "description": "Create a system for scheduling notifications in advance, such as booking reminders and follow-ups.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["NotificationScheduler.ts", "ScheduledNotificationsList.tsx"],
+          "dependencies": ["NS-001", "NS-002"]
+        },
+        {
+          "id": "NS-005",
+          "title": "Notification Analytics",
+          "description": "Implement tracking and analytics for notification delivery, open rates, and engagement metrics.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "small",
+          "components": ["NotificationAnalytics.tsx", "EngagementMetrics.ts"],
+          "dependencies": ["NS-001", "NS-002", "NS-003"]
+        }
+      ]
+    },
+    {
+      "id": "mobile-optimization",
+      "name": "Mobile Optimization",
+      "description": "Enhance the mobile experience for all user roles",
+      "tasks": [
+        {
+          "id": "MO-001",
+          "title": "Responsive Dashboard",
+          "description": "Optimize the admin dashboard for mobile devices. Ensure all charts, tables, and forms are fully responsive.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "medium",
+          "components": ["ResponsiveDashboard.tsx", "MobileCharts.tsx", "MobileTables.tsx"]
+        },
+        {
+          "id": "MO-002",
+          "title": "Driver Mobile Interface",
+          "description": "Create a dedicated mobile interface for drivers with optimized task views and maps. Include offline access to essential information.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "large",
+          "components": ["DriverMobileApp.tsx", "MobileTaskView.tsx", "OfflineStorage.ts"]
+        },
+        {
+          "id": "MO-003",
+          "title": "Offline Capabilities",
+          "description": "Implement limited offline functionality for critical operations. Include data synchronization when connection is restored.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "large",
+          "components": ["OfflineMode.ts", "DataSynchronization.ts", "ConnectionMonitor.ts"],
+          "dependencies": ["MO-002"]
+        },
+        {
+          "id": "MO-004",
+          "title": "Mobile Booking Process",
+          "description": "Optimize the booking creation and modification process for mobile devices with simplified forms and touch-friendly controls.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["MobileBookingForm.tsx", "TouchFriendlyControls.tsx"]
+        },
+        {
+          "id": "MO-005",
+          "title": "Progressive Web App",
+          "description": "Convert the application to a Progressive Web App (PWA) for improved mobile experience and offline capabilities.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "large",
+          "components": ["ServiceWorker.ts", "PWAManifest.json", "CacheStrategy.ts"],
+          "dependencies": ["MO-003"]
+        }
+      ]
+    },
+    {
+      "id": "recurring-booking",
+      "name": "Recurring Booking Support",
+      "description": "Add support for recurring bookings and subscription-based rentals",
+      "tasks": [
+        {
+          "id": "RB-001",
+          "title": "Recurring Booking Creation",
+          "description": "Implement the ability to create bookings that repeat on a schedule. Include options for daily, weekly, monthly, and custom recurrence patterns.",
+          "status": "planned",
+          "priority": "high",
+          "effort": "large",
+          "components": ["RecurringBookingForm.tsx", "RecurrencePatterns.ts", "BookingGenerator.ts"]
+        },
+        {
+          "id": "RB-002",
+          "title": "Subscription Management",
+          "description": "Add functionality to manage long-term rental subscriptions. Include billing cycles, automatic renewals, and subscription modifications.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "large",
+          "components": ["SubscriptionManager.tsx", "BillingCycles.ts", "RenewalSettings.tsx"],
+          "dependencies": ["RB-001"]
+        },
+        {
+          "id": "RB-003",
+          "title": "Recurring Booking Calendar",
+          "description": "Enhance the calendar view to properly display recurring bookings. Include visual indicators for recurring events and series editing.",
+          "status": "planned",
+          "priority": "medium",
+          "effort": "medium",
+          "components": ["RecurringBookingCalendar.tsx", "SeriesEditor.tsx"],
+          "dependencies": ["RB-001", "IM-001"]
+        },
+        {
+          "id": "RB-004",
+          "title": "Recurring Booking Exceptions",
+          "description": "Implement support for exceptions to recurring booking patterns, such as skipped dates or modified instances.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "medium",
+          "components": ["RecurrenceExceptions.tsx", "ExceptionHandler.ts"],
+          "dependencies": ["RB-001", "RB-003"]
+        },
+        {
+          "id": "RB-005",
+          "title": "Subscription Analytics",
+          "description": "Create analytics and reporting specifically for subscription-based rentals, including retention rates and lifetime value.",
+          "status": "planned",
+          "priority": "low",
+          "effort": "medium",
+          "components": ["SubscriptionAnalytics.tsx", "RetentionReports.tsx"],
+          "dependencies": ["RB-002", "RA-001"]
+        }
+      ]
+    }
+  ]
+}

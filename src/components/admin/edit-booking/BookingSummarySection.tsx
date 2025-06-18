@@ -2,7 +2,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { BookingItem } from './types';
+import { BookingItem } from '@/components/admin/calendar/types';
 
 interface BookingSummarySectionProps {
   startDate: string;

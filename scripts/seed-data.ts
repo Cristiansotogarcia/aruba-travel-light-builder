@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Customer, Equipment, Booking } from '../src/lib/queries/types';
+// import { Customer, Equipment, Booking } from '../src/lib/queries/types';
 
 const supabaseAdmin = createClient(
   process.env.VITE_PUBLIC_SUPABASE_URL!,

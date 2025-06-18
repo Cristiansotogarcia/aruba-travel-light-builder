@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Truck, Package } from 'lucide-react';
 import { format } from 'date-fns';
-import { Booking } from './types';
+import { Booking } from '@/components/admin/calendar/types';
 import { getStatusColor, getStatusLabel } from './statusUtils';
 import { getBookingsByTypeForDate } from './bookingUtils';
 

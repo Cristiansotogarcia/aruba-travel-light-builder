@@ -29,17 +29,17 @@ export const DriverTasks = () => {
 
   useEffect(() => {
     if (hasPermission('DriverTasks') && profile?.id) {
-      fetchTasks();
+      fetchTasks(profile.id); // Pass profile.id directly
     }
   }, [hasPermission, profile]);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (driverId: string) => { // Add driverId parameter
     try {
       // Fetch bookings assigned to current driver
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('assigned_to', profile?.id)
+        .eq('assigned_to', driverId) // Use driverId here
         .order('start_date', { ascending: true });
 
       if (error) throw error;
@@ -133,7 +133,7 @@ export const DriverTasks = () => {
         <CardContent>
           <div className="space-y-4">
             {todayTasks.length > 0 ? (
-              todayTasks.map((task, index) => (
+              todayTasks.map((task) => ( // Removed unused index
                 <div key={`${task.id}-${task.task_type}`} className="p-4 border border-gray-200 rounded-lg bg-yellow-50">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -192,7 +192,7 @@ export const DriverTasks = () => {
             {upcomingTasks.filter(task => !todayTasks.includes(task)).length > 0 ? (
               upcomingTasks
                 .filter(task => !todayTasks.includes(task))
-                .map((task, index) => (
+                .map((task) => ( // Removed unused index
                   <div key={`${task.id}-${task.task_type}`} className="p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

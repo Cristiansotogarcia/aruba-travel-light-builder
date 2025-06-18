@@ -1,11 +1,19 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, profile, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/'); // Redirect to homepage after sign out
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -35,12 +43,40 @@ export const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/book">
-              <Button>Book Now</Button>
-            </Link>
-            <Link to="/login">
-              <Button variant="outline">Login</Button>
-            </Link>
+            {loading ? (
+              <p>Loading...</p>
+            ) : user && profile ? (
+              <>
+                {profile.role === 'Booker' && (
+                  <Link to="/book">
+                    <Button>Book Now</Button>
+                  </Link>
+                )}
+                {profile.role === 'Admin' || profile.role === 'SuperUser' ? (
+                  <Link to="/admin">
+                    <Button variant="outline">Admin Dashboard</Button>
+                  </Link>
+                ) : profile.role === 'Driver' ? (
+                  <Link to="/driver-dashboard">
+                    <Button variant="outline">Driver Dashboard</Button>
+                  </Link>
+                ) : profile.role === 'Booker' ? (
+                  <Link to="/customer-dashboard">
+                    <Button variant="outline">My Dashboard</Button>
+                  </Link>
+                ) : null}
+                <Button variant="ghost" onClick={handleSignOut}>Logout</Button>
+              </>
+            ) : (
+              <>
+                <Link to="/book">
+                  <Button>Book Now</Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="outline">Login</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -78,12 +114,40 @@ export const Header = () => {
                 Contact
               </Link>
               <div className="flex flex-col space-y-2 px-3 py-2">
-                <Link to="/book" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full">Book Now</Button>
-                </Link>
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">Login</Button>
-                </Link>
+                {loading ? (
+                  <p className="px-3 py-2 text-gray-700">Loading...</p>
+                ) : user && profile ? (
+                  <>
+                    {profile.role === 'Booker' && (
+                      <Link to="/book" onClick={() => setIsMenuOpen(false)}>
+                        <Button className="w-full">Book Now</Button>
+                      </Link>
+                    )}
+                    {profile.role === 'Admin' || profile.role === 'SuperUser' ? (
+                      <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="outline" className="w-full">Admin Dashboard</Button>
+                      </Link>
+                    ) : profile.role === 'Driver' ? (
+                      <Link to="/driver-dashboard" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="outline" className="w-full">Driver Dashboard</Button>
+                      </Link>
+                    ) : profile.role === 'Booker' ? (
+                      <Link to="/customer-dashboard" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="outline" className="w-full">My Dashboard</Button>
+                      </Link>
+                    ) : null}
+                    <Button variant="ghost" className="w-full text-left px-3 py-2" onClick={() => { handleSignOut(); setIsMenuOpen(false); }}>Logout</Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/book" onClick={() => setIsMenuOpen(false)}>
+                      <Button className="w-full">Book Now</Button>
+                    </Link>
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">Login</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

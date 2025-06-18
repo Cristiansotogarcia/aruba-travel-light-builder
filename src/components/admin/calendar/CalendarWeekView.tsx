@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Truck, Package } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Booking } from './types';
+import { Booking } from '@/components/admin/calendar/types';
 import { getTotalCountsForDate } from './bookingUtils';
 
 interface CalendarWeekViewProps {

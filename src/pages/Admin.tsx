@@ -10,6 +10,7 @@ import { VisibilitySettings } from '@/components/admin/VisibilitySettings';
 import { ProductManagement } from '@/components/admin/ProductManagement';
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
+import { ReportsDashboard } from '@/components/admin/ReportsDashboard'; // Import ReportsDashboard
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -26,6 +27,8 @@ const Admin = () => {
         return <BookingAssignment />;
       case 'equipment':
         return <ProductManagement />;
+      case 'reports': // Add case for reports
+        return <ReportsDashboard />;
       case 'users':
         return <UserManagement />;
       case 'visibility':

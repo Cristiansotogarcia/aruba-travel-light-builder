@@ -3,23 +3,22 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserCheck, Calendar, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+// import { mockDeliveryPersonnel } from '@/data/mockDeliveryPersonnel'; // Removed this line
+import { Booking } from './calendar/types';
+import { getStatusColor } from './calendar/statusUtils';
 
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  assigned_to: string | null;
+/* // Removed this interface
+interface BookingAssignmentProps {
+  bookings: Booking[];
+  onAssign: (bookingId: string, personnelId: string) => void;
 }
+*/
 
 interface Driver {
   id: string;
@@ -44,12 +43,16 @@ export const BookingAssignment = () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('*')
+        .select(`
+          *,
+          booking_items (*)
+        `)
         .in('status', ['pending', 'confirmed'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      const bookingsWithDefaults = data ? data.map(b => ({ ...b, booking_items: b.booking_items || [] })) : [];
+      setBookings(bookingsWithDefaults as Booking[]);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -88,7 +91,7 @@ export const BookingAssignment = () => {
       setBookings(prev =>
         prev.map(booking =>
           booking.id === bookingId
-            ? { ...booking, assigned_to: driverId }
+            ? { ...booking, assigned_to: driverId, booking_items: booking.booking_items || [] } // Ensure booking_items default here too
             : booking
         )
       );
@@ -107,36 +110,10 @@ export const BookingAssignment = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   if (!hasPermission('BookingAssignment')) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">You don't have permission to access booking assignment.</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
       </div>
     );
   }
@@ -147,7 +124,8 @@ export const BookingAssignment = () => {
     : [];
 
   return (
-    <div className="space-y-6">
+    <LoadingState isLoading={loading} message="Loading bookings...">
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Booking Assignment</h1>
         <p className="text-gray-600 mt-1">Assign bookings to drivers for delivery and pickup</p>
@@ -251,5 +229,6 @@ export const BookingAssignment = () => {
         </Card>
       )}
     </div>
+    </LoadingState>
   );
 };

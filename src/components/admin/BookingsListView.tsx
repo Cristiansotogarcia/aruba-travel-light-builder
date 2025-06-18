@@ -1,34 +1,17 @@
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
+// import React from 'react'; // Removed this line
 import { BookingSquareCard } from './BookingSquareCard';
-
-interface BookingItem {
-  equipment_name: string;
-  quantity: number;
-  subtotal: number;
-}
-
-interface Booking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-  booking_items?: BookingItem[];
-}
+import { Booking, BookingStatus } from './calendar/types'; // Added BookingStatus
+import { Card, CardContent } from "@/components/ui/card"; // Added import
+import { Calendar } from "@/components/ui/calendar"; // Added import
 
 interface BookingsListViewProps {
   bookings: Booking[];
-  onStatusUpdate: (bookingId: string, newStatus: string) => void;
+  onStatusUpdate: (bookingId: string, newStatus: BookingStatus) => void; // Changed to BookingStatus
   onEdit: (booking: Booking) => void;
-  onView?: (booking: Booking) => void;
-  searchTerm: string;
-  statusFilter: string;
+  onView: (booking: Booking) => void; // Added prop (distinct from onViewBooking for now)
+  searchTerm: string; // Added prop
+  statusFilter: string; // Added prop (can be a more specific union type later e.g. 'all' | 'pending' etc.)
 }
 
 export const BookingsListView = ({ 
@@ -62,6 +45,8 @@ export const BookingsListView = ({
           key={booking.id}
           booking={booking}
           onView={onView || (() => {})}
+          onStatusUpdate={onStatusUpdate} // Pass prop
+          onEdit={onEdit} // Pass prop
         />
       ))}
     </div>

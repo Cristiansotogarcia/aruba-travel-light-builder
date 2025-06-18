@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Minus, X } from 'lucide-react';
 import { mockEquipment } from '@/data/mockEquipment';
-import { BookingItem } from './types';
+import { BookingItem } from '@/components/admin/calendar/types';
 
 interface EquipmentSelectionSectionProps {
   selectedEquipment: string;

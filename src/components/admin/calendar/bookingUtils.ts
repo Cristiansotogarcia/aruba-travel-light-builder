@@ -1,5 +1,5 @@
 
-import { Booking } from './types';
+import { Booking } from '@/components/admin/calendar/types';
 import { isSameDay } from 'date-fns';
 
 export interface BookingsByType {

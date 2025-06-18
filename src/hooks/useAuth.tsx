@@ -13,7 +13,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; profile?: Profile | null }>; // Modified to return profile
   signOut: () => Promise<void>;
   hasPermission: (componentName: string) => boolean;
 }
@@ -40,68 +40,76 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Use setTimeout to defer profile loading to avoid blocking
-          setTimeout(() => {
-            loadUserProfile(session.user.id);
-          }, 0);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          await loadUserProfile(currentUser.id); // loadUserProfile will handle setLoading
         } else {
           setProfile(null);
           setPermissions({});
-          setLoading(false);
+          setLoading(false); // No user, so loading is done
         }
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('Initial session check:', session?.user?.email);
       setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        loadUserProfile(session.user.id);
+      const initialUser = session?.user ?? null;
+      setUser(initialUser);
+
+      if (initialUser) {
+        await loadUserProfile(initialUser.id); // loadUserProfile will handle setLoading
       } else {
-        setLoading(false);
+        setLoading(false); // No initial user, so loading is done
       }
+    }).catch(error => {
+      console.error("Error getting initial session:", error);
+      setLoading(false); // Ensure loading is false on error
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const loadUserProfile = async (userId: string) => {
+    setLoading(true); // Always set loading to true when starting to load a profile
     try {
       console.log('Loading profile for user:', userId);
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single(); // Changed to single() as profile should exist for a logged-in user
 
       if (error) {
         console.error('Error loading profile:', error);
-        setLoading(false);
+        setProfile(null); // Clear profile on error
+        setPermissions({});
+        // Do not set loading to false here if it's an error during an update, 
+        // let the main flow handle it or rely on INITIAL_SESSION completion.
         return;
       }
 
       if (profileData) {
         console.log('Profile loaded:', profileData);
         setProfile(profileData);
-        await loadPermissions(profileData.role);
+        await loadPermissions(profileData.role as UserRole); // Ensure role is cast if necessary
       } else {
-        console.log('No profile found for user, they may need to complete registration');
+        console.log('No profile found for user, they may need to complete registration or an error occurred.');
         setProfile(null);
+        setPermissions({});
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
+      setProfile(null);
+      setPermissions({});
     } finally {
+      // Set loading to false only after profile and permissions are attempted
       setLoading(false);
     }
   };
@@ -127,7 +135,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const signUp = async (email: string, password: string, name: string, role: UserRole = 'Booker'): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('Attempting signup for:', email);
       
@@ -142,12 +150,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
-        console.error('Signup error:', error);
+        console.error('Signin error:', error);
+        setLoading(false); // Set loading false if auth fails immediately
         return { success: false, error: error.message };
       }
 
       if (data.user) {
-        console.log('Signup successful for user:', data.user.email);
+        console.log('Auth Signup successful for user:', data.user.email, 'Now creating profile.');
+        // After successful auth sign-up, create a profile for the user
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id, // Supabase user ID
+            email: data.user.email,
+            name: name,
+            role: role, // Assign the provided role, defaults to 'Booker'
+            // Add other default profile fields if necessary
+          });
+
+        if (profileError) {
+          console.error('Error creating profile after signup:', profileError);
+          // Optionally, you might want to delete the auth user if profile creation fails
+          // await supabase.auth.admin.deleteUser(data.user.id); // Requires admin privileges
+          return { success: false, error: `User signed up, but profile creation failed: ${profileError.message}` };
+        }
+
+        console.log('Profile created successfully for user:', data.user.email);
+        // The onAuthStateChange listener should pick up the new user and load the profile subsequently.
         return { success: true };
       }
 
@@ -159,28 +188,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true); // Set loading true at the very start of the sign-in attempt
     try {
       console.log('Attempting signin for:', email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) {
-        console.error('Signin error:', error);
-        return { success: false, error: error.message };
+      if (signInError) {
+        console.error('Signin error:', signInError);
+        return { success: false, error: signInError.message };
       }
 
-      if (data.user) {
-        console.log('Signin successful for user:', data.user.email);
+      if (signInData.user) {
+        console.log('Auth Signin successful for user:', signInData.user.email);
+        // onAuthStateChange will be triggered. It calls loadUserProfile, which manages
+        // setting profile and eventually sets loading to false.
+        // So, we don't set loading to false here.
         return { success: true };
       }
-
-      return { success: false, error: 'Signin failed' };
+      
+      return { success: false, error: 'Unknown error occurred during sign-in.' };
     } catch (error) {
-      console.error('Signin error:', error);
-      return { success: false, error: 'Signin failed' };
+      console.error('Unexpected error during sign-in:', error);
+      return { success: false, error: 'Unexpected error occurred during sign-in.' };
+    } finally {
+      setLoading(false); // Ensure loading is set to false in case of unexpected errors
     }
   };
 

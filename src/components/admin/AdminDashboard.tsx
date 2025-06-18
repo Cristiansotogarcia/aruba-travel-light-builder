@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, DollarSign, Users, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getStatusColor } from './calendar/statusUtils';
 
 interface DashboardStats {
   totalBookings: number;
@@ -58,19 +59,6 @@ export const AdminDashboard = () => {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
 

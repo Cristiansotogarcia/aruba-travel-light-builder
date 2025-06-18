@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { mockEquipment } from '@/data/mockEquipment';
-import { BookingItem } from './types';
+import { BookingItem } from '@/components/admin/calendar/types';
 
 export const useBookingEquipment = (initialItems: BookingItem[] = []) => {
   const [selectedEquipment, setSelectedEquipment] = useState('');
