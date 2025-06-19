@@ -1,5 +1,6 @@
+/// <reference lib="deno.ns" />
 // supabase/functions/booking-status-update-email/index.ts
-import { serve } from 'jsr:@std/http/server';
+// import { serve } from 'jsr:@std/http/server'; // Removed this line
 import { corsHeaders } from '../_shared/cors.ts';
 
 console.log('Booking Status Update Email function up and running!');
@@ -15,7 +16,8 @@ interface BookingDetails {
   equipment_details?: string; 
 }
 
-serve(async (req: Request) => {
+// Replaced `serve` with `Deno.serve`
+Deno.serve(async (req: Request) => {
   // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });

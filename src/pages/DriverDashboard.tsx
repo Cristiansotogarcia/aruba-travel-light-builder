@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card'; // Removed CardDescription, CardFooter, CardHeader, CardTitle
 import { Button } from '@/components/ui/button';
 // import { toast } from 'sonner'; // Removed unused toast from sonner

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast'; // Added useToast import
 import { useQueryClient } from '@tanstack/react-query'; // Added useQueryClient import
-import { Booking, BookingStatus } from '@/types/types'; // Added Booking and BookingStatus import, assuming path
+import { Booking, BookingStatus, Product } from '@/types/types'; // Added Booking and BookingStatus import, assuming path
 
 type Status = 'pending' | 'confirmed' | 'out_for_delivery' | 'delivered' | 'completed' | 'cancelled' | 'undeliverable';
 
@@ -99,7 +99,7 @@ export const BookingStatusWorkflow: React.FC<BookingStatusWorkflowProps> = ({ bo
     try {
       const { data: currentBooking, error: fetchError } = await supabase
         .from('bookings')
-        .select('*, booking_items(*, equipment(*))')
+        .select('*, booking_items(*, equipment:products!equipment_id(*))')
         .eq('id', booking.id)
         .single();
 
@@ -127,7 +127,7 @@ export const BookingStatusWorkflow: React.FC<BookingStatusWorkflowProps> = ({ bo
         const equipmentDetails = currentBooking.booking_items?.map(item => {
           // Type guard to ensure item.equipment is not an error and has a name property
           if (item.equipment && typeof item.equipment === 'object' && 'name' in item.equipment) {
-            return `${item.equipment.name} (x${item.quantity})`;
+            return `${(item.equipment as Product).name} (x${item.quantity})`;
           }
           return `Unknown Equipment (x${item.quantity})`;
         }).join(', ') || 'N/A';

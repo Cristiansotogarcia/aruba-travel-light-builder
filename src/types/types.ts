@@ -63,4 +63,18 @@ export interface SupabaseBookingItemData {
 // Re-export Booking and BookingItem from the single source of truth
 export type { Booking, BookingItem, BookingStatus };
 
+// Defines the structure for a user profile
+export interface Profile {
+  id: string;
+  name: string;
+  role: UserRole; // Changed to use UserRole type
+  created_at: string | null;
+  needs_password_change?: boolean | null;
+  email: string | null;
+  is_deactivated?: boolean | null;
+}
+
+// Define UserRole based on the roles in Profile
+export type UserRole = 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
+
 // You can add other shared types here as your project grows.

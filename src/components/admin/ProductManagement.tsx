@@ -232,7 +232,7 @@ export const ProductManagement = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .update({ availability_status: newStatus })
+        .update({ availability_status: newStatus } as any) // Cast to any to bypass incorrect type inference
         .eq('id', product.id)
         .select()
         .single();
@@ -242,22 +242,18 @@ export const ProductManagement = () => {
       // Ensure the updated product from DB is used for state update using the helper
       const updatedProductFromDB: Product = mapSupabaseToProduct(data);
 
-      setProducts(prev =>
-        prev.map(p =>
-          p.id === product.id
-            ? updatedProductFromDB
-            : p
-        )
+      setProducts(prevProducts => 
+        prevProducts.map(p => p.id === updatedProductFromDB.id ? updatedProductFromDB : p)
       );
       toast({
         title: "Success",
-        description: "Product availability updated",
+        description: `Product availability updated to ${newStatus}.`,
       });
     } catch (error) {
       console.error('Error updating product availability:', error);
       toast({
         title: "Error",
-        description: "Failed to update product availability",
+        description: "Failed to update product availability.",
         variant: "destructive",
       });
     }

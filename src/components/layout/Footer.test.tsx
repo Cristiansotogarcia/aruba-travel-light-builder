@@ -16,18 +16,12 @@ describe('Footer Component', () => {
       </BrowserRouter>
     );
     // screen.debug(); // Removed for now
-    const copyrightMatcher = (element: Element | null): boolean => {
-      if (!element) return false;
-      // Only consider P tags to avoid matching parent divs
-      if (element.nodeName !== 'P') return false;
-
-      const textContent = element.textContent || "";
-      const normalizedText = textContent.replace(/\s+/g, " ").trim();
-      // Exact match for the normalized text
-      return (
-        normalizedText === "© 2024 Travel Light Aruba. All rights reserved." ||
-        normalizedText === "\u00A9 2024 Travel Light Aruba. All rights reserved."
-      );
+    const copyrightMatcher = (content: string, element: Element | null): boolean => {
+      if (!element || !content) return false;
+      const currentYear = new Date().getFullYear();
+      const expectedText = `© ${currentYear} Aruba Travel Light. All rights reserved.`;
+      // Check if the element's text content matches the expected dynamic copyright text
+      return element.textContent === expectedText && content === expectedText;
     };
     const copyrightElement = screen.getByText(copyrightMatcher);
     expect(copyrightElement).toBeInTheDocument();

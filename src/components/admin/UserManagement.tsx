@@ -1,22 +1,11 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { ChangePasswordModal } from './ChangePasswordModal';
-import { UserManagementHeader } from './user-management/UserManagementHeader';
 import { UserList } from './user-management/UserList';
+import { UserManagementHeader } from './user-management/UserManagementHeader';
+import { supabase } from '@/integrations/supabase/client'; 
+import { useToast } from '@/hooks/use-toast';
 import { TempPasswordDialog } from './user-management/TempPasswordDialog';
-
-interface Profile {
-  id: string;
-  name: string;
-  role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string | null; // Allow null for created_at
-  needs_password_change?: boolean | null; // Allow null for needs_password_change
-  email?: string;
-  is_deactivated?: boolean | null; // Allow null for is_deactivated
-}
+import type { Profile } from '@/types/types';
 
 interface TempPasswordResult {
   user: {

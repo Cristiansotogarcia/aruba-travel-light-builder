@@ -23,7 +23,7 @@ export const updateBookingStatus = async (bookingId: string, newStatus: BookingS
       .from('bookings')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', bookingId)
-      .select('*, booking_items(*, equipment(*))') // Ensure we get customer_email and other details
+      .select('*, booking_items(*, products(*))') // Changed equipment(*) to products(*)
       .single();
 
     if (updateError) {

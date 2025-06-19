@@ -1,22 +1,16 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash2, Key, UserX } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Added Card imports
+import { Badge } from '@/components/ui/badge'; // Added Badge import
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Edit, Trash2, KeyRound, RefreshCcw, Eye, EyeOff, UserCheck, UserX } from 'lucide-react';
 import { EditUserModal } from './EditUserModal';
-import { ResetPasswordModal } from './ResetPasswordModal';
 import { DeleteUserModal } from './DeleteUserModal';
-import { Badge } from '@/components/ui/badge';
-
-interface Profile {
-  id: string;
-  name: string;
-  role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string | null; // Allow null for created_at
-  needs_password_change?: boolean | null; // Allow null for needs_password_change
-  email?: string;
-  is_deactivated?: boolean | null; // Allow null for is_deactivated
-}
+import { ResetPasswordModal } from './ResetPasswordModal';
+import type { Profile } from '@/types/types';
 
 interface UserListProps {
   profiles: Profile[];

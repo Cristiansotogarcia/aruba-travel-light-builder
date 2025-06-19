@@ -2,20 +2,15 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
-import { Database } from '@/integrations/supabase/types';
-
-type UserRole = Database['public']['Enums']['app_role'];
-type Profile = Database['public']['Tables']['profiles']['Row'];
+import type { Profile, UserRole } from '@/types/types'; // Added UserRole to import
 
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
-  session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; profile?: Profile | null }>; // Modified to return profile
   signOut: () => Promise<void>;
-  hasPermission: (componentName: string) => boolean;
+  refreshSession: () => Promise<void>;
+  setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

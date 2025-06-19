@@ -8,16 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generateTempPassword } from '@/utils/passwordUtils';
 import { RefreshCw, Copy, Eye, EyeOff } from 'lucide-react';
-
-interface Profile {
-  id: string;
-  name: string;
-  role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
-  created_at: string | null;
-  needs_password_change?: boolean | null;
-  email?: string;
-  // is_deactivated is not used in this modal's Profile definition, so no change needed here for that
-}
+import type { Profile } from '@/types/types';
 
 interface ResetPasswordModalProps {
   open: boolean;
