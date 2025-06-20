@@ -1,5 +1,6 @@
 import { useTheme } from "next-themes"
-import { Toaster as Sonner, toast } from "sonner"
+import { Toaster as Sonner } from "sonner" // Removed toast import
+// import { toast } from "./sonner-utils"; // This line will be added by the user if they need toast globally, or imported directly where needed.
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -26,4 +27,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-export { Toaster, toast }
+export { Toaster } // Removed toast from export

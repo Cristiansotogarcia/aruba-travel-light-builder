@@ -1,27 +1,28 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, ReactNode, useCallback, useContext } from 'react'; // Added useCallback
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
-import type { Profile, UserRole } from '@/types/types'; // Added UserRole to import
+import type { Profile, UserRole } from '@/types/types';
+import { AuthContext } from './useAuthContext'; // Import from the new file
 
-interface AuthContextType {
-  user: User | null;
-  profile: Profile | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-  setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
-}
+// interface AuthContextType {  // REMOVED
+//   user: User | null;
+//   profile: Profile | null;
+//   loading: boolean;
+//   signOut: () => Promise<void>;
+//   refreshSession: () => Promise<void>;
+//   setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
+// }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// const AuthContext = createContext<AuthContextType | undefined>(undefined); // REMOVED
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+ export const useAuth = () => {
+   const context = useContext(AuthContext);
+   if (context === undefined) {
+     throw new Error('useAuth must be used within an AuthProvider');
+   }
+   return context;
+ };
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -34,6 +35,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
+  const loadUserProfile = useCallback(async (userId: string) => { // Wrapped with useCallback
+    setLoading(true); 
+    try {
+      console.log('Loading profile for user:', userId);
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error loading profile:', error);
+        setProfile(null); 
+        setPermissions({});
+        return;
+      }
+
+      if (profileData) {
+        console.log('Profile loaded:', profileData);
+        setProfile(profileData);
+        await loadPermissions(profileData.role as UserRole); 
+      } else {
+        console.log('No profile found for user, they may need to complete registration or an error occurred.');
+        setProfile(null);
+        setPermissions({});
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setProfile(null);
+      setPermissions({});
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Added empty dependency array for useCallback as loadPermissions is stable
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -43,11 +79,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentUser);
 
         if (currentUser) {
-          await loadUserProfile(currentUser.id); // loadUserProfile will handle setLoading
+          await loadUserProfile(currentUser.id);
         } else {
           setProfile(null);
           setPermissions({});
-          setLoading(false); // No user, so loading is done
+          setLoading(false); 
         }
       }
     );
@@ -59,55 +95,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(initialUser);
 
       if (initialUser) {
-        await loadUserProfile(initialUser.id); // loadUserProfile will handle setLoading
+        await loadUserProfile(initialUser.id);
       } else {
-        setLoading(false); // No initial user, so loading is done
+        setLoading(false); 
       }
     }).catch(error => {
       console.error("Error getting initial session:", error);
-      setLoading(false); // Ensure loading is false on error
+      setLoading(false); 
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  const loadUserProfile = async (userId: string) => {
-    setLoading(true); // Always set loading to true when starting to load a profile
-    try {
-      console.log('Loading profile for user:', userId);
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single(); // Changed to single() as profile should exist for a logged-in user
-
-      if (error) {
-        console.error('Error loading profile:', error);
-        setProfile(null); // Clear profile on error
-        setPermissions({});
-        // Do not set loading to false here if it's an error during an update, 
-        // let the main flow handle it or rely on INITIAL_SESSION completion.
-        return;
-      }
-
-      if (profileData) {
-        console.log('Profile loaded:', profileData);
-        setProfile(profileData);
-        await loadPermissions(profileData.role as UserRole); // Ensure role is cast if necessary
-      } else {
-        console.log('No profile found for user, they may need to complete registration or an error occurred.');
-        setProfile(null);
-        setPermissions({});
-      }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      setProfile(null);
-      setPermissions({});
-    } finally {
-      // Set loading to false only after profile and permissions are attempted
-      setLoading(false);
-    }
-  };
+  }, [loadUserProfile]); // Added loadUserProfile to dependency array
 
   const loadPermissions = async (role: UserRole) => {
     try {
@@ -133,45 +131,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signUp = async (email: string, password: string, name: string, role: UserRole = 'Booker'): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('Attempting signup for:', email);
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name: name
+            name: name,
+            role: role // <--- ADD THIS LINE
           }
         }
       });
 
       if (error) {
         console.error('Signin error:', error);
-        setLoading(false); // Set loading false if auth fails immediately
+        setLoading(false);
         return { success: false, error: error.message };
       }
 
       if (data.user) {
         console.log('Auth Signup successful for user:', data.user.email, 'Now creating profile.');
-        // After successful auth sign-up, create a profile for the user
+
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
-            id: data.user.id, // Supabase user ID
+            id: data.user.id,
             email: data.user.email,
             name: name,
-            role: role, // Assign the provided role, defaults to 'Booker'
-            // Add other default profile fields if necessary
+            role: role,
           });
 
         if (profileError) {
           console.error('Error creating profile after signup:', profileError);
-          // Optionally, you might want to delete the auth user if profile creation fails
-          // await supabase.auth.admin.deleteUser(data.user.id); // Requires admin privileges
+
           return { success: false, error: `User signed up, but profile creation failed: ${profileError.message}` };
         }
 
         console.log('Profile created successfully for user:', data.user.email);
-        // The onAuthStateChange listener should pick up the new user and load the profile subsequently.
+
         return { success: true };
       }
 
@@ -182,8 +179,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+
   const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true); // Set loading true at the very start of the sign-in attempt
+    setLoading(true); 
     try {
       console.log('Attempting signin for:', email);
       
@@ -199,9 +197,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (signInData.user) {
         console.log('Auth Signin successful for user:', signInData.user.email);
-        // onAuthStateChange will be triggered. It calls loadUserProfile, which manages
-        // setting profile and eventually sets loading to false.
-        // So, we don't set loading to false here.
+        
         return { success: true };
       }
       
@@ -210,7 +206,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Unexpected error during sign-in:', error);
       return { success: false, error: 'Unexpected error occurred during sign-in.' };
     } finally {
-      setLoading(false); // Ensure loading is set to false in case of unexpected errors
+      setLoading(false); 
     }
   };
 
@@ -242,9 +238,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       signUp, 
       signIn, 
       signOut, 
-      hasPermission 
+      hasPermission,
+      setProfile // Ensure setProfile is passed in context if needed by useAuthContext consumers
     }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}

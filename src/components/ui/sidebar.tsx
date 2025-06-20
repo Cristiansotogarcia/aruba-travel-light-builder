@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { SidebarContext, useSidebar, SidebarContextValue } from "./sidebar-utils"; // Added SidebarContextValue
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -34,16 +35,16 @@ type SidebarContext = {
   toggleSidebar: () => void
 }
 
-const SidebarContext = React.createContext<SidebarContext | null>(null)
+// const SidebarContext = React.createContext<SidebarContext | null>(null)
 
-function useSidebar() {
-  const context = React.useContext(SidebarContext)
-  if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.")
-  }
+// function useSidebar() {
+//   const context = React.useContext(SidebarContext)
+//   if (!context) {
+//     throw new Error("useSidebar must be used within a SidebarProvider.")
+//   }
 
-  return context
-}
+//   return context
+// }
 
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
@@ -114,7 +115,7 @@ const SidebarProvider = React.forwardRef<
     // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? "expanded" : "collapsed"
 
-    const contextValue = React.useMemo<SidebarContext>(
+    const contextValue = React.useMemo<SidebarContextValue>( // Changed SidebarContext to SidebarContextValue
       () => ({
         state,
         open,
@@ -757,5 +758,5 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
+  useSidebar, // No longer exported from here
 }

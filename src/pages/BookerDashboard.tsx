@@ -8,6 +8,23 @@ import { Header } from '@/components/layout/Header'; // Changed Navigation to He
 import { useAuth } from '@/hooks/useAuth';
 // import { useToast } from '@/hooks/use-toast'; // Removed unused import
 
+// Define interfaces for booking data
+interface BookerBookingItem {
+  equipment_name: string;
+  quantity: number;
+}
+
+interface BookerBooking {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  start_date: string;
+  end_date: string;
+  total_amount: number;
+  status: string; // Consider using a more specific type if available (e.g., from types.ts BookingStatus)
+  booking_items: BookerBookingItem[];
+}
+
 // Assuming a similar structure to DriverToday, but for Booker
 const BookerDashboard = () => {
   const { user } = useAuth();
@@ -106,7 +123,7 @@ const BookerDashboard = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bookings.map((booking: any) => (
+            {bookings.map((booking: BookerBooking) => (
               <Card key={booking.id} className="overflow-hidden flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-lg">Booking #{booking.id.substring(0,8)}</CardTitle>
@@ -130,7 +147,7 @@ const BookerDashboard = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Items:</p>
                     <ul className="list-disc list-inside text-sm text-gray-600">
-                      {booking.booking_items.map((item: any, index: number) => (
+                      {booking.booking_items.map((item: BookerBookingItem, index: number) => (
                         <li key={index}>{item.equipment_name} (x{item.quantity})</li>
                       ))}
                     </ul>

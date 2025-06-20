@@ -6,6 +6,21 @@ import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/layout/Header'; // Changed to named import
 import { useAuth } from '@/hooks/useAuth';
 
+// Define interfaces for booking data
+interface CustomerBookingItem {
+  equipment_name: string;
+  quantity: number;
+}
+
+interface CustomerBooking {
+  id: string;
+  start_date: string;
+  end_date: string;
+  total_amount: number;
+  status: string; // Consider using a more specific type if available (e.g., from types.ts BookingStatus)
+  booking_items: CustomerBookingItem[];
+}
+
 const CustomerDashboard = () => {
   const { user } = useAuth();
 
@@ -72,7 +87,7 @@ const CustomerDashboard = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bookings.map((booking: any) => (
+            {bookings.map((booking: CustomerBooking) => (
               <Card key={booking.id} className="overflow-hidden flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-lg">Booking #{booking.id.substring(0,8)}</CardTitle>
@@ -95,7 +110,7 @@ const CustomerDashboard = () => {
                     <p className="text-sm font-medium text-gray-700">Items:</p>
                     {booking.booking_items && booking.booking_items.length > 0 ? (
                       <ul className="list-disc list-inside text-sm text-gray-600">
-                        {booking.booking_items.map((item: any, index: number) => (
+                        {booking.booking_items.map((item: CustomerBookingItem, index: number) => (
                           <li key={index}>{item.equipment_name} (x{item.quantity})</li>
                         ))}
                       </ul>

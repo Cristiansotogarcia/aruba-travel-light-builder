@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Added Card imports
 import { Badge } from '@/components/ui/badge'; // Added Badge import
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Edit, Trash2, KeyRound, RefreshCcw, Eye, EyeOff, UserCheck, UserX } from 'lucide-react';
+// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+// import { useToast } from '@/hooks/use-toast';
+// import { supabase } from '@/integrations/supabase/client';
+import { Edit, Trash2, KeyRound, UserX } from 'lucide-react'; // Removed RefreshCcw, Eye, EyeOff, UserCheck
 import { EditUserModal } from './EditUserModal';
 import { DeleteUserModal } from './DeleteUserModal';
 import { ResetPasswordModal } from './ResetPasswordModal';
@@ -120,7 +120,7 @@ export const UserList = ({ profiles, loading, onRefreshProfiles }: UserListProps
                         onClick={() => handleResetPassword(profile)}
                         title="Reset password"
                       >
-                        <Key className="h-4 w-4" />
+                        <KeyRound className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="outline" 

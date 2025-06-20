@@ -11,6 +11,19 @@ import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
+// Define interface for delivery data
+interface DriverDelivery {
+  id: string;
+  delivery_address: string | null; // Assuming address can be null
+  start_date: string;
+  status: BookingStatus; // Using imported BookingStatus
+  user_id: string | null; // Assuming user_id can be null
+  customer_name: string | null;
+  customer_email: string | null;
+  driver_id: string | null;
+  notes?: string | null; // Added optional notes based on usage
+}
+
 const DriverDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast(); // This toast is used
@@ -85,7 +98,7 @@ const DriverDashboard = () => {
           </Card>
         ) : (
           <div className="space-y-4">
-            {deliveries.map((delivery: any) => (
+            {deliveries.map((delivery: DriverDelivery) => (
               <Card key={delivery.id} className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="p-4 space-y-3">

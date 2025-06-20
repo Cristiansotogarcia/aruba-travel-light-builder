@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TempPasswordDialog } from './user-management/TempPasswordDialog';
 import type { Profile } from '@/types/types';
+import { useAuth } from '@/hooks/useAuth';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 interface TempPasswordResult {
   user: {

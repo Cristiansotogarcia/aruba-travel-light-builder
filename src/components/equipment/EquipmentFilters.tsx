@@ -12,15 +12,17 @@ interface FilterOptions {
   availability: string[];
 }
 
+interface ActiveFiltersState {
+  search: string;
+  categories: string[];
+  priceRange: [number, number]; // Assuming priceRange can also be part of what's changed, though not directly modified in handlers here
+  availability: string[];
+}
+
 interface EquipmentFiltersProps {
   filters: FilterOptions;
-  activeFilters: {
-    search: string;
-    categories: string[];
-    priceRange: [number, number];
-    availability: string[];
-  };
-  onFiltersChange: (filters: any) => void;
+  activeFilters: ActiveFiltersState;
+  onFiltersChange: (filters: ActiveFiltersState) => void;
   onClearFilters: () => void;
 }
 
