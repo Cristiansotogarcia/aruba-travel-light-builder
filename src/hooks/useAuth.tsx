@@ -1,28 +1,30 @@
 
-import { useEffect, useState, ReactNode, useCallback, useContext } from 'react'; // Added useCallback
+import { useEffect, useState, ReactNode, useCallback, useContext, createContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import type { Profile, UserRole } from '@/types/types';
-import { AuthContext } from './useAuthContext'; // Import from the new file
 
-// interface AuthContextType {  // REMOVED
-//   user: User | null;
-//   profile: Profile | null;
-//   loading: boolean;
-//   signOut: () => Promise<void>;
-//   refreshSession: () => Promise<void>;
-//   setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
-// }
+interface AuthContextType {
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (email: string, password: string, name: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
+  hasPermission: (componentName: string) => boolean;
+  setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
+}
 
-// const AuthContext = createContext<AuthContextType | undefined>(undefined); // REMOVED
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
- export const useAuth = () => {
-   const context = useContext(AuthContext);
-   if (context === undefined) {
-     throw new Error('useAuth must be used within an AuthProvider');
-   }
-   return context;
- };
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -35,79 +37,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
-  const loadUserProfile = useCallback(async (userId: string) => { // Wrapped with useCallback
-    setLoading(true); 
-    try {
-      console.log('Loading profile for user:', userId);
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error loading profile:', error);
-        setProfile(null); 
-        setPermissions({});
-        return;
-      }
-
-      if (profileData) {
-        console.log('Profile loaded:', profileData);
-        setProfile(profileData);
-        await loadPermissions(profileData.role as UserRole); 
-      } else {
-        console.log('No profile found for user, they may need to complete registration or an error occurred.');
-        setProfile(null);
-        setPermissions({});
-      }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      setProfile(null);
-      setPermissions({});
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Added empty dependency array for useCallback as loadPermissions is stable
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          await loadUserProfile(currentUser.id);
-        } else {
-          setProfile(null);
-          setPermissions({});
-          setLoading(false); 
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.email);
-      setSession(session);
-      const initialUser = session?.user ?? null;
-      setUser(initialUser);
-
-      if (initialUser) {
-        await loadUserProfile(initialUser.id);
-      } else {
-        setLoading(false); 
-      }
-    }).catch(error => {
-      console.error("Error getting initial session:", error);
-      setLoading(false); 
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadUserProfile]); // Added loadUserProfile to dependency array
-
-  const loadPermissions = async (role: UserRole) => {
+  const loadPermissions = useCallback(async (role: UserRole) => {
     try {
       console.log('Loading permissions for role:', role);
       const { data, error } = await supabase
@@ -126,7 +56,79 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error loading permissions:', error);
     }
-  };
+  }, []);
+
+  const loadUserProfile = useCallback(async (userId: string) => {
+    setLoading(true);
+    try {
+      console.log('Loading profile for user:', userId);
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error loading profile:', error);
+        setProfile(null);
+        setPermissions({});
+        return;
+      }
+
+      if (profileData) {
+        console.log('Profile loaded:', profileData);
+        setProfile(profileData);
+        await loadPermissions(profileData.role as UserRole);
+      } else {
+        console.log('No profile found for user, they may need to complete registration or an error occurred.');
+        setProfile(null);
+        setPermissions({});
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setProfile(null);
+      setPermissions({});
+    } finally {
+      setLoading(false);
+    }
+  }, [loadPermissions]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          await loadUserProfile(currentUser.id);
+        } else {
+          setProfile(null);
+          setPermissions({});
+          setLoading(false);
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
+      setSession(session);
+      const initialUser = session?.user ?? null;
+      setUser(initialUser);
+
+      if (initialUser) {
+        await loadUserProfile(initialUser.id);
+      } else {
+        setLoading(false);
+      }
+    }).catch(error => {
+      console.error("Error getting initial session:", error);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadUserProfile]);
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = 'Booker'): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -138,7 +140,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         options: {
           data: {
             name: name,
-            role: role // <--- ADD THIS LINE
+            role: role
           }
         }
       });
@@ -163,12 +165,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (profileError) {
           console.error('Error creating profile after signup:', profileError);
-
           return { success: false, error: `User signed up, but profile creation failed: ${profileError.message}` };
         }
 
         console.log('Profile created successfully for user:', data.user.email);
-
         return { success: true };
       }
 
@@ -179,9 +179,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-
   const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true); 
+    setLoading(true);
     try {
       console.log('Attempting signin for:', email);
       
@@ -192,21 +191,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (signInError) {
         console.error('Signin error:', signInError);
+        setLoading(false);
         return { success: false, error: signInError.message };
       }
 
       if (signInData.user) {
         console.log('Auth Signin successful for user:', signInData.user.email);
-        
         return { success: true };
       }
       
+      setLoading(false);
       return { success: false, error: 'Unknown error occurred during sign-in.' };
     } catch (error) {
       console.error('Unexpected error during sign-in:', error);
+      setLoading(false);
       return { success: false, error: 'Unexpected error occurred during sign-in.' };
-    } finally {
-      setLoading(false); 
     }
   };
 
@@ -230,18 +229,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile, 
-      session, 
-      loading, 
-      signUp, 
-      signIn, 
-      signOut, 
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut,
       hasPermission,
-      setProfile // Ensure setProfile is passed in context if needed by useAuthContext consumers
+      setProfile
     }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
