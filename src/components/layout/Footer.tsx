@@ -15,8 +15,8 @@ export const Footer = () => {
               Your trusted partner for beach and baby equipment rentals in Aruba.
             </p>
             <div className="text-sm text-gray-400">
-              <p>📞 +297 123-4567</p>
-              <p>📧 info@travellightaruba.com</p>
+              <p>📞 +297 593-2028</p>
+              <p>📧 info@travelightaruba.com</p>
             </div>
           </div>
 
@@ -47,13 +47,13 @@ export const Footer = () => {
             <div className="text-gray-400 space-y-1">
               <p>Monday - Friday: 8AM - 6PM</p>
               <p>Saturday: 9AM - 5PM</p>
-              <p>Sunday: 10AM - 4PM</p>
+              <p>Sunday: CLOSED</p>
             </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 Travel Light Aruba. All rights reserved.</p>
+          <p>&copy; 2025 Travel Light Aruba. All rights reserved.</p>
         </div>
       </div>
     </footer>
