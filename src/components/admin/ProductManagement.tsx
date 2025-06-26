@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 // import { LoadingState } from '@/components/ui/LoadingState'; // Removed LoadingState
 import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
+import { BulkProductUpload } from './BulkProductUpload';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types'; // Import global Product and AvailabilityStatus
 
@@ -50,6 +51,7 @@ export const ProductManagement = () => {
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
@@ -412,6 +414,21 @@ export const ProductManagement = () => {
             </Button>
           </DialogTrigger>
           {renderProductForm(handleCreateProduct, "Create New Product", "Create Product")}
+        </Dialog>
+
+        {/* Bulk Upload Dialog */}
+        <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="ml-2" onClick={() => setIsBulkDialogOpen(true)}>
+              Bulk Upload
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Bulk Upload Products</DialogTitle>
+            </DialogHeader>
+            <BulkProductUpload onComplete={() => { setIsBulkDialogOpen(false); fetchProducts(); }} />
+          </DialogContent>
         </Dialog>
 
         {/* Edit Product Dialog */}
