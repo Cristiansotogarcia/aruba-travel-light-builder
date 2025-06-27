@@ -222,6 +222,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // Automatically sign the user out after 5 minutes of inactivity
+  useEffect(() => {
+    const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes in milliseconds
+    let inactivityTimer: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      if (user) {
+        inactivityTimer = setTimeout(() => {
+          console.log('User inactive for 5 minutes. Signing out.');
+          signOut();
+        }, INACTIVITY_LIMIT);
+      }
+    };
+
+    const activityEvents = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'scroll',
+      'touchstart',
+    ];
+
+    activityEvents.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      activityEvents.forEach(event =>
+        window.removeEventListener(event, resetTimer)
+      );
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+    };
+  }, [user]);
+
   const hasPermission = (componentName: string): boolean => {
     if (!profile) return false;
     if (profile.role === 'SuperUser') return true;
