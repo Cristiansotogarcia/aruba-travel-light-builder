@@ -39,11 +39,8 @@ const mapSupabaseToProduct = (data: any): Product => {
 };
 
 const categories = [
-  'Beach Equipment',
-  'Camping',
-  'Electronics',
-  'Transportation',
-  'Accessories'
+  'Baby Equipment',
+  'Beach Equipment'
 ];
 
 export const ProductManagement = () => {
