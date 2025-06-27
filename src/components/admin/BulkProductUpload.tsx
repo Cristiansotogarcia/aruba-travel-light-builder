@@ -48,7 +48,7 @@ const products = parsedRows.map(row => ({
   category: row.category,
   price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
   stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-  availability: row.availability_status === 'Available',
+  availability_status: row.availability_status || 'Available',
   image_url: row.image_url || null,
 }));
 
