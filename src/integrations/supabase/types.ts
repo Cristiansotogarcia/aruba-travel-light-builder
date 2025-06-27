@@ -205,8 +205,10 @@ export type Database = {
           description: string | null
           id: string
           images: string[] | null
+          image_url: string | null
           name: string
           price_per_day: number
+          availability_status: string | null
           stock_quantity: number
           updated_at: string
         }
@@ -217,8 +219,10 @@ export type Database = {
           description?: string | null
           id?: string
           images?: string[] | null
+          image_url?: string | null
           name: string
           price_per_day?: number
+          availability_status?: string | null
           stock_quantity?: number
           updated_at?: string
         }
@@ -229,8 +233,10 @@ export type Database = {
           description?: string | null
           id?: string
           images?: string[] | null
+          image_url?: string | null
           name?: string
           price_per_day?: number
+          availability_status?: string | null
           stock_quantity?: number
           updated_at?: string
         }
