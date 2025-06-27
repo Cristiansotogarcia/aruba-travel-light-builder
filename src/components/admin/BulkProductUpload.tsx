@@ -10,14 +10,22 @@ function parseCsv(file: File): Promise<Record<string, string>[]> {
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      complete: results => {
+      complete: (results) => {
         resolve(results.data as Record<string, string>[]);
       },
-      error: err => {
+      error: (err) => {
         reject(err);
       },
     });
   });
+}
+
+function normalizeRow(row: Record<string, string>): Record<string, string> {
+  const normalized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(row)) {
+    normalized[key.trim().toLowerCase().replace(/\s+/g, '_')] = value;
+  }
+  return normalized;
 }
 
 interface Props {
@@ -33,17 +41,22 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     if (!csvFile) return;
     setUploading(true);
     try {
-      const rows = await parseCsv(csvFile);
-      for (const row of rows) {
-        await supabase.from('products').insert({
-          name: row.name,
-          description: row.description || null,
-          category: row.category,
-          price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
-          stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-          availability_status: row.availability_status || 'Available',
-          image_url: row.image_url || null,
-        });
+const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
+const products = parsedRows.map(row => ({
+  name: row.name,
+  description: row.description || null,
+  category: row.category,
+  price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
+  stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+  availability_status: row.availability_status || 'Available',
+  image_url: row.image_url || null,
+}));
+
+if (products.length > 0) {
+  const { error } = await supabase.from('products').insert(products);
+  if (error) throw error;
+}
+
       }
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);
