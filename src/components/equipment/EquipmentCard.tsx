@@ -77,7 +77,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-2xl font-bold text-primary">
-              ${equipment.price}/day
+              ${equipment.price.toFixed(2)}/day
             </span>
           </div>
           
