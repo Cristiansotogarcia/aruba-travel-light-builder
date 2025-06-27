@@ -9,7 +9,7 @@ export const HeroSection = () => {
   return (
     <section className="hero-section">
       <img
-        src={assets.hero_image || '/default-hero.jpg'}
+        src={assets.hero_image}
         alt="Hero"
         className="w-full h-auto object-cover"
       />
