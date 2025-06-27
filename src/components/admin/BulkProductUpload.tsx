@@ -41,20 +41,22 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     if (!csvFile) return;
     setUploading(true);
     try {
-      const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
-      const products = parsedRows.map(row => ({
-        name: row.name,
-        description: row.description || null,
-        category: row.category,
-        price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
-        stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-        availability_status: row.availability_status || 'Available',
-        image_url: row.image_url || null,
-      }));
+const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
+const products = parsedRows.map(row => ({
+  name: row.name,
+  description: row.description || null,
+  category: row.category,
+  price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
+  stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+  availability_status: row.availability_status || 'Available',
+  image_url: row.image_url || null,
+}));
 
-      if (products.length > 0) {
-        const { error } = await supabase.from('products').insert(products);
-        if (error) throw error;
+if (products.length > 0) {
+  const { error } = await supabase.from('products').insert(products);
+  if (error) throw error;
+}
+
       }
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);

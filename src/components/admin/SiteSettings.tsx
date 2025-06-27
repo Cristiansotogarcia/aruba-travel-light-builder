@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,12 @@ export const SiteSettings = () => {
     favicon: null
   });
   const [uploading, setUploading] = useState<AssetKey | null>(null);
+  const [siteTitle, setSiteTitle] = useState('');
+  const [savingTitle, setSavingTitle] = useState(false);
+
+  useEffect(() => {
+    setSiteTitle(assets.title || '');
+  }, [assets.title]);
 
   const handleFileChange = (key: AssetKey, file: File | null) => {
     setFiles(prev => ({ ...prev, [key]: file }));
@@ -49,6 +55,30 @@ export const SiteSettings = () => {
     setFiles(prev => ({ ...prev, [key]: null }));
     setUploading(null);
     await refresh();
+  };
+
+  const updateTitle = async () => {
+    setSavingTitle(true);
+    const { error } = await supabase
+      .from('content_blocks')
+      .upsert(
+        {
+          block_key: 'site_title',
+          page_slug: 'global',
+          title: 'Site Title',
+          block_type: 'text',
+          content: siteTitle,
+        },
+        { onConflict: 'block_key' }
+      );
+
+    if (error) {
+      toast({ title: 'Error', description: 'Title update failed', variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Title updated' });
+      await refresh();
+    }
+    setSavingTitle(false);
   };
 
   return (
@@ -81,6 +111,17 @@ export const SiteSettings = () => {
           </Card>
         ))}
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Site Title</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input value={siteTitle} onChange={e => setSiteTitle(e.target.value)} />
+          <Button onClick={updateTitle} disabled={savingTitle}>
+            {savingTitle ? 'Saving...' : 'Save Title'}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
