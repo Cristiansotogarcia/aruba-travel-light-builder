@@ -57,7 +57,6 @@ if (products.length > 0) {
   if (error) throw error;
 }
 
-      }
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);
       if (onComplete) onComplete();
