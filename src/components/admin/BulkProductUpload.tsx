@@ -1,22 +1,22 @@
 import { useState } from 'react';
+import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 
-// Simple CSV parser (no quoted field support)
-async function parseCsv(file: File): Promise<Record<string, string>[]> {
-  const text = await file.text();
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length === 0) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).filter(Boolean).map(line => {
-    const values = line.split(',');
-    const obj: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      obj[h] = (values[idx] || '').trim();
+function parseCsv(file: File): Promise<Record<string, string>[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        resolve(results.data as Record<string, string>[]);
+      },
+      error: err => {
+        reject(err);
+      },
     });
-    return obj;
   });
 }
 
