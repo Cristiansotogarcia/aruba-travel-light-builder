@@ -63,15 +63,18 @@ const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
         newCategories.forEach(c => existingCategoryMap.set(c.name, c.id));
       }
 
-      const products = parsedRows.map(row => ({
-        name: row.name,
-        description: row.description || null,
-        price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
-        stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-        availability_status: row.availability_status || 'Available',
-        image_url: row.image_url || null,
-        category_id: row.category ? existingCategoryMap.get(row.category) : null,
-      }));
+      const products = parsedRows
+        .filter(row => row.category)
+        .map(row => ({
+          name: row.name,
+          description: row.description || null,
+          price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
+          stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+          availability_status: row.availability_status || 'Available',
+          image_url: row.image_url || null,
+          category_id: existingCategoryMap.get(row.category),
+          category: row.category,
+        }));
 
       if (products.length > 0) {
         const { error } = await supabase.from('equipment').insert(products);
