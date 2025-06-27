@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { useSiteAssets } from '@/hooks/useSiteAssets';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LoadingState from '@/components/common/LoadingState';
 import { useEffect } from 'react'; // Import useEffect
@@ -18,6 +19,7 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false); // Renamed loading to isSubmitting for clarity
 
   const auth = useAuth(); // Get the whole auth context
+  const { assets } = useSiteAssets();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -99,9 +101,9 @@ const Login = () => {
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <img 
-                  src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
-                  alt="Travel Light Aruba" 
+                <img
+                  src={assets.logo || '/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png'}
+                  alt="Travel Light Aruba"
                   className="h-16 w-auto"
                 />
               </div>
