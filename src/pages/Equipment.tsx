@@ -1,28 +1,68 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
-import { mockEquipment, getAvailableCategories, getAvailabilityOptions, getPriceRange } from '@/data/mockEquipment';
+import type { Equipment as EquipmentType } from '@/data/mockEquipment';
+import { getProducts } from '@/lib/queries/products';
 
 const Equipment = () => {
   const [filters, setFilters] = useState({
     search: '',
     categories: [] as string[],
-    priceRange: getPriceRange() as [number, number],
+    priceRange: [0, 0] as [number, number],
     availability: [] as string[]
   });
 
-  const filterOptions = {
-    categories: getAvailableCategories(),
-    priceRange: getPriceRange(),
-    availability: getAvailabilityOptions()
-  };
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['equipment-products'],
+    queryFn: getProducts,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const equipmentData: EquipmentType[] = useMemo(() => {
+    return products.map((p: any) => {
+      const stock = p.stock_quantity ?? 0;
+      let availability: 'available' | 'limited' | 'unavailable';
+      if (stock <= 0) availability = 'unavailable';
+      else if (stock <= 5) availability = 'limited';
+      else availability = 'available';
+
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        price: p.price_per_day,
+        image: p.image_url || (p.images && p.images[0]) || '',
+        description: p.description || '',
+        availability,
+        features: [],
+      } as EquipmentType;
+    });
+  }, [products]);
+
+  const filterOptions = useMemo(() => {
+    const categories = Array.from(new Set(equipmentData.map(e => e.category)));
+    const prices = equipmentData.map(e => e.price);
+    const priceRange: [number, number] = prices.length
+      ? [Math.min(...prices), Math.max(...prices)]
+      : [0, 0];
+    return {
+      categories,
+      priceRange,
+      availability: ['available', 'limited', 'unavailable'],
+    };
+  }, [equipmentData]);
+
+  useEffect(() => {
+    setFilters(f => ({ ...f, priceRange: filterOptions.priceRange }));
+  }, [filterOptions.priceRange]);
 
   const filteredEquipment = useMemo(() => {
-    return mockEquipment.filter(item => {
+    return equipmentData.filter(item => {
       // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        if (!item.name.toLowerCase().includes(searchLower) && 
+        if (!item.name.toLowerCase().includes(searchLower) &&
             !item.description.toLowerCase().includes(searchLower)) {
           return false;
         }
@@ -41,7 +81,13 @@ const Equipment = () => {
       }
       return true;
     });
-  }, [filters]);
+  }, [filters, equipmentData]);
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center">Loading equipment...</div>
+    );
+  }
 
   return (
     <div>
@@ -50,7 +96,7 @@ const Equipment = () => {
         filters={filterOptions} 
         activeFilters={filters} 
         onFiltersChange={setFilters} 
-        onClearFilters={() => setFilters({ search: '', categories: [], priceRange: getPriceRange(), availability: [] })} 
+        onClearFilters={() => setFilters({ search: '', categories: [], priceRange: filterOptions.priceRange, availability: [] })}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredEquipment.map(equipment => (
