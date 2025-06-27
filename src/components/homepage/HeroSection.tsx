@@ -5,11 +5,15 @@ import { useSiteAssets } from '@/hooks/useSiteAssets';
 
 export const HeroSection = () => {
   const { assets } = useSiteAssets();
+
   return (
-    <section className="relative h-[70vh] bg-cover bg-center bg-no-repeat overflow-hidden" style={{
-      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${assets.hero_image || '/placeholder.svg'}')`,
-      backgroundPosition: 'center 30%'
-    }}>
+    <section className="hero-section">
+      <img
+        src={assets.hero_image || '/default-hero.jpg'}
+        alt="Hero"
+        className="w-full h-auto object-cover"
+      />
+      <h1 className="hero-title">{assets.title || 'Welcome to Travel Light Aruba'}</h1>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 h-full flex items-center">
         <div className="text-center text-white w-full">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg">
