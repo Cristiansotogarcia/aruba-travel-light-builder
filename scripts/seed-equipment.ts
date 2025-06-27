@@ -109,10 +109,10 @@ const equipmentData: Equipment[] = [
     availability_status: 'Out of Stock'
   },
 
-  // Water Sports
+  // Beach Equipment (Water Sports)
   {
     name: 'Single Kayak',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price_per_day: 45,
     description: 'Stable single-person kayak perfect for exploring',
     images: ['https://images.unsplash.com/photo-1506744038136-46273834b3fb'],
@@ -122,7 +122,7 @@ const equipmentData: Equipment[] = [
   },
   {
     name: 'Stand-up Paddleboard',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price_per_day: 40,
     description: 'Inflatable SUP board with pump and paddle',
     images: ['https://images.unsplash.com/photo-1544551763-46a013bb70d5'],
@@ -132,7 +132,7 @@ const equipmentData: Equipment[] = [
   },
   {
     name: 'Life Jacket Set (4)',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price_per_day: 15,
     description: 'Coast Guard approved life jackets in various sizes',
     images: ['https://images.unsplash.com/photo-1530549387789-4c1017266635'],
@@ -142,7 +142,7 @@ const equipmentData: Equipment[] = [
   },
   {
     name: 'Water Toys Bundle',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price_per_day: 28,
     description: 'Fun water toys including floats and games',
     images: ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b'],

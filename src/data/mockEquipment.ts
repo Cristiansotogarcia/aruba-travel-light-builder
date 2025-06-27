@@ -95,11 +95,11 @@ export const mockEquipment: Equipment[] = [
     features: ['Height Adjustable', 'Safety Harness', 'Easy Clean', 'Foldable']
   },
 
-  // Water Sports
+  // Beach Equipment (Water Sports)
   {
     id: '9',
     name: 'Single Kayak',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price: 45,
     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     description: 'Stable single-person kayak perfect for exploring',
@@ -109,7 +109,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '10',
     name: 'Stand-up Paddleboard',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price: 40,
     image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5',
     description: 'Inflatable SUP board with pump and paddle',
@@ -119,7 +119,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '11',
     name: 'Life Jacket Set (4)',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price: 15,
     image: 'https://images.unsplash.com/photo-1530549387789-4c1017266635',
     description: 'Coast Guard approved life jackets in various sizes',
@@ -129,7 +129,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '12',
     name: 'Water Toys Bundle',
-    category: 'Water Sports',
+    category: 'Beach Equipment',
     price: 28,
     image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b',
     description: 'Fun water toys including floats and games',

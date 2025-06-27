@@ -13,6 +13,7 @@ export interface Product {
   image_url?: string | null | undefined;
   stock_quantity: number; // Made non-optional
   availability_status?: AvailabilityStatus; // Uncommented and made optional
+  featured?: boolean;
   created_at?: string; // ISO 8601 date string
   updated_at?: string; // ISO 8601 date string
 }

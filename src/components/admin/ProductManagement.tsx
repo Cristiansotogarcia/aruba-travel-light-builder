@@ -32,6 +32,7 @@ const mapSupabaseToProduct = (data: any): Product => {
     image_url: data.image_url ?? '', // Default to empty string if null/undefined
     stock_quantity: data.stock_quantity ?? 0, // Default to 0 if null/undefined
     availability_status: data.availability_status ?? 'Available', // Default to 'Available'
+    featured: data.featured ?? false,
     created_at: data.created_at,
     updated_at: data.updated_at,
   };
@@ -39,7 +40,6 @@ const mapSupabaseToProduct = (data: any): Product => {
 
 const categories = [
   'Beach Equipment',
-  'Water Sports',
   'Camping',
   'Electronics',
   'Transportation',
@@ -64,6 +64,7 @@ export const ProductManagement = () => {
     availability_status: 'Available', // Default to a valid AvailabilityStatus
     stock_quantity: 0,
     image_url: '', // Use image_url directly
+    featured: false,
     image_url_temp: '',
     imageFile: null
   });
@@ -126,6 +127,7 @@ export const ProductManagement = () => {
         availability_status: formState.availability_status as AvailabilityStatus,
         stock_quantity: formState.stock_quantity,
         image_url: imageUrl,
+        featured: formState.featured,
       };
 
       const { data, error } = await supabase
@@ -147,6 +149,7 @@ export const ProductManagement = () => {
         availability_status: 'Available',
         stock_quantity: 0,
         image_url: '',
+        featured: false,
         image_url_temp: '',
         imageFile: null,
       });
@@ -176,6 +179,7 @@ export const ProductManagement = () => {
       stock_quantity: product.stock_quantity,
       image_url: product.image_url || '',
       image_url_temp: product.image_url || '',
+      featured: product.featured ?? false,
       imageFile: null,
     });
     setIsEditDialogOpen(true);
@@ -198,6 +202,7 @@ export const ProductManagement = () => {
         availability_status: formState.availability_status as AvailabilityStatus,
         stock_quantity: formState.stock_quantity,
         image_url: imageUrl,
+        featured: formState.featured,
       };
 
       const { data, error } = await supabase
@@ -382,6 +387,15 @@ export const ProductManagement = () => {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-center space-x-2">
+          <input
+            id="featured"
+            type="checkbox"
+            checked={formState.featured}
+            onChange={(e) => setFormState({ ...formState, featured: e.target.checked })}
+          />
+          <Label htmlFor="featured">Featured</Label>
+        </div>
         {/* Removed duplicate Select for Availability Status */}
         <Button onClick={submitHandler} className="w-full">
           {buttonText}
@@ -435,12 +449,12 @@ export const ProductManagement = () => {
         <Dialog open={isCreateDialogOpen} onOpenChange={(isOpen) => {
           setIsCreateDialogOpen(isOpen);
           if (!isOpen) {
-            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', image_url_temp: '', imageFile: null });
+            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null });
           }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => {
-              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', image_url_temp: '', imageFile: null });
+              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null });
               setIsCreateDialogOpen(true);
             }}>
               <Plus className="h-4 w-4 mr-2" />
