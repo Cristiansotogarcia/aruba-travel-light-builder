@@ -5,6 +5,7 @@ interface SiteAssets {
   hero_image?: string;
   logo?: string;
   favicon?: string;
+  title?: string;
 }
 
 interface SiteAssetsContextType {
@@ -29,6 +30,12 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
       .select('image_key, file_path')
       .in('image_key', ['hero_image', 'logo', 'favicon']);
 
+    const { data: titleData } = await supabase
+      .from('content_blocks')
+      .select('content')
+      .eq('block_key', 'site_title')
+      .single();
+
     if (!error && data) {
       const result: SiteAssets = {};
       data.forEach(({ image_key, file_path }) => {
@@ -37,6 +44,9 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
           .getPublicUrl(file_path);
         (result as any)[image_key] = url.publicUrl;
       });
+      if (titleData?.content) {
+        result.title = titleData.content as string;
+      }
       setAssets(result);
     }
   };
@@ -51,6 +61,14 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
       if (link) link.href = assets.favicon;
     }
   }, [assets.favicon]);
+
+  useEffect(() => {
+    if (assets.title) {
+      document.title = assets.title;
+      const og = document.querySelector("meta[property='og:title']") as HTMLMetaElement | null;
+      if (og) og.setAttribute('content', assets.title);
+    }
+  }, [assets.title]);
 
   return (
     <SiteAssetsContext.Provider value={{ assets, refresh: fetchAssets }}>
