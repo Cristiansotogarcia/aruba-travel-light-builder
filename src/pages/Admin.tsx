@@ -11,6 +11,7 @@ import { ProductManagement } from '@/components/admin/ProductManagement';
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
 import { ReportsDashboard } from '@/components/admin/ReportsDashboard'; // Import ReportsDashboard
+import { SiteSettings } from '@/components/admin/SiteSettings';
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -36,11 +37,7 @@ const Admin = () => {
       case 'tasks':
         return <DriverTasks />;
       case 'settings':
-        return (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Settings coming soon...</p>
-          </div>
-        );
+        return <SiteSettings />;
       default:
         return <AdminDashboard />;
     }

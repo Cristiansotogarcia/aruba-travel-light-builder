@@ -1,11 +1,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useSiteAssets } from '@/hooks/useSiteAssets';
 
 export const HeroSection = () => {
+  const { assets } = useSiteAssets();
   return (
     <section className="relative h-[70vh] bg-cover bg-center bg-no-repeat overflow-hidden" style={{
-      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/lovable-uploads/f00c75e1-9906-4e6e-919a-e1ef524a7e4c.png')`,
+      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${assets.hero_image || '/lovable-uploads/f00c75e1-9906-4e6e-919a-e1ef524a7e4c.png'}')`,
       backgroundPosition: 'center 30%'
     }}>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 h-full flex items-center">

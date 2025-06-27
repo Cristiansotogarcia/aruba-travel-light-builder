@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { useSiteAssets } from '@/hooks/useSiteAssets';
 
 interface AdminSidebarProps {
   activeSection?: string;
@@ -11,6 +12,7 @@ interface AdminSidebarProps {
 
 export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarProps) => {
   const { profile, hasPermission, signOut } = useAuth();
+  const { assets } = useSiteAssets();
   const [currentSection, setCurrentSection] = useState(activeSection || 'dashboard');
 
   const handleSectionChange = (section: string) => {
@@ -40,9 +42,9 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     <div className="w-64 bg-white border-r border-gray-200">
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <img 
-            src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
-            alt="Travel Light Aruba" 
+          <img
+            src={assets.logo || '/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png'}
+            alt="Travel Light Aruba"
             className="h-8 w-auto mr-3"
           />
           <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
