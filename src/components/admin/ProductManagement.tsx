@@ -1,21 +1,21 @@
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 // import { LoadingState } from '@/components/ui/LoadingState'; // Removed LoadingState
 import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
 import { BulkProductUpload } from './BulkProductUpload';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ProductCard } from './ProductCard';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types'; // Import global Product and AvailabilityStatus
 
 // Use the global Product type
@@ -511,48 +511,13 @@ export const ProductManagement = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.length > 0 ? (
             products.map((product) => (
-              <Card key={product.id} className="flex flex-col">
-                {product.image_url && (
-                  <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover rounded-t-lg" />
-                )}
-                <CardHeader className="flex-grow-0">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{product.name}</CardTitle>
-                    <Badge variant={product.availability_status === 'Available' ? "default" : product.availability_status === 'Low Stock' ? "outline" : "secondary"}>
-                      {product.availability_status ? product.availability_status : 'Unknown'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-between">
-                  <div className="space-y-3 mb-4">
-                    <p className="text-sm text-gray-600 h-16 overflow-y-auto">{product.description || 'No description available.'}</p>
-                    <div className="text-sm text-gray-500">Category: {product.category}</div>
-                    <div className="text-sm text-gray-500">Stock: {product.stock_quantity}</div>
-                    <div className="text-lg font-bold text-green-600">
-                      ${product.price_per_day}/day
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-2 border-t mt-auto">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEditProduct(product)}>
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => toggleAvailabilityStatus(product)}
-                    >
-                      <Package className="h-4 w-4 mr-1" />
-                      {product.availability_status === 'Available' ? 'Set Out of Stock' : 'Set Available'}
-                    </Button>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" onClick={() => setProductToDelete(product)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProductCard
+                key={product.id}
+                product={product}
+                onEdit={handleEditProduct}
+                onDelete={() => setProductToDelete(product)}
+                onToggleAvailability={toggleAvailabilityStatus}
+              />
             ))
           ) : (
             <div className="col-span-full text-center py-12">
