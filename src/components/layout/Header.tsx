@@ -4,10 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSiteAssets } from '@/hooks/useSiteAssets';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, profile, signOut, loading } = useAuth();
+  const { assets } = useSiteAssets();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -21,9 +23,9 @@ export const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img 
-              src="/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png" 
-              alt="Travel Light Aruba" 
+            <img
+              src={assets.logo || '/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png'}
+              alt="Travel Light Aruba"
               className="w-[198px] h-[94px] object-contain"
             />
           </Link>
