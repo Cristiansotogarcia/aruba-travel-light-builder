@@ -54,7 +54,7 @@ const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
       }));
 
       if (products.length > 0) {
-        const { error } = await supabase.from('equipment').insert(products);
+        const { error } = await supabase.from('equipment').insert(products as any);
         if (error) throw error;
       }
 
