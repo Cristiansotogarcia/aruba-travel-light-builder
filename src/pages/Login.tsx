@@ -102,7 +102,7 @@ const Login = () => {
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <img
-                  src={assets.logo || '/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png'}
+                  src={assets.logo || '/placeholder.svg'}
                   alt="Travel Light Aruba"
                   className="h-16 w-auto"
                 />

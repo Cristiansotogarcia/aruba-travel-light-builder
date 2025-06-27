@@ -43,7 +43,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
       <div className="p-6">
         <div className="flex items-center mb-4">
           <img
-            src={assets.logo || '/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png'}
+            src={assets.logo || '/placeholder.svg'}
             alt="Travel Light Aruba"
             className="h-8 w-auto mr-3"
           />
