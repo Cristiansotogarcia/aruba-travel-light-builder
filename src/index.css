@@ -99,3 +99,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .hero-section {
+    @apply relative text-white text-center h-[70vh];
+  }
+
+  .hero-section img {
+    @apply absolute inset-0 w-full h-full object-cover;
+  }
+
+  .hero-section .hero-content {
+    @apply relative z-10 h-full flex flex-col items-center justify-center bg-black bg-opacity-50 p-4;
+  }
+
+  .hero-title {
+    @apply text-4xl font-bold;
+  }
+}
