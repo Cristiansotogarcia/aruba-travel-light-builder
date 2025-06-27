@@ -1,30 +1,36 @@
-
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getFeaturedProducts } from '@/lib/queries/products';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
-const categories = [
-  {
-    title: "Beach Equipment",
-    description: "Umbrellas, chairs, coolers, and water sports gear",
-    image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21",
-    items: ["Beach Umbrellas", "Beach Chairs", "Coolers", "Snorkel Gear"]
-  },
-  {
-    title: "Baby Equipment",
-    description: "Strollers, car seats, cribs, and safety gear",
-    image: "https://images.unsplash.com/photo-1721322800607-8c38375eef04",
-    items: ["Strollers", "Car Seats", "Baby Cribs", "High Chairs"]
-  },
-  {
-    title: "Water Sports",
-    description: "Kayaks, paddleboards, and water activity gear",
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
-    items: ["Kayaks", "Paddleboards", "Life Jackets", "Water Toys"]
-  }
-];
-
 export const FeaturedCategories = () => {
+  const { data: products = [] } = useQuery({
+    queryKey: ['featured-products'],
+    queryFn: getFeaturedProducts,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categories = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    for (const product of products) {
+      if (product.category === 'Water Sports') continue; // remove Water Sports
+      if (!groups[product.category]) groups[product.category] = [];
+      groups[product.category].push(product);
+    }
+    return Object.entries(groups).map(([title, items]) => ({
+      title,
+      description: '',
+      image: items[0]?.image_url || '',
+      items: items.slice(0, 4).map(i => i.name),
+    }));
+  }, [products]);
+
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,15 +47,17 @@ export const FeaturedCategories = () => {
           {categories.map((category, index) => (
             <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-video relative overflow-hidden">
-                <img 
-                  src={category.image} 
-                  alt={category.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
+                {category.image && (
+                  <img
+                    src={category.image}
+                    alt={category.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                )}
               </div>
               <CardHeader>
                 <CardTitle className="text-xl">{category.title}</CardTitle>
-                <p className="text-gray-600">{category.description}</p>
+                {category.description && <p className="text-gray-600">{category.description}</p>}
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 mb-4">

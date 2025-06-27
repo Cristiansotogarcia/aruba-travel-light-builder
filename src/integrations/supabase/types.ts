@@ -208,6 +208,7 @@ export type Database = {
           image_url: string | null
           name: string
           price_per_day: number
+          featured: boolean
           availability_status: string | null
           stock_quantity: number
           updated_at: string
@@ -222,6 +223,7 @@ export type Database = {
           image_url?: string | null
           name: string
           price_per_day?: number
+          featured?: boolean
           availability_status?: string | null
           stock_quantity?: number
           updated_at?: string
@@ -236,6 +238,7 @@ export type Database = {
           image_url?: string | null
           name?: string
           price_per_day?: number
+          featured?: boolean
           availability_status?: string | null
           stock_quantity?: number
           updated_at?: string

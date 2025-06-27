@@ -37,7 +37,6 @@ export const Footer = () => {
             <ul className="space-y-2 text-gray-400">
               <li><Link to="/equipment?category=beach" className="hover:text-white transition-colors">Beach Equipment</Link></li>
               <li><Link to="/equipment?category=baby" className="hover:text-white transition-colors">Baby Equipment</Link></li>
-              <li><Link to="/equipment?category=water" className="hover:text-white transition-colors">Water Sports</Link></li>
             </ul>
           </div>
 
