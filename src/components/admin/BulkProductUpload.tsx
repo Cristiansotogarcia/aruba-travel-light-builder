@@ -42,49 +42,16 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     setUploading(true);
     try {
 const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
-      const categoryNames = [...new Set(parsedRows.map(row => row.category).filter(Boolean))];
-      const { data: existingCategories, error: catError } = await supabase
-        .from('equipment_category')
-        .select('id, name')
-        .in('name', categoryNames);
-
-      if (catError) throw catError;
-
-      const existingCategoryMap = new Map(existingCategories.map(c => [c.name, c.id]));
-      const newCategoryNames = categoryNames.filter(name => !existingCategoryMap.has(name));
-
-      if (newCategoryNames.length > 0) {
-        const { data: newCategories, error: newCatError } = await supabase
-          .from('equipment_category')
-          .insert(newCategoryNames.map(name => ({ name })))
-          .select('id, name');
-
-        if (newCatError) throw newCatError;
-        newCategories.forEach(c => existingCategoryMap.set(c.name, c.id));
-      }
-
-      const validationResult = parsedRows.map((row, index) => {
-        if (!row.name) return `Row ${index + 2}: Missing 'name'.`;
-        if (!row.category) return `Row ${index + 2}: Missing 'category'.`;
-        return null;
-      }).filter(Boolean);
-
-      if (validationResult.length > 0) {
-        throw new Error(`CSV validation failed: ${validationResult.join(' ')}`);
-      }
-
-      const products = parsedRows
-        .filter(row => row.category)
-        .map(row => ({
-          name: row.name,
-          description: row.description || null,
-          price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
-          stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-          availability_status: row.availability_status || 'Available',
-          image_url: row.image_url || null,
-          category_id: existingCategoryMap.get(row.category),
-          category: row.category,
-        }));
+      const products = parsedRows.map(row => ({
+        name: row.name,
+        description: row.description || null,
+        price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
+        stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+        availability_status: row.availability_status || 'Available',
+        image_url: row.image_url || null,
+        category_id: null,
+        category: null,
+      }));
 
       if (products.length > 0) {
         const { error } = await supabase.from('equipment').insert(products);
