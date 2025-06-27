@@ -63,6 +63,16 @@ const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
         newCategories.forEach(c => existingCategoryMap.set(c.name, c.id));
       }
 
+      const validationResult = parsedRows.map((row, index) => {
+        if (!row.name) return `Row ${index + 2}: Missing 'name'.`;
+        if (!row.category) return `Row ${index + 2}: Missing 'category'.`;
+        return null;
+      }).filter(Boolean);
+
+      if (validationResult.length > 0) {
+        throw new Error(`CSV validation failed: ${validationResult.join(' ')}`);
+      }
+
       const products = parsedRows
         .filter(row => row.category)
         .map(row => ({
@@ -84,11 +94,11 @@ const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);
       if (onComplete) onComplete();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       toast({
         title: 'Error',
-        description: 'Failed to upload products. Check file format.',
+        description: err.message || 'Failed to upload products. Check file format.',
         variant: 'destructive',
       });
     } finally {
