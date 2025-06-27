@@ -24,7 +24,7 @@ export const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img
-              src={assets.logo || '/lovable-uploads/89b8e502-c516-4f94-841b-813b84bedea8.png'}
+              src={assets.logo || '/placeholder.svg'}
               alt="Travel Light Aruba"
               className="w-[198px] h-[94px] object-contain"
             />
