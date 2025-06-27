@@ -55,9 +55,11 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-2 right-2">
-          <Badge className={getAvailabilityColor(equipment.availability)}>
-            {getAvailabilityText(equipment.availability)}
-          </Badge>
+          {equipment.availability !== 'unavailable' && (
+            <Badge className={getAvailabilityColor(equipment.availability)}>
+              {getAvailabilityText(equipment.availability)}
+            </Badge>
+          )}
         </div>
       </div>
       
@@ -98,7 +100,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             className="w-full" 
             disabled={equipment.availability === 'unavailable'}
           >
-            {equipment.availability === 'unavailable' ? 'Out of Stock' : 'Book Now'}
+            {'Book Now'}
           </Button>
         </Link>
       </CardFooter>
