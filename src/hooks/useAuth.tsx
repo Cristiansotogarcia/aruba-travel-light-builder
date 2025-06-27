@@ -58,10 +58,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, []);
 
-  const loadUserProfile = useCallback(async (userId: string) => {
-    setLoading(true);
+  const loadUserProfile = useCallback(async (userId: string, showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
-      console.log('Loading profile for user:', userId);
+      console.log('Loading profile for user:', userId, 'Show Loading:', showLoading);
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
@@ -102,7 +102,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentUser);
 
         if (currentUser) {
-          await loadUserProfile(currentUser.id);
+          // Show loading indicator only on initial sign-in
+          const showLoading = event === 'SIGNED_IN' && !user;
+          await loadUserProfile(currentUser.id, showLoading);
         } else {
           setProfile(null);
           setPermissions({});
