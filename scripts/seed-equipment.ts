@@ -19,7 +19,9 @@ interface Equipment {
   price_per_day: number;
   description: string;
   images: string[];
+  image_url: string;
   availability: boolean;
+  availability_status: 'Available' | 'Low Stock' | 'Out of Stock';
 }
 
 const equipmentData: Equipment[] = [
@@ -30,7 +32,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 15,
     description: 'Large UV-protection umbrella perfect for family beach days',
     images: ['https://images.unsplash.com/photo-1500375592092-40eb2168fd21'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Beach Chair Set (2)',
@@ -38,7 +42,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 20,
     description: 'Comfortable reclining beach chairs for two people',
     images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Premium Cooler (48qt)',
@@ -46,7 +52,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 25,
     description: 'Large insulated cooler keeps drinks cold all day',
     images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Snorkel Gear Set',
@@ -54,7 +62,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 18,
     description: 'Complete snorkeling set with mask, snorkel, and fins',
     images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
+    availability: true,
+    availability_status: 'Available'
   },
 
   // Baby Equipment
@@ -64,7 +74,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 35,
     description: 'Rugged stroller perfect for beach and city exploring',
     images: ['https://images.unsplash.com/photo-1721322800607-8c38375eef04'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Convertible Car Seat',
@@ -72,7 +84,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 40,
     description: 'Safety-certified car seat for infants and toddlers',
     images: ['https://images.unsplash.com/photo-1586015555751-63bb77f4322a'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Portable Baby Crib',
@@ -80,7 +94,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 30,
     description: 'Lightweight portable crib for safe baby sleep',
     images: ['https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'High Chair',
@@ -88,7 +104,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 22,
     description: 'Adjustable high chair for mealtime comfort',
     images: ['https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e'],
-    availability: false
+    image_url: 'https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e',
+    availability: false,
+    availability_status: 'Out of Stock'
   },
 
   // Water Sports
@@ -98,7 +116,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 45,
     description: 'Stable single-person kayak perfect for exploring',
     images: ['https://images.unsplash.com/photo-1506744038136-46273834b3fb'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Stand-up Paddleboard',
@@ -106,7 +126,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 40,
     description: 'Inflatable SUP board with pump and paddle',
     images: ['https://images.unsplash.com/photo-1544551763-46a013bb70d5'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Life Jacket Set (4)',
@@ -114,7 +136,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 15,
     description: 'Coast Guard approved life jackets in various sizes',
     images: ['https://images.unsplash.com/photo-1530549387789-4c1017266635'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635',
+    availability: true,
+    availability_status: 'Available'
   },
   {
     name: 'Water Toys Bundle',
@@ -122,7 +146,9 @@ const equipmentData: Equipment[] = [
     price_per_day: 28,
     description: 'Fun water toys including floats and games',
     images: ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b'],
-    availability: true
+    image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b',
+    availability: true,
+    availability_status: 'Available'
   }
 ];
 
