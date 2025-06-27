@@ -197,7 +197,7 @@ export type Database = {
         }
         Relationships: []
       }
-      products: {
+      equipment: {
         Row: {
           availability: boolean
           category: string
