@@ -45,7 +45,7 @@ const useBooking = () => {
       };
 
       const { data, error } = await supabase
-        .from('products')
+        .from('equipment')
         .select('id, name, description, price_per_day, category, images, availability, created_at, updated_at');
 
       if (error) {
