@@ -56,7 +56,7 @@ export const ProductManagement = () => {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   // Adjusted formState to align with the global Product type
-  const [formState, setFormState] = useState<Omit<Product, 'id' | 'created_at' | 'updated_at'> & { image_url_temp?: string }> ({
+  const [formState, setFormState] = useState<Omit<Product, 'id' | 'created_at' | 'updated_at'> & { image_url_temp?: string; imageFile?: File | null }> ({
     name: '',
     description: '',
     category: '',
@@ -64,11 +64,23 @@ export const ProductManagement = () => {
     availability_status: 'Available', // Default to a valid AvailabilityStatus
     stock_quantity: 0,
     image_url: '', // Use image_url directly
-    image_url_temp: '' // Keep for temporary input if needed, or remove if image_url is sufficient
+    image_url_temp: '',
+    imageFile: null
   });
 
   const { hasPermission } = useAuth();
   const { toast } = useToast();
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(`products/${Date.now()}-${file.name}`, file, { upsert: true });
+    if (error || !data) return null;
+    const urlRes = supabase.storage
+      .from('product-images')
+      .getPublicUrl(data.path);
+    return urlRes.data.publicUrl;
+  };
 
   useEffect(() => {
     if (hasPermission('ProductManagement')) {
@@ -101,6 +113,11 @@ export const ProductManagement = () => {
 
   const handleCreateProduct = async () => {
     try {
+      let imageUrl = formState.image_url_temp || formState.image_url || null;
+      if (formState.imageFile) {
+        const uploaded = await uploadImage(formState.imageFile);
+        if (uploaded) imageUrl = uploaded;
+      }
       const productDataToSave = {
         name: formState.name,
         description: formState.description || null, // Allow null for description if empty
@@ -108,7 +125,7 @@ export const ProductManagement = () => {
         price_per_day: formState.price_per_day,
         availability_status: formState.availability_status as AvailabilityStatus,
         stock_quantity: formState.stock_quantity,
-        image_url: formState.image_url_temp || formState.image_url || null, // Use null for DB if empty
+        image_url: imageUrl,
       };
 
       const { data, error } = await supabase
@@ -131,6 +148,7 @@ export const ProductManagement = () => {
         stock_quantity: 0,
         image_url: '',
         image_url_temp: '',
+        imageFile: null,
       });
 
       toast({
@@ -158,6 +176,7 @@ export const ProductManagement = () => {
       stock_quantity: product.stock_quantity,
       image_url: product.image_url || '',
       image_url_temp: product.image_url || '',
+      imageFile: null,
     });
     setIsEditDialogOpen(true);
   };
@@ -166,6 +185,11 @@ export const ProductManagement = () => {
     if (!editingProduct) return;
 
     try {
+      let imageUrl = formState.image_url_temp || formState.image_url || null;
+      if (formState.imageFile) {
+        const uploaded = await uploadImage(formState.imageFile);
+        if (uploaded) imageUrl = uploaded;
+      }
       const productDataToUpdate: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>> = {
         name: formState.name,
         description: formState.description || null,
@@ -173,7 +197,7 @@ export const ProductManagement = () => {
         price_per_day: formState.price_per_day,
         availability_status: formState.availability_status as AvailabilityStatus,
         stock_quantity: formState.stock_quantity,
-        image_url: formState.image_url_temp || formState.image_url || null,
+        image_url: imageUrl,
       };
 
       const { data, error } = await supabase
@@ -189,6 +213,7 @@ export const ProductManagement = () => {
       setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProduct : p));
       setIsEditDialogOpen(false);
       setEditingProduct(null);
+      setFormState(prev => ({ ...prev, imageFile: null }));
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -333,6 +358,15 @@ export const ProductManagement = () => {
           />
         </div>
         <div>
+          <Label htmlFor="image_file">Upload Image</Label>
+          <Input
+            id="image_file"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFormState({ ...formState, imageFile: e.target.files?.[0] || null })}
+          />
+        </div>
+        <div>
           <Label htmlFor="product-availability_status">Availability Status</Label>
           <Select
             value={formState.availability_status}
@@ -401,12 +435,12 @@ export const ProductManagement = () => {
         <Dialog open={isCreateDialogOpen} onOpenChange={(isOpen) => {
           setIsCreateDialogOpen(isOpen);
           if (!isOpen) {
-            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', image_url_temp: '' });
+            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', image_url_temp: '', imageFile: null });
           }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => {
-              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', image_url_temp: '' });
+              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', image_url_temp: '', imageFile: null });
               setIsCreateDialogOpen(true);
             }}>
               <Plus className="h-4 w-4 mr-2" />
@@ -434,7 +468,10 @@ export const ProductManagement = () => {
         {/* Edit Product Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={(isOpen) => {
           setIsEditDialogOpen(isOpen);
-          if (!isOpen) setEditingProduct(null); // Clear editing state when dialog closes
+          if (!isOpen) {
+            setEditingProduct(null);
+            setFormState(prev => ({ ...prev, imageFile: null }));
+          }
         }}>
           {editingProduct && renderProductForm(handleUpdateProduct, "Edit Product", "Save Changes")}
         </Dialog>
