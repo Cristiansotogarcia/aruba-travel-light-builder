@@ -134,7 +134,7 @@ export const ProductManagement = () => {
         .from('equipment')
         .insert([productDataToSave])
         .select()
-        .single(); 
+        .single();
 
       if (error) throw error;
       // Ensure new data conforms to Product type using the helper
