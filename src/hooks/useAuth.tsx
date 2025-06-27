@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [initialAuthEventProcessed, setInitialAuthEventProcessed] = useState(false);
 
   const loadPermissions = useCallback(async (role: UserRole) => {
     try {
@@ -102,13 +103,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentUser);
 
         if (currentUser) {
-          // Show loading indicator only on initial sign-in
-          const showLoading = event === 'SIGNED_IN' && !user;
+          const showLoading = event === 'SIGNED_IN' && !initialAuthEventProcessed;
           await loadUserProfile(currentUser.id, showLoading);
+          if (event === 'SIGNED_IN') {
+            setInitialAuthEventProcessed(true);
+          }
         } else {
           setProfile(null);
           setPermissions({});
           setLoading(false);
+          setInitialAuthEventProcessed(false);
         }
       }
     );
@@ -121,6 +125,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (initialUser) {
         await loadUserProfile(initialUser.id);
+        setInitialAuthEventProcessed(true);
       } else {
         setLoading(false);
       }
