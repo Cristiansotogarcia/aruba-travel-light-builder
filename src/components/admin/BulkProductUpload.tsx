@@ -10,10 +10,10 @@ function parseCsv(file: File): Promise<Record<string, string>[]> {
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: Papa.ParseResult<any>) => {
         resolve(results.data as Record<string, string>[]);
       },
-      error: (err) => {
+      error: (err: Error) => {
         reject(err);
       },
     });
