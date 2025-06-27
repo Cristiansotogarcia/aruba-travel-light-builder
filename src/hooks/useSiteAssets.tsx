@@ -39,9 +39,10 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
     if (!error && data) {
       const result: SiteAssets = {};
       data.forEach(({ image_key, file_path }) => {
+        const path = file_path.startsWith(`${image_key}/`) ? file_path : `${image_key}/${file_path}`;
         const { data: url } = supabase.storage
           .from('site-assets')
-          .getPublicUrl(`${image_key}/${file_path}`);
+          .getPublicUrl(path);
         (result as any)[image_key] = url.publicUrl;
       });
       if (titleData?.content) {
