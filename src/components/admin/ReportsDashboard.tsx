@@ -244,7 +244,7 @@ export const ReportsDashboard: React.FC = () => {
       }
 
       const { data: productsData, error: productsError } = await supabase
-        .from('products')
+        .from('equipment')
         .select('*'); // Select all columns including stock_quantity
       if (productsError) throw productsError;
       
