@@ -42,20 +42,41 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     setUploading(true);
     try {
 const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
-const products = parsedRows.map(row => ({
-  name: row.name,
-  description: row.description || null,
-  category: row.category,
-  price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
-  stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-  availability_status: row.availability_status || 'Available',
-  image_url: row.image_url || null,
-}));
+      const categoryNames = [...new Set(parsedRows.map(row => row.category).filter(Boolean))];
+      const { data: existingCategories, error: catError } = await supabase
+        .from('equipment_category')
+        .select('id, name')
+        .in('name', categoryNames);
 
-if (products.length > 0) {
-  const { error } = await supabase.from('equipment').insert(products);
-  if (error) throw error;
-}
+      if (catError) throw catError;
+
+      const existingCategoryMap = new Map(existingCategories.map(c => [c.name, c.id]));
+      const newCategoryNames = categoryNames.filter(name => !existingCategoryMap.has(name));
+
+      if (newCategoryNames.length > 0) {
+        const { data: newCategories, error: newCatError } = await supabase
+          .from('equipment_category')
+          .insert(newCategoryNames.map(name => ({ name })))
+          .select('id, name');
+
+        if (newCatError) throw newCatError;
+        newCategories.forEach(c => existingCategoryMap.set(c.name, c.id));
+      }
+
+      const products = parsedRows.map(row => ({
+        name: row.name,
+        description: row.description || null,
+        price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
+        stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+        availability_status: row.availability_status || 'Available',
+        image_url: row.image_url || null,
+        category_id: row.category ? existingCategoryMap.get(row.category) : null,
+      }));
+
+      if (products.length > 0) {
+        const { error } = await supabase.from('equipment').insert(products);
+        if (error) throw error;
+      }
 
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);
