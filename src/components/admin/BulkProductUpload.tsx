@@ -26,7 +26,6 @@ interface Props {
 
 export const BulkProductUpload = ({ onComplete }: Props) => {
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
@@ -36,22 +35,6 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     try {
       const rows = await parseCsv(csvFile);
       for (const row of rows) {
-        const imageName = row.image || row.image_file;
-        let image_url: string | null = null;
-        if (imageName && imageFiles) {
-          const file = Array.from(imageFiles).find(f => f.name === imageName);
-          if (file) {
-            const { data, error } = await supabase.storage
-              .from('product-images')
-              .upload(`products/${Date.now()}-${file.name}`, file);
-            if (!error && data) {
-              const urlRes = supabase.storage
-                .from('product-images')
-                .getPublicUrl(data.path);
-              image_url = urlRes.data.publicUrl;
-            }
-          }
-        }
         await supabase.from('products').insert({
           name: row.name,
           description: row.description || null,
@@ -59,12 +42,11 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
           price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
           stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
           availability_status: row.availability_status || 'Available',
-          image_url,
+          image_url: row.image_url || null,
         });
       }
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);
-      setImageFiles(null);
       if (onComplete) onComplete();
     } catch (err) {
       console.error(err);
@@ -82,9 +64,6 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     <div className="space-y-4">
       <div>
         <Input type="file" accept=".csv" onChange={e => setCsvFile(e.target.files?.[0] || null)} />
-      </div>
-      <div>
-        <Input type="file" accept="image/*" multiple onChange={e => setImageFiles(e.target.files)} />
       </div>
       <Button onClick={handleUpload} disabled={!csvFile || uploading}>
         {uploading ? 'Uploading...' : 'Upload'}
