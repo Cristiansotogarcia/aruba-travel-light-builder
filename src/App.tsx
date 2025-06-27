@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
+import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import Index from "./pages/Index";
 import Equipment from "./pages/Equipment";
 import Book from "./pages/Book";
@@ -23,10 +24,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <ErrorBoundary>
-          <BrowserRouter>
+        <SiteAssetsProvider>
+          <Toaster />
+          <Sonner />
+          <ErrorBoundary>
+            <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/equipment" element={<Equipment />} />
@@ -53,6 +55,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
         </ErrorBoundary>
+        </SiteAssetsProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
