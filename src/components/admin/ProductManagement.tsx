@@ -92,7 +92,7 @@ export const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
-        .from('products')
+        .from('equipment')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -131,7 +131,7 @@ export const ProductManagement = () => {
       };
 
       const { data, error } = await supabase
-        .from('products')
+        .from('equipment')
         .insert([productDataToSave])
         .select()
         .single(); 
@@ -206,7 +206,7 @@ export const ProductManagement = () => {
       };
 
       const { data, error } = await supabase
-        .from('products')
+        .from('equipment')
         .update(productDataToUpdate)
         .eq('id', editingProduct.id)
         .select()
@@ -237,7 +237,7 @@ export const ProductManagement = () => {
     if (!productToDelete) return;
     try {
       const { error } = await supabase
-        .from('products')
+        .from('equipment')
         .delete()
         .eq('id', productToDelete.id);
 
@@ -263,7 +263,7 @@ export const ProductManagement = () => {
     const newStatus: AvailabilityStatus = product.availability_status === 'Available' ? 'Out of Stock' : 'Available';
     try {
       const { data, error } = await supabase
-        .from('products')
+        .from('equipment')
         .update({ availability_status: newStatus } as any) // Cast to any to bypass incorrect type inference
         .eq('id', product.id)
         .select()

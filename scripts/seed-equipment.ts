@@ -157,7 +157,7 @@ async function seedEquipment() {
 
   // Check if equipment already exists
   const { data: existingEquipment, error: checkError } = await supabaseAdmin
-    .from('products')
+    .from('equipment')
     .select('name')
     .limit(1);
 
@@ -173,7 +173,7 @@ async function seedEquipment() {
 
   // Insert equipment data
   const { error: insertError } = await supabaseAdmin
-    .from('products')
+    .from('equipment')
     .insert(equipmentData);
 
   if (insertError) {
