@@ -53,7 +53,7 @@ const products = parsedRows.map(row => ({
 }));
 
 if (products.length > 0) {
-  const { error } = await supabase.from('products').insert(products);
+  const { error } = await supabase.from('equipment').insert(products);
   if (error) throw error;
 }
 
