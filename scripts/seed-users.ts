@@ -4,7 +4,8 @@ import { randomUUID } from 'crypto';
 
 dotenv.config();
 
-const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL;
+// Use SUPABASE_URL to match the environment variable name
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {

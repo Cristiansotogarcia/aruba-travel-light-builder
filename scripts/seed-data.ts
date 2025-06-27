@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 // import { Customer, Equipment, Booking } from '../src/lib/queries/types';
 
 const supabaseAdmin = createClient(
-  process.env.VITE_PUBLIC_SUPABASE_URL!,
+  (process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL)!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
