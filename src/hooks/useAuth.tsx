@@ -103,38 +103,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentUser);
 
         if (currentUser) {
-          const showLoading = event === 'SIGNED_IN' && !initialAuthEventProcessed;
+          // Show loading indicator on initial session load or sign-in
+          const showLoading = (event === 'INITIAL_SESSION' || event === 'SIGNED_IN');
           await loadUserProfile(currentUser.id, showLoading);
-          if (event === 'SIGNED_IN') {
-            setInitialAuthEventProcessed(true);
-          }
         } else {
           setProfile(null);
           setPermissions({});
           setLoading(false);
-          setInitialAuthEventProcessed(false);
         }
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.email);
-      setSession(session);
-      const initialUser = session?.user ?? null;
-      setUser(initialUser);
-
-      if (initialUser) {
-        await loadUserProfile(initialUser.id);
-        setInitialAuthEventProcessed(true);
-      } else {
-        setLoading(false);
-      }
-    }).catch(error => {
-      console.error("Error getting initial session:", error);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [loadUserProfile]);
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = 'Booker'): Promise<{ success: boolean; error?: string }> => {

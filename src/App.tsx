@@ -18,7 +18,13 @@ import BookerDashboard from "./pages/BookerDashboard"; // Import BookerDashboard
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/layout/ProtectedRoute"; // Import ProtectedRoute
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
