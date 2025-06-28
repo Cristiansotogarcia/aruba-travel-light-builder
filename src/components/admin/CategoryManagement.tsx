@@ -4,209 +4,203 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+
+interface SubCategory {
+  id: string;
+  name: string;
+  sort_order: number | null;
+  category_id: string;
+}
 
 interface Category {
   id: string;
   name: string;
   description: string | null;
   sort_order: number | null;
+  sub_categories: SubCategory[];
 }
 
 export const CategoryManagement = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formState, setFormState] = useState({ name: '', description: '', sort_order: 0 });
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
+  const [parentCategory, setParentCategory] = useState<Category | null>(null);
+
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', sort_order: 0 });
+  const [subCategoryForm, setSubCategoryForm] = useState({ name: '', sort_order: 0 });
+
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (hasPermission('CategoryManagement')) {
-      fetchCategories();
+      fetchData();
     }
   }, [hasPermission]);
 
-  const fetchCategories = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: cats, error: catError } = await supabase
         .from('equipment_category')
         .select('*')
         .order('sort_order', { ascending: true, nullsFirst: false });
 
-      if (error) throw error;
-      setCategories(data as Category[] || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive",
+      if (catError) throw catError;
+
+      const { data: subCats, error: subCatError } = await supabase
+        .from('equipment_sub_category')
+        .select('*')
+        .order('sort_order', { ascending: true, nullsFirst: false });
+
+      if (subCatError) throw subCatError;
+
+      const categoryMap = new Map(cats.map(c => [c.id, { ...c, sub_categories: [] }]));
+      subCats.forEach(sc => {
+        const cat = categoryMap.get(sc.category_id);
+        if (cat) {
+          cat.sub_categories.push(sc);
+        }
       });
+
+      setCategories(Array.from(categoryMap.values()));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({ title: "Error", description: "Failed to load data", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateCategory = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('equipment_category')
-        .insert([{ ...formState, sort_order: formState.sort_order || 0 }])
-        .select()
-        .single();
+  // Category Handlers
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryForm({ name: category.name, description: category.description || '', sort_order: category.sort_order || 0 });
+    setIsCategoryDialogOpen(true);
+  };
 
-      if (error) throw error;
-      setCategories(prev => [...prev, data as Category]);
-      setIsCreateDialogOpen(false);
-      setFormState({ name: '', description: '', sort_order: 0 });
-      toast({
-        title: "Success",
-        description: "Category created successfully",
-      });
-    } catch (error) {
-      console.error('Error creating category:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create category",
-        variant: "destructive",
-      });
+  const handleSaveCategory = async () => {
+    const dataToSave = { ...categoryForm, sort_order: categoryForm.sort_order || 0 };
+    let error;
+    if (editingCategory) {
+      ({ error } = await supabase.from('equipment_category').update(dataToSave).eq('id', editingCategory.id));
+    } else {
+      ({ error } = await supabase.from('equipment_category').insert([dataToSave]));
+    }
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to save category", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Category saved" });
+      setIsCategoryDialogOpen(false);
+      setEditingCategory(null);
+      fetchData();
     }
   };
 
-  const handleUpdateCategory = async (category: Category) => {
-    try {
-      const { error } = await supabase
-        .from('equipment_category')
-        .update({ sort_order: category.sort_order, name: category.name, description: category.description })
-        .eq('id', category.id);
-
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: `Category "${category.name}" updated.`,
-      });
-    } catch (error) {
-      console.error('Error updating category:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update category.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSortOrderChange = (id: string, sort_order: number) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, sort_order } : c));
+  // Sub-Category Handlers
+  const handleEditSubCategory = (subCategory: SubCategory, category: Category) => {
+    setEditingSubCategory(subCategory);
+    setParentCategory(category);
+    setSubCategoryForm({ name: subCategory.name, sort_order: subCategory.sort_order || 0 });
+    setIsSubCategoryDialogOpen(true);
   };
   
-  const handleNameChange = (id: string, name: string) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, name } : c));
+  const handleAddSubCategory = (category: Category) => {
+    setEditingSubCategory(null);
+    setParentCategory(category);
+    setSubCategoryForm({ name: '', sort_order: 0 });
+    setIsSubCategoryDialogOpen(true);
   };
 
-  const handleDescriptionChange = (id: string, description: string) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, description } : c));
+  const handleSaveSubCategory = async () => {
+    if (!parentCategory) return;
+    const dataToSave = { ...subCategoryForm, category_id: parentCategory.id, sort_order: subCategoryForm.sort_order || 0 };
+    let error;
+    if (editingSubCategory) {
+      ({ error } = await supabase.from('equipment_sub_category').update(dataToSave).eq('id', editingSubCategory.id));
+    } else {
+      ({ error } = await supabase.from('equipment_sub_category').insert([dataToSave]));
+    }
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to save sub-category", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Sub-category saved" });
+      setIsSubCategoryDialogOpen(false);
+      setEditingSubCategory(null);
+      setParentCategory(null);
+      fetchData();
+    }
   };
 
-  if (!hasPermission('CategoryManagement')) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">You don't have permission to access category management.</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-8 w-1/4" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
-  }
+  if (loading) return <Skeleton className="h-64 w-full" />;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Category Management</CardTitle>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Category</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="name">Category Name</Label>
-                <Input
-                  id="name"
-                  value={formState.name}
-                  onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-                  placeholder="Enter category name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={formState.description}
-                  onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-                  placeholder="Enter category description"
-                />
-              </div>
-              <div>
-                <Label htmlFor="sort_order">Sort Order</Label>
-                <Input
-                  id="sort_order"
-                  type="number"
-                  value={formState.sort_order}
-                  onChange={(e) => setFormState({ ...formState, sort_order: Number(e.target.value) })}
-                  placeholder="0"
-                />
-              </div>
-              <Button onClick={handleCreateCategory} className="w-full">
-                Create Category
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CardTitle>Category & Sub-Category Management</CardTitle>
+        <Button onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', sort_order: 0 }); setIsCategoryDialogOpen(true); }}>
+          <Plus className="h-4 w-4 mr-2" /> Add Category
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {categories.map((category) => (
-            <div key={category.id} className="flex items-center space-x-4">
-              <Input
-                type="number"
-                value={category.sort_order || ''}
-                onChange={(e) => handleSortOrderChange(category.id, Number(e.target.value))}
-                className="w-20"
-              />
-              <Input
-                value={category.name}
-                onChange={(e) => handleNameChange(category.id, e.target.value)}
-                className="flex-grow"
-              />
-              <Input
-                value={category.description || ''}
-                onChange={(e) => handleDescriptionChange(category.id, e.target.value)}
-                className="flex-grow"
-              />
-              <Button onClick={() => handleUpdateCategory(category)}>Save</Button>
+        {categories.map(category => (
+          <div key={category.id} className="p-4 border rounded-lg mb-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">{category.name} (Order: {category.sort_order})</h3>
+              <div>
+                <Button variant="ghost" size="sm" onClick={() => handleEditCategory(category)}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleAddSubCategory(category)}><Plus className="h-4 w-4" /></Button>
+              </div>
             </div>
-          ))}
-        </div>
+            <div className="pl-4 mt-2 space-y-2">
+              {category.sub_categories.map(sub => (
+                <div key={sub.id} className="flex justify-between items-center p-2 border rounded-md">
+                  <span>{sub.name} (Order: {sub.sort_order})</span>
+                  <Button variant="ghost" size="sm" onClick={() => handleEditSubCategory(sub, category)}><Pencil className="h-4 w-4" /></Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </CardContent>
+
+      {/* Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Edit' : 'Create'} Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input placeholder="Category Name" value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} />
+            <Input placeholder="Description" value={categoryForm.description} onChange={e => setCategoryForm({...categoryForm, description: e.target.value})} />
+            <Input type="number" placeholder="Sort Order" value={categoryForm.sort_order} onChange={e => setCategoryForm({...categoryForm, sort_order: Number(e.target.value)})} />
+            <Button onClick={handleSaveCategory}>Save Category</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-Category Dialog */}
+      <Dialog open={isSubCategoryDialogOpen} onOpenChange={setIsSubCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingSubCategory ? 'Edit' : 'Create'} Sub-Category for {parentCategory?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input placeholder="Sub-Category Name" value={subCategoryForm.name} onChange={e => setSubCategoryForm({...subCategoryForm, name: e.target.value})} />
+            <Input type="number" placeholder="Sort Order" value={subCategoryForm.sort_order} onChange={e => setSubCategoryForm({...subCategoryForm, sort_order: Number(e.target.value)})} />
+            <Button onClick={handleSaveSubCategory}>Save Sub-Category</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

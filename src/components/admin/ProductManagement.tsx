@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,45 +10,32 @@ import { Plus, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
-// import { LoadingState } from '@/components/ui/LoadingState'; // Removed LoadingState
-import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton
+import { Skeleton } from '@/components/ui/skeleton';
 import { BulkProductUpload } from './BulkProductUpload';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ProductCard } from './ProductCard';
-import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types'; // Import global Product and AvailabilityStatus
+import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
 
-// Use the global Product type
 interface Product extends GlobalProduct {
-  sub_category?: string;
+  sub_category_id?: string;
   sort_order?: number;
 }
 
-// Helper function to map Supabase data to Product type
-const mapSupabaseToProduct = (data: any): Product => {
-  return {
-    id: data.id,
-    name: data.name,
-    description: data.description ?? '',
-    price_per_day: data.price_per_day,
-    category: data.category,
-    image_url: data.image_url ?? '', // Default to empty string if null/undefined
-    stock_quantity: data.stock_quantity ?? 0, // Default to 0 if null/undefined
-    availability_status: data.availability_status ?? 'Available', // Default to 'Available'
-    featured: data.featured ?? false,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    sub_category: data.sub_category,
-    sort_order: data.sort_order,
-  };
-};
+interface Category {
+  id: string;
+  name: string;
+}
 
-const categories = [
-  'Baby Equipment',
-  'Beach Equipment'
-];
+interface SubCategory {
+  id: string;
+  name: string;
+  category_id: string;
+}
 
 export const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -57,510 +43,159 @@ export const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
-  // Adjusted formState to align with the global Product type
-  const [formState, setFormState] = useState<Omit<Product, 'id' | 'created_at' | 'updated_at'> & { image_url_temp?: string; imageFile?: File | null }> ({
+  const [formState, setFormState] = useState<any>({
     name: '',
     description: '',
-    category: '',
+    category_id: '',
+    sub_category_id: '',
     price_per_day: 0,
-    availability_status: 'Available', // Default to a valid AvailabilityStatus
+    availability_status: 'Available',
     stock_quantity: 0,
-    image_url: '', // Use image_url directly
+    image_url: '',
     featured: false,
-    image_url_temp: '',
-    imageFile: null,
-    sub_category: '',
     sort_order: 0,
+    imageFile: null,
   });
 
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
-  const uploadImage = async (file: File): Promise<string | null> => {
-    const { data, error } = await supabase.storage
-      .from('product-images')
-      .upload(`products/${Date.now()}-${file.name}`, file, { upsert: true });
-    if (error || !data) return null;
-    const urlRes = supabase.storage
-      .from('product-images')
-      .getPublicUrl(data.path);
-    return urlRes.data.publicUrl;
-  };
-
   useEffect(() => {
     if (hasPermission('ProductManagement')) {
-      fetchProducts();
+      fetchData();
     }
   }, [hasPermission]);
 
-  const fetchProducts = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('equipment')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data: productsData, error: productsError } = await supabase.from('equipment').select('*, equipment_category(name), equipment_sub_category(name)');
+      if (productsError) throw productsError;
+      setProducts(productsData.map(p => ({...p, category: p.equipment_category?.name, sub_category: p.equipment_sub_category?.name })));
 
-      if (error) throw error;
-      // Ensure fetched data conforms to Product type using the helper
-      const fetchedProducts: Product[] = data ? data.map(mapSupabaseToProduct) : [];
-      setProducts(fetchedProducts);
+      const { data: cats, error: catError } = await supabase.from('equipment_category').select('*');
+      if (catError) throw catError;
+      setCategories(cats);
+
+      const { data: subCats, error: subCatError } = await supabase.from('equipment_sub_category').select('*');
+      if (subCatError) throw subCatError;
+      setSubCategories(subCats);
+
     } catch (error) {
-      console.error('Error fetching products:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load products",
-        variant: "destructive",
-      });
+      console.error('Error fetching data:', error);
+      toast({ title: "Error", description: "Failed to load data", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateProduct = async () => {
-    try {
-      let imageUrl = formState.image_url_temp || formState.image_url || null;
-      if (formState.imageFile) {
-        const uploaded = await uploadImage(formState.imageFile);
-        if (uploaded) imageUrl = uploaded;
+  const handleSaveProduct = async () => {
+    let imageUrl = formState.image_url;
+    if (formState.imageFile) {
+      const { data, error } = await supabase.storage.from('product-images').upload(`products/${Date.now()}-${formState.imageFile.name}`, formState.imageFile, { upsert: true });
+      if (error || !data) {
+        toast({ title: "Error", description: "Failed to upload image", variant: "destructive" });
+        return;
       }
-      const productDataToSave = {
-        name: formState.name,
-        description: formState.description || null, // Allow null for description if empty
-        category: formState.category,
-        price_per_day: formState.price_per_day,
-        availability_status: formState.availability_status as AvailabilityStatus,
-        stock_quantity: formState.stock_quantity,
-        image_url: imageUrl,
-        featured: formState.featured,
-        sub_category: formState.sub_category,
-        sort_order: formState.sort_order,
-      };
+      imageUrl = supabase.storage.from('product-images').getPublicUrl(data.path).data.publicUrl;
+    }
 
-      const { data, error } = await supabase
-        .from('equipment')
-        .insert([productDataToSave])
-        .select()
-        .single();
+    const { id, category, sub_category, imageFile, ...rest } = formState;
+    const dataToSave = { ...rest, image_url: imageUrl, category_id: formState.category_id };
 
-      if (error) throw error;
-      // Ensure new data conforms to Product type using the helper
-      const newProduct: Product = mapSupabaseToProduct(data);
-      setProducts(prev => [newProduct, ...prev]);
+    let error;
+    if (editingProduct) {
+      ({ error } = await supabase.from('equipment').update(dataToSave).eq('id', editingProduct.id));
+    } else {
+      ({ error } = await supabase.from('equipment').insert([dataToSave]));
+    }
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to save product", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Product saved" });
+      setIsEditDialogOpen(false);
       setIsCreateDialogOpen(false);
-      setFormState({
-        name: '',
-        description: '',
-        category: '',
-        price_per_day: 0,
-        availability_status: 'Available',
-        stock_quantity: 0,
-        image_url: '',
-        featured: false,
-        image_url_temp: '',
-        imageFile: null,
-        sub_category: '',
-        sort_order: 0,
-      });
-
-      toast({
-        title: "Success",
-        description: "Product created successfully",
-      });
-    } catch (error) {
-      console.error('Error creating product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create product",
-        variant: "destructive",
-      });
+      setEditingProduct(null);
+      fetchData();
     }
   };
-
-  const handleEditProduct = (product: Product) => {
+  
+  const handleEditProduct = (product: any) => {
     setEditingProduct(product);
     setFormState({
-      name: product.name,
-      description: product.description || '',
-      category: product.category,
-      price_per_day: product.price_per_day,
-      availability_status: product.availability_status || 'Available',
-      stock_quantity: product.stock_quantity,
-      image_url: product.image_url || '',
-      image_url_temp: product.image_url || '',
-      featured: product.featured ?? false,
+      ...product,
+      category_id: product.category_id || '',
+      sub_category_id: product.sub_category_id || '',
       imageFile: null,
-      sub_category: (product as any).sub_category || '',
-      sort_order: (product as any).sort_order || 0,
     });
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateProduct = async () => {
-    if (!editingProduct) return;
-
-    try {
-      let imageUrl = formState.image_url_temp || formState.image_url || null;
-      if (formState.imageFile) {
-        const uploaded = await uploadImage(formState.imageFile);
-        if (uploaded) imageUrl = uploaded;
-      }
-      const productDataToUpdate: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>> = {
-        name: formState.name,
-        description: formState.description || null,
-        category: formState.category,
-        price_per_day: formState.price_per_day,
-        availability_status: formState.availability_status as AvailabilityStatus,
-        stock_quantity: formState.stock_quantity,
-        image_url: imageUrl,
-        featured: formState.featured,
-        sub_category: formState.sub_category,
-        sort_order: formState.sort_order,
-      };
-
-      const { data, error } = await supabase
-        .from('equipment')
-        .update(productDataToUpdate)
-        .eq('id', editingProduct.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      // Ensure updated data conforms to Product type using the helper
-      const updatedProduct: Product = mapSupabaseToProduct(data);
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProduct : p));
-      setIsEditDialogOpen(false);
-      setEditingProduct(null);
-      setFormState(prev => ({ ...prev, imageFile: null }));
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update product",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleDeleteProduct = async () => {
     if (!productToDelete) return;
-    try {
-      const { error } = await supabase
-        .from('equipment')
-        .delete()
-        .eq('id', productToDelete.id);
-
-      if (error) throw error;
-
-      setProducts(prev => prev.filter(p => p.id !== productToDelete.id));
-      setProductToDelete(null); // Close dialog implicitly by resetting this
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
-      });
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete product",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const toggleAvailabilityStatus = async (product: Product) => {
-    const newStatus: AvailabilityStatus = product.availability_status === 'Available' ? 'Out of Stock' : 'Available';
-    try {
-      const { data, error } = await supabase
-        .from('equipment')
-        .update({ availability_status: newStatus } as any) // Cast to any to bypass incorrect type inference
-        .eq('id', product.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Ensure the updated product from DB is used for state update using the helper
-      const updatedProductFromDB: Product = mapSupabaseToProduct(data);
-
-      setProducts(prevProducts => 
-        prevProducts.map(p => p.id === updatedProductFromDB.id ? updatedProductFromDB : p)
-      );
-      toast({
-        title: "Success",
-        description: `Product availability updated to ${newStatus}.`,
-      });
-    } catch (error) {
-      console.error('Error updating product availability:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update product availability.",
-        variant: "destructive",
-      });
+    const { error } = await supabase.from('equipment').delete().eq('id', productToDelete.id);
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Product deleted" });
+      setProductToDelete(null);
+      fetchData();
     }
   };
 
   const renderProductForm = (submitHandler: () => void, title: string, buttonText: string) => (
     <DialogContent>
-      <DialogHeader>
-        <DialogTitle>{title}</DialogTitle>
-      </DialogHeader>
+      <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
       <div className="space-y-4 py-4">
-        <div>
-          <Label htmlFor="name">Product Name</Label>
-          <Input
-            id="name"
-            value={formState.name}
-            onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-            placeholder="Enter product name"
-          />
-        </div>
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={formState.description || ''} // Ensure value is not null for Textarea
-            onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-            placeholder="Enter product description"
-          />
-        </div>
-        <div>
-          <Label htmlFor="category">Category</Label>
-          <Select
-            value={formState.category}
-            onValueChange={(value) => setFormState({ ...formState, category: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="sub_category">Sub Category</Label>
-          <Input
-            id="sub_category"
-            value={formState.sub_category || ''}
-            onChange={(e) => setFormState({ ...formState, sub_category: e.target.value })}
-            placeholder="e.g. Strollers"
-          />
-        </div>
-        <div>
-          <Label htmlFor="sort_order">Sort Order</Label>
-          <Input
-            id="sort_order"
-            type="number"
-            step="1"
-            value={formState.sort_order || 0}
-            onChange={(e) => setFormState({ ...formState, sort_order: Number(e.target.value) })}
-            placeholder="0"
-          />
-        </div>
-        <div>
-          <Label htmlFor="price">Price per Day ($)</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            value={formState.price_per_day}
-            onChange={(e) => setFormState({ ...formState, price_per_day: Number(e.target.value) })}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <Label htmlFor="stock_quantity">Stock Quantity</Label>
-          <Input
-            id="stock_quantity"
-            type="number"
-            step="1"
-            value={formState.stock_quantity}
-            onChange={(e) => setFormState({ ...formState, stock_quantity: Number(e.target.value) })}
-            placeholder="0"
-          />
-        </div>
-        <div>
-          <Label htmlFor="image_url">Image URL</Label>
-          <Input
-            id="image_url"
-            value={formState.image_url_temp || ''} // Ensure value is not null for Input
-            onChange={(e) => setFormState({ ...formState, image_url_temp: e.target.value })}
-            placeholder="Enter image URL (optional)"
-          />
-        </div>
-        <div>
-          <Label htmlFor="image_file">Upload Image</Label>
-          <Input
-            id="image_file"
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFormState({ ...formState, imageFile: e.target.files?.[0] || null })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="product-availability_status">Availability Status</Label>
-          <Select
-            value={formState.availability_status}
-            onValueChange={(value) => setFormState(prev => ({ ...prev, availability_status: value as AvailabilityStatus }))}
-          >
-            <SelectTrigger id="product-availability_status"> {/* Changed ID to be more generic */}
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Available">Available</SelectItem>
-              <SelectItem value="Low Stock">Low Stock</SelectItem>
-              <SelectItem value="Out of Stock">Out of Stock</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <input
-            id="featured"
-            type="checkbox"
-            checked={formState.featured}
-            onChange={(e) => setFormState({ ...formState, featured: e.target.checked })}
-          />
-          <Label htmlFor="featured">Featured</Label>
-        </div>
-        {/* Removed duplicate Select for Availability Status */}
-        <Button onClick={submitHandler} className="w-full">
-          {buttonText}
-        </Button>
+        <Input placeholder="Product Name" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} />
+        <Textarea placeholder="Description" value={formState.description} onChange={e => setFormState({ ...formState, description: e.target.value })} />
+        <Select value={formState.category_id} onValueChange={value => setFormState({ ...formState, category_id: value, sub_category_id: '' })}>
+          <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+          <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={formState.sub_category_id} onValueChange={value => setFormState({ ...formState, sub_category_id: value })}>
+          <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
+          <SelectContent>{subCategories.filter(sc => sc.category_id === formState.category_id).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent>
+        </Select>
+        <Input type="number" placeholder="Price per day" value={formState.price_per_day} onChange={e => setFormState({ ...formState, price_per_day: Number(e.target.value) })} />
+        <Input type="number" placeholder="Stock Quantity" value={formState.stock_quantity} onChange={e => setFormState({ ...formState, stock_quantity: Number(e.target.value) })} />
+        <Input type="number" placeholder="Sort Order" value={formState.sort_order} onChange={e => setFormState({ ...formState, sort_order: Number(e.target.value) })} />
+        <Input type="file" onChange={e => setFormState({ ...formState, imageFile: e.target.files?.[0] })} />
+        <Button onClick={submitHandler} className="w-full">{buttonText}</Button>
       </div>
     </DialogContent>
   );
 
-  if (!hasPermission('ProductManagement')) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">You don't have permission to access product management.</p>
-      </div>
-    );
-  }
-
-  if (loading) { // Moved loading check here
-    return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-8 w-1/4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-8 w-1/3 mt-2" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <Skeleton className="h-96 w-full" />;
 
   return (
-    // <LoadingState isLoading={loading} message="Loading products..."> // Removed LoadingState wrapper
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
+        <h1 className="text-3xl font-bold">Product Management</h1>
+        <div className="flex gap-2">
+          <Button onClick={() => { setEditingProduct(null); setFormState({ name: '', description: '', category_id: '', sub_category_id: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, sort_order: 0, imageFile: null }); setIsCreateDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Add Product
+          </Button>
+          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+            <DialogTrigger asChild><Button variant="outline">Bulk Upload</Button></DialogTrigger>
+            <DialogContent><DialogHeader><DialogTitle>Bulk Upload Products</DialogTitle></DialogHeader><BulkProductUpload onComplete={() => { setIsBulkDialogOpen(false); fetchData(); }} /></DialogContent>
+          </Dialog>
         </div>
-        <p className="text-gray-600 mt-1">Manage your equipment inventory</p>
       </div>
-      {/* This div was closing prematurely, now it wraps all subsequent elements */}
-      <div> 
-        <Dialog open={isCreateDialogOpen} onOpenChange={(isOpen) => {
-          setIsCreateDialogOpen(isOpen);
-          if (!isOpen) {
-            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null, sub_category: '', sort_order: 0 });
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null, sub_category: '', sort_order: 0 });
-              setIsCreateDialogOpen(true);
-            }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Button>
-          </DialogTrigger>
-          {renderProductForm(handleCreateProduct, "Create New Product", "Create Product")}
-        </Dialog>
-
-        {/* Bulk Upload Dialog */}
-        <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="ml-2" onClick={() => setIsBulkDialogOpen(true)}>
-              Bulk Upload
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Bulk Upload Products</DialogTitle>
-            </DialogHeader>
-            <BulkProductUpload onComplete={() => { setIsBulkDialogOpen(false); fetchProducts(); }} />
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Product Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={(isOpen) => {
-          setIsEditDialogOpen(isOpen);
-          if (!isOpen) {
-            setEditingProduct(null);
-            setFormState(prev => ({ ...prev, imageFile: null }));
-          }
-        }}>
-          {editingProduct && renderProductForm(handleUpdateProduct, "Edit Product", "Save Changes")}
-        </Dialog>
-
-        {/* Delete Product Confirmation Dialog */}
-        <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => {
-          if (!isOpen) setProductToDelete(null);
-        }}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the product "{productToDelete?.name}".
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setProductToDelete(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteProduct}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.length > 0 ? (
-            products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onEdit={handleEditProduct}
-                onDelete={() => setProductToDelete(product)}
-                onToggleAvailability={toggleAvailabilityStatus}
-              />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No products found. Create your first product to get started.</p>
-            </div>
-          )}
-        </div>
-      </div> {/* Closing the wrapping div */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} onEdit={() => handleEditProduct(product)} onDelete={() => setProductToDelete(product)} onToggleAvailability={() => {}} />
+        ))}
+      </div>
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>{renderProductForm(handleSaveProduct, "Create New Product", "Create Product")}</Dialog>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>{editingProduct && renderProductForm(handleSaveProduct, "Edit Product", "Save Changes")}</Dialog>
+      <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => !isOpen && setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete "{productToDelete?.name}".</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteProduct}>Delete</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-    // </LoadingState> // Removed LoadingState wrapper
   );
 };
 
