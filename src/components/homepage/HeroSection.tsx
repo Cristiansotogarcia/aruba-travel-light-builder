@@ -22,11 +22,6 @@ export const HeroSection = () => {
           From beach gear to baby essentials, we've got everything you need.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/book">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3 shadow-lg">
-              Start Booking
-            </Button>
-          </Link>
           <Link to="/equipment">
             <Button size="lg" variant="outline" className="border-2 border-white bg-white text-blue-600 hover:bg-gray-100 hover:text-blue-700 text-lg px-8 py-3 shadow-lg">
               View Equipment
