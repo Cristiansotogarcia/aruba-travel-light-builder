@@ -10,6 +10,7 @@
 - [x] **View Equipment:** Allow users to browse available equipment with details and images.
 - [x] **Filter & Sort Equipment:** Implement filtering (by category, availability) and sorting (by price, popularity).
 - [x] **Admin - Add/Edit/Delete Equipment:** CRUD operations for equipment in an admin interface.
+- [x] **Sub-category Management:** Added new sub-categories for Beach and Baby equipment.
 
 ### Booking Flow
 - [x] **Create Booking:** Allow customers to select equipment, dates, and create a booking.
