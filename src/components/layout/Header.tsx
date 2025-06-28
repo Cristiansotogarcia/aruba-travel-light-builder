@@ -71,9 +71,6 @@ export const Header = () => {
               </>
             ) : (
               <>
-                <Link to="/book">
-                  <Button>Book Now</Button>
-                </Link>
                 <Link to="/login">
                   <Button variant="outline">Login</Button>
                 </Link>
@@ -142,9 +139,6 @@ export const Header = () => {
                   </>
                 ) : (
                   <>
-                    <Link to="/book" onClick={() => setIsMenuOpen(false)}>
-                      <Button className="w-full">Book Now</Button>
-                    </Link>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                       <Button variant="outline" className="w-full">Login</Button>
                     </Link>

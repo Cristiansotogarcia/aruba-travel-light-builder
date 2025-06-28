@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [initialAuthEventProcessed, setInitialAuthEventProcessed] = useState(false);
 
   const loadPermissions = useCallback(async (role: UserRole) => {
     try {
