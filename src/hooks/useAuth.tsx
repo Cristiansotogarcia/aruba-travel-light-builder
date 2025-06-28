@@ -31,12 +31,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const initialAuthEventHandled = useRef(false);
+
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+
 
   const loadPermissions = useCallback(async (role: UserRole) => {
     try {
@@ -59,8 +60,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, []);
 
-  const loadUserProfile = useCallback(async (userId: string, showLoading = true) => {
-    if (showLoading) setLoading(true);
+  const loadUserProfile = useCallback(async (userId: string) => {
+    setLoading(true);
     try {
       console.log('Loading profile for user:', userId, 'Show Loading:', showLoading);
       const { data: profileData, error } = await supabase
@@ -95,21 +96,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [loadPermissions]);
 
   useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        await loadUserProfile(currentUser.id);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+      async (_event, session) => {
         setSession(session);
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
         if (currentUser) {
-          // Show loading indicator on initial session load or sign-in, but only once.
-          const isInitialEvent = (event === 'INITIAL_SESSION' || event === 'SIGNED_IN');
-          const showLoading = isInitialEvent && !initialAuthEventHandled.current;
-          await loadUserProfile(currentUser.id, showLoading);
-          if (isInitialEvent) {
-            initialAuthEventHandled.current = true;
-          }
+          await loadUserProfile(currentUser.id);
         } else {
           setProfile(null);
           setPermissions({});
