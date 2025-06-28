@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,7 +13,7 @@ interface SubCategory {
   id: string;
   name: string;
   sort_order: number | null;
-  category_id: string;
+  category_id: string | null;
 }
 
 interface Category {
@@ -62,11 +61,13 @@ export const CategoryManagement = () => {
 
       if (subCatError) throw subCatError;
 
-      const categoryMap = new Map(cats.map(c => [c.id, { ...c, sub_categories: [] }]));
+      const categoryMap = new Map(cats.map(c => [c.id, { ...c, sub_categories: [] as SubCategory[] }]));
       subCats.forEach(sc => {
-        const cat = categoryMap.get(sc.category_id);
-        if (cat) {
-          cat.sub_categories.push(sc);
+        if (sc.category_id) {
+          const cat = categoryMap.get(sc.category_id);
+          if (cat) {
+            cat.sub_categories.push(sc);
+          }
         }
       });
 
