@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -88,6 +88,10 @@ export const ProductManagement = () => {
   };
 
   const handleSaveProduct = async () => {
+    if (!formState.category_id) {
+      toast({ title: "Error", description: "Please select a category.", variant: "destructive" });
+      return;
+    }
     let imageUrl = formState.image_url;
     if (formState.imageFile) {
       const { data, error } = await supabase.storage.from('product-images').upload(`products/${Date.now()}-${formState.imageFile.name}`, formState.imageFile, { upsert: true });
@@ -98,8 +102,19 @@ export const ProductManagement = () => {
       imageUrl = supabase.storage.from('product-images').getPublicUrl(data.path).data.publicUrl;
     }
 
-    const { id, category, sub_category, imageFile, ...rest } = formState;
-    const dataToSave = { ...rest, image_url: imageUrl, category_id: formState.category_id, sub_category_id: formState.sub_category_id };
+    const dataToSave = {
+      name: formState.name,
+      description: formState.description,
+      price_per_day: formState.price_per_day,
+      stock_quantity: formState.stock_quantity,
+      availability_status: formState.availability_status,
+      featured: formState.featured,
+      sort_order: formState.sort_order,
+      image_url: imageUrl,
+      category_id: formState.category_id,
+      sub_category_id: formState.sub_category_id || null,
+      updated_at: new Date().toISOString(),
+    };
 
     let error;
     if (editingProduct) {
@@ -144,7 +159,10 @@ export const ProductManagement = () => {
 
   const renderProductForm = (submitHandler: () => void, title: string, buttonText: string) => (
     <DialogContent>
-      <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>Fill in the form to add or edit a product.</DialogDescription>
+      </DialogHeader>
       <div className="space-y-4 py-4">
         <Input placeholder="Product Name" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} />
         <Textarea placeholder="Description" value={formState.description} onChange={e => setFormState({ ...formState, description: e.target.value })} />
