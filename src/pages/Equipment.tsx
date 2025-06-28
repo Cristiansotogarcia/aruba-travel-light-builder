@@ -4,6 +4,8 @@ import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
 import type { Equipment as EquipmentType } from '@/data/mockEquipment';
 import { getProducts } from '@/lib/queries/products';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 
 const Equipment = () => {
   const [filters, setFilters] = useState({
@@ -90,19 +92,31 @@ const Equipment = () => {
   }
 
   return (
-    <div>
-      <h1>Equipment</h1>
-      <EquipmentFilters 
-        filters={filterOptions} 
-        activeFilters={filters} 
-        onFiltersChange={setFilters} 
-        onClearFilters={() => setFilters({ search: '', categories: [], priceRange: filterOptions.priceRange, availability: [] })}
-      />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredEquipment.map(equipment => (
-          <EquipmentCard key={equipment.id} equipment={equipment} />
-        ))}
-      </div>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
+          Our Equipment
+        </h1>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
+            <EquipmentFilters 
+              filters={filterOptions} 
+              activeFilters={filters} 
+              onFiltersChange={setFilters} 
+              onClearFilters={() => setFilters({ search: '', categories: [], priceRange: filterOptions.priceRange, availability: [] })}
+            />
+          </div>
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredEquipment.map(equipment => (
+                <EquipmentCard key={equipment.id} equipment={equipment} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };
