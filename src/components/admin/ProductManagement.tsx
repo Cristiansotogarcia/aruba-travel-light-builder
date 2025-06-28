@@ -19,7 +19,10 @@ import { ProductCard } from './ProductCard';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types'; // Import global Product and AvailabilityStatus
 
 // Use the global Product type
-interface Product extends GlobalProduct {}
+interface Product extends GlobalProduct {
+  sub_category?: string;
+  sort_order?: number;
+}
 
 // Helper function to map Supabase data to Product type
 const mapSupabaseToProduct = (data: any): Product => {
@@ -35,6 +38,8 @@ const mapSupabaseToProduct = (data: any): Product => {
     featured: data.featured ?? false,
     created_at: data.created_at,
     updated_at: data.updated_at,
+    sub_category: data.sub_category,
+    sort_order: data.sort_order,
   };
 };
 
@@ -63,7 +68,9 @@ export const ProductManagement = () => {
     image_url: '', // Use image_url directly
     featured: false,
     image_url_temp: '',
-    imageFile: null
+    imageFile: null,
+    sub_category: '',
+    sort_order: 0,
   });
 
   const { hasPermission } = useAuth();
@@ -125,6 +132,8 @@ export const ProductManagement = () => {
         stock_quantity: formState.stock_quantity,
         image_url: imageUrl,
         featured: formState.featured,
+        sub_category: formState.sub_category,
+        sort_order: formState.sort_order,
       };
 
       const { data, error } = await supabase
@@ -149,6 +158,8 @@ export const ProductManagement = () => {
         featured: false,
         image_url_temp: '',
         imageFile: null,
+        sub_category: '',
+        sort_order: 0,
       });
 
       toast({
@@ -174,6 +185,8 @@ export const ProductManagement = () => {
       price_per_day: product.price_per_day,
       availability_status: product.availability_status || 'Available',
       stock_quantity: product.stock_quantity,
+      sub_category: product.sub_category || '',
+      sort_order: product.sort_order || 0,
       image_url: product.image_url || '',
       image_url_temp: product.image_url || '',
       featured: product.featured ?? false,
@@ -200,6 +213,8 @@ export const ProductManagement = () => {
         stock_quantity: formState.stock_quantity,
         image_url: imageUrl,
         featured: formState.featured,
+        sub_category: formState.sub_category,
+        sort_order: formState.sort_order,
       };
 
       const { data, error } = await supabase
@@ -329,6 +344,26 @@ export const ProductManagement = () => {
           </Select>
         </div>
         <div>
+          <Label htmlFor="sub_category">Sub Category</Label>
+          <Input
+            id="sub_category"
+            value={formState.sub_category || ''}
+            onChange={(e) => setFormState({ ...formState, sub_category: e.target.value })}
+            placeholder="e.g. Strollers"
+          />
+        </div>
+        <div>
+          <Label htmlFor="sort_order">Sort Order</Label>
+          <Input
+            id="sort_order"
+            type="number"
+            step="1"
+            value={formState.sort_order || 0}
+            onChange={(e) => setFormState({ ...formState, sort_order: Number(e.target.value) })}
+            placeholder="0"
+          />
+        </div>
+        <div>
           <Label htmlFor="price">Price per Day ($)</Label>
           <Input
             id="price"
@@ -446,12 +481,12 @@ export const ProductManagement = () => {
         <Dialog open={isCreateDialogOpen} onOpenChange={(isOpen) => {
           setIsCreateDialogOpen(isOpen);
           if (!isOpen) {
-            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null });
+            setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null, sub_category: '', sort_order: 0 });
           }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => {
-              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null });
+              setFormState({ name: '', description: '', category: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, image_url_temp: '', imageFile: null, sub_category: '', sort_order: 0 });
               setIsCreateDialogOpen(true);
             }}>
               <Plus className="h-4 w-4 mr-2" />
