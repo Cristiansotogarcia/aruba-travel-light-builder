@@ -1,5 +1,5 @@
 
-import { useEffect, useState, ReactNode, useCallback, useContext, createContext, useRef } from 'react';
+import { useEffect, useState, ReactNode, useCallback, useContext, createContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import type { Profile, UserRole } from '@/types/types';
@@ -61,9 +61,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const loadUserProfile = useCallback(async (userId: string) => {
+    console.log('Attempting to load profile for user:', userId);
     setLoading(true);
     try {
-      console.log('Loading profile for user:', userId, 'Show Loading:', showLoading);
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
@@ -71,64 +71,117 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .single();
 
       if (error) {
-        console.error('Error loading profile:', error);
+        console.error('Error loading profile inside loadUserProfile:', error);
         setProfile(null);
         setPermissions({});
         return;
       }
 
       if (profileData) {
-        console.log('Profile loaded:', profileData);
+        console.log('Profile data loaded successfully:', profileData);
         setProfile(profileData);
         await loadPermissions(profileData.role as UserRole);
       } else {
-        console.log('No profile found for user, they may need to complete registration or an error occurred.');
+        console.log('No profile data found for user:', userId);
         setProfile(null);
         setPermissions({});
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('Caught exception in loadUserProfile:', error);
       setProfile(null);
       setPermissions({});
     } finally {
+      console.log('Finished loading profile, setting loading to false.');
       setLoading(false);
     }
   }, [loadPermissions]);
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
+  const signOut = useCallback(async () => {
+    try {
+      console.log('Signing out');
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      setPermissions({});
+    } catch (error) {
+      console.error('Signout error:', error);
+    }
+  }, []);
 
-      if (currentUser) {
-        await loadUserProfile(currentUser.id);
-      } else {
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Tab is visible, re-validating session...');
+        setLoading(true);
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('Error re-validating session:', error);
+            // Handle error, maybe sign out the user
+            await signOut();
+            return;
+          }
+          
+          if (data.session) {
+            console.log('Session re-validated successfully.');
+            setSession(data.session);
+            setUser(data.session.user);
+            if (data.session.user) {
+              await loadUserProfile(data.session.user.id);
+            }
+          } else {
+            console.log('No active session found on re-validation.');
+            await signOut();
+          }
+        } catch (error) {
+          console.error('Exception during session re-validation:', error);
+          await signOut();
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Initial session load
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await loadUserProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
         setLoading(false);
       }
     };
 
-    checkSession();
+    getInitialSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          await loadUserProfile(currentUser.id);
-        } else {
-          setProfile(null);
-          setPermissions({});
-          setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('onAuthStateChange triggered', { _event, session });
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        if (_event !== 'SIGNED_IN') { // Avoid duplicate profile load on sign-in
+          loadUserProfile(session.user.id);
         }
+      } else {
+        setProfile(null);
+        setPermissions({});
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [loadUserProfile]);
 
@@ -184,45 +237,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      console.log('Attempting signin for:', email);
-      
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
-      if (signInError) {
-        console.error('Signin error:', signInError);
-        setLoading(false);
-        return { success: false, error: signInError.message };
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      if (signInData.user) {
-        console.log('Auth Signin successful for user:', signInData.user.email);
-        return { success: true };
+      if (data.user) {
+        await loadUserProfile(data.user.id);
       }
-      
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    } finally {
       setLoading(false);
-      return { success: false, error: 'Unknown error occurred during sign-in.' };
-    } catch (error) {
-      console.error('Unexpected error during sign-in:', error);
-      setLoading(false);
-      return { success: false, error: 'Unexpected error occurred during sign-in.' };
     }
   };
 
-  const signOut = async () => {
-    try {
-      console.log('Signing out');
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-      setPermissions({});
-    } catch (error) {
-      console.error('Signout error:', error);
-    }
-  };
+
 
   // Automatically sign the user out after 5 minutes of inactivity
   useEffect(() => {
@@ -256,7 +292,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       );
       if (inactivityTimer) clearTimeout(inactivityTimer);
     };
-  }, [user]);
+  }, [user, signOut]);
 
   const hasPermission = (componentName: string): boolean => {
     if (!profile) return false;
