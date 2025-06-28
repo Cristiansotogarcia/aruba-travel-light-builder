@@ -99,7 +99,7 @@ export const ProductManagement = () => {
     }
 
     const { id, category, sub_category, imageFile, ...rest } = formState;
-    const dataToSave = { ...rest, image_url: imageUrl, category_id: formState.category_id };
+    const dataToSave = { ...rest, image_url: imageUrl, category_id: formState.category_id, sub_category_id: formState.sub_category_id };
 
     let error;
     if (editingProduct) {
