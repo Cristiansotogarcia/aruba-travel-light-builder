@@ -8,10 +8,14 @@ export const getProducts = async () => {
       equipment_category (
         name,
         sort_order
+      ),
+      equipment_sub_category (
+        name,
+        sort_order
       )
     `)
     .order('sort_order', { foreignTable: 'equipment_category', ascending: true })
-    .order('sub_category', { ascending: true, nullsFirst: false })
+    .order('sort_order', { foreignTable: 'equipment_sub_category', ascending: true })
     .order('sort_order', { ascending: true, nullsFirst: false });
 
   if (error) throw error;

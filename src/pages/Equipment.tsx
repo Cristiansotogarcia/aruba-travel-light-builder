@@ -33,7 +33,7 @@ const Equipment = () => {
         id: p.id,
         name: p.name,
         category: p.equipment_category ? p.equipment_category.name : 'Uncategorized',
-        sub_category: p.sub_category,
+        sub_category: p.equipment_sub_category ? p.equipment_sub_category.name : 'General',
         price: p.price_per_day,
         image: p.image_url || (p.images && p.images[0]) || '',
         description: p.description || '',
@@ -87,7 +87,7 @@ const Equipment = () => {
   }, [filters, equipmentData]);
 
   const groupedEquipment = useMemo(() => {
-    return filteredEquipment.reduce((acc, item) => {
+    const grouped = filteredEquipment.reduce((acc, item) => {
       const category = item.category || 'Uncategorized';
       const subCategory = (item as any).sub_category || 'General';
       if (!acc[category]) {
@@ -99,6 +99,17 @@ const Equipment = () => {
       acc[category][subCategory].push(item);
       return acc;
     }, {} as Record<string, Record<string, EquipmentType[]>>);
+
+    // Sort subcategories within each category
+    for (const category in grouped) {
+      const subCategories = Object.entries(grouped[category]);
+      // This is a bit of a hack since we don't have the sort order here.
+      // A better solution would be to fetch the sort order along with the products.
+      subCategories.sort(([a], [b]) => a.localeCompare(b));
+      grouped[category] = Object.fromEntries(subCategories);
+    }
+
+    return grouped;
   }, [filteredEquipment]);
 
   if (isLoading) {
