@@ -32,7 +32,8 @@ const Equipment = () => {
       return {
         id: p.id,
         name: p.name,
-        category: p.category,
+        category: p.equipment_category.name,
+        sub_category: p.sub_category,
         price: p.price_per_day,
         image: p.image_url || (p.images && p.images[0]) || '',
         description: p.description || '',
@@ -85,6 +86,21 @@ const Equipment = () => {
     });
   }, [filters, equipmentData]);
 
+  const groupedEquipment = useMemo(() => {
+    return filteredEquipment.reduce((acc, item) => {
+      const category = item.category || 'Uncategorized';
+      const subCategory = (item as any).sub_category || 'General';
+      if (!acc[category]) {
+        acc[category] = {};
+      }
+      if (!acc[category][subCategory]) {
+        acc[category][subCategory] = [];
+      }
+      acc[category][subCategory].push(item);
+      return acc;
+    }, {} as Record<string, Record<string, EquipmentType[]>>);
+  }, [filteredEquipment]);
+
   if (isLoading) {
     return (
       <div className="py-8 text-center">Loading equipment...</div>
@@ -107,12 +123,24 @@ const Equipment = () => {
               onClearFilters={() => setFilters({ search: '', categories: [], priceRange: filterOptions.priceRange, availability: [] })}
             />
           </div>
-          <div className="lg:col-span-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredEquipment.map(equipment => (
-                <EquipmentCard key={equipment.id} equipment={equipment} />
-              ))}
-            </div>
+          <div className="lg:col-span-3 space-y-8">
+            {Object.entries(groupedEquipment).map(([category, subCategories]) => (
+              <div key={category}>
+                <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl mb-4">
+                  {category}
+                </h2>
+                {Object.entries(subCategories).map(([subCategory, items]) => (
+                  <div key={subCategory}>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-3">{subCategory}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {items.map(equipment => (
+                        <EquipmentCard key={equipment.id} equipment={equipment} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       </main>

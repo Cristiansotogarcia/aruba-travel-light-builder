@@ -8,6 +8,7 @@ import { CustomersList } from '@/components/admin/CustomersList';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { VisibilitySettings } from '@/components/admin/VisibilitySettings';
 import { ProductManagement } from '@/components/admin/ProductManagement';
+import { CategoryManagement } from '@/components/admin/CategoryManagement';
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
 import { ReportsDashboard } from '@/components/admin/ReportsDashboard'; // Import ReportsDashboard
@@ -28,6 +29,8 @@ const Admin = () => {
         return <BookingAssignment />;
       case 'equipment':
         return <ProductManagement />;
+      case 'categories':
+        return <CategoryManagement />;
       case 'reports': // Add case for reports
         return <ReportsDashboard />;
       case 'users':
