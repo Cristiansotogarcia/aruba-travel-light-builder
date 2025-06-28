@@ -35,6 +35,7 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }:
         <div className="space-y-3 mb-4">
           <p className="text-sm text-gray-600 h-16 overflow-y-auto">{product.description || 'No description available.'}</p>
           <div className="text-sm text-gray-500">Category: {product.category || 'Uncategorized'}</div>
+          <div className="text-sm text-gray-500">Sub-Category: {(product as any).sub_category || 'N/A'}</div>
           <div className="text-sm text-gray-500">Stock: {product.stock_quantity}</div>
           <div className="text-lg font-bold text-green-600">
             ${Number(product.price_per_day).toFixed(2)}/day
