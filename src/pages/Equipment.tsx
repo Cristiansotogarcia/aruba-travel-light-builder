@@ -32,7 +32,7 @@ const Equipment = () => {
       return {
         id: p.id,
         name: p.name,
-        category: p.equipment_category.name,
+        category: p.equipment_category ? p.equipment_category.name : 'Uncategorized',
         sub_category: p.sub_category,
         price: p.price_per_day,
         image: p.image_url || (p.images && p.images[0]) || '',
