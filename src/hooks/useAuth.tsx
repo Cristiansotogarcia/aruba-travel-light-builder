@@ -1,5 +1,5 @@
 
-import { useEffect, useState, ReactNode, useCallback, useContext, createContext } from 'react';
+import { useEffect, useState, ReactNode, useCallback, useContext, createContext, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import type { Profile, UserRole } from '@/types/types';
@@ -31,6 +31,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const initialAuthEventHandled = useRef(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -102,9 +103,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(currentUser);
 
         if (currentUser) {
-          // Show loading indicator on initial session load or sign-in
-          const showLoading = (event === 'INITIAL_SESSION' || event === 'SIGNED_IN');
+          // Show loading indicator on initial session load or sign-in, but only once.
+          const isInitialEvent = (event === 'INITIAL_SESSION' || event === 'SIGNED_IN');
+          const showLoading = isInitialEvent && !initialAuthEventHandled.current;
           await loadUserProfile(currentUser.id, showLoading);
+          if (isInitialEvent) {
+            initialAuthEventHandled.current = true;
+          }
         } else {
           setProfile(null);
           setPermissions({});
