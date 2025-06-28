@@ -25,8 +25,15 @@ const Login = () => {
 
   // useEffect to handle navigation after profile is loaded
   useEffect(() => {
+    console.log('[Login] useEffect triggered', { 
+      loading: auth.loading, 
+      user: !!auth.user, 
+      profile: !!auth.profile 
+    });
+
     // Only attempt navigation if loading is complete and we have a user and profile
     if (!auth.loading && auth.user && auth.profile) {
+      console.log('[Login] Conditions met, navigating...');
       const userRole = auth.profile.role;
       toast({
         title: "Welcome back!",
@@ -41,56 +48,35 @@ const Login = () => {
       } else if (userRole === 'Customer') {
         navigate('/customer-dashboard');
       } else {
-        console.warn(`User role '${userRole}' not recognized or not handled, navigating to homepage.`);
+        console.warn(`[Login] User role '${userRole}' not recognized, navigating to homepage.`);
         navigate('/'); // Fallback to homepage for unhandled roles
       }
     } else if (!auth.loading && auth.user && !auth.profile) {
-      // This case might indicate an issue with profile loading, e.g., profile doesn't exist or error during fetch
-      // auth.loading should ideally cover this, but as a safeguard:
-      console.error("User is authenticated, but profile is not available. Check profile creation/fetching logic.");
+      console.error("[Login] User authenticated, but profile not available.");
       toast({
         title: "Sign in issue",
         description: "Could not load user profile. Please try again or contact support.",
         variant: "destructive",
       });
-      // Optionally, sign out the user or navigate to an error page
-      // auth.signOut(); navigate('/login');
     }
   }, [auth.user, auth.profile, auth.loading, navigate, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[Login] handleSignIn triggered');
     setIsSubmitting(true);
 
-    try {
-      // Use auth.signIn directly from the context
-      const result = await auth.signIn(email, password);
-      if (!result.success) {
-        toast({
-          title: "Sign in failed",
-          description: result.error || "Invalid credentials",
-          variant: "destructive",
-        });
-        setIsSubmitting(false); // Ensure isSubmitting is false on failure
-      } else {
-        // On successful auth.signIn, onAuthStateChange and subsequent useEffect will handle navigation.
-        // setIsSubmitting will be set to false when auth.loading becomes false (handled by useEffect or if navigation occurs)
-        // However, it's safer to manage it here if the user stays on the login page for any reason after successful auth call
-        // but before navigation (e.g. if useEffect doesn't immediately navigate)
-        // For now, we rely on the useEffect to clear the submitting state implicitly when navigation occurs or auth.loading changes.
-        // If issues persist where the button stays disabled, explicitly set setIsSubmitting(false) here too.
-      }
-    } catch (error) {
+    const result = await auth.signIn(email, password);
+    console.log('[Login] signIn result:', result);
+
+    if (!result.success) {
       toast({
         title: "Sign in failed",
-        description: "An unexpected error occurred",
+        description: result.error || "Invalid credentials",
         variant: "destructive",
       });
-      setIsSubmitting(false); // Ensure isSubmitting is false on catch
-    } 
-    // Removed finally block as setIsSubmitting is handled in success/error paths
-    // If auth.signIn is successful, the useEffect will eventually navigate or auth.loading will change,
-    // which should disable the spinner. If not, setIsSubmitting(false) might be needed after successful auth.signIn too.
+    }
+    setIsSubmitting(false);
   };
 
   return (
