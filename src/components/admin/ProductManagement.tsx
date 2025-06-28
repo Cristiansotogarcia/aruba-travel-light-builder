@@ -17,8 +17,8 @@ import { ProductCard } from './ProductCard';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
 
 interface Product extends GlobalProduct {
-  sub_category_id?: string;
-  sort_order?: number;
+  sub_category_id?: string | null;
+  sort_order?: number | null;
 }
 
 interface Category {
@@ -70,7 +70,7 @@ export const ProductManagement = () => {
     try {
       const { data: productsData, error: productsError } = await supabase.from('equipment').select('*, equipment_category(name), equipment_sub_category(name)');
       if (productsError) throw productsError;
-      setProducts(productsData.map(p => ({...p, category: p.equipment_category?.name, sub_category: p.equipment_sub_category?.name })));
+      setProducts(productsData.map(p => ({...p, category: p.equipment_category?.name || 'Uncategorized', sub_category: p.equipment_sub_category?.name, availability_status: (p.availability_status || 'Available') as AvailabilityStatus })));
 
       const { data: cats, error: catError } = await supabase.from('equipment_category').select('*');
       if (catError) throw catError;
@@ -78,7 +78,7 @@ export const ProductManagement = () => {
 
       const { data: subCats, error: subCatError } = await supabase.from('equipment_sub_category').select('*');
       if (subCatError) throw subCatError;
-      setSubCategories(subCats);
+      setSubCategories(subCats as SubCategory[]);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -157,10 +157,22 @@ export const ProductManagement = () => {
           <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
           <SelectContent>{subCategories.filter(sc => sc.category_id === formState.category_id).map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent>
         </Select>
-        <Input type="number" placeholder="Price per day" value={formState.price_per_day} onChange={e => setFormState({ ...formState, price_per_day: Number(e.target.value) })} />
-        <Input type="number" placeholder="Stock Quantity" value={formState.stock_quantity} onChange={e => setFormState({ ...formState, stock_quantity: Number(e.target.value) })} />
-        <Input type="number" placeholder="Sort Order" value={formState.sort_order} onChange={e => setFormState({ ...formState, sort_order: Number(e.target.value) })} />
-        <Input type="file" onChange={e => setFormState({ ...formState, imageFile: e.target.files?.[0] })} />
+        <div>
+          <Label>Price per Day</Label>
+          <Input type="number" placeholder="Price per day" value={formState.price_per_day} onChange={e => setFormState({ ...formState, price_per_day: Number(e.target.value) })} />
+        </div>
+        <div>
+          <Label>Stock Quantity</Label>
+          <Input type="number" placeholder="Stock Quantity" value={formState.stock_quantity} onChange={e => setFormState({ ...formState, stock_quantity: Number(e.target.value) })} />
+        </div>
+        <div>
+          <Label>Sort Order</Label>
+          <Input type="number" placeholder="Sort Order" value={formState.sort_order} onChange={e => setFormState({ ...formState, sort_order: Number(e.target.value) })} />
+        </div>
+        <div>
+          <Label>Image</Label>
+          <Input type="file" onChange={e => setFormState({ ...formState, imageFile: e.target.files?.[0] })} />
+        </div>
         <Button onClick={submitHandler} className="w-full">{buttonText}</Button>
       </div>
     </DialogContent>
