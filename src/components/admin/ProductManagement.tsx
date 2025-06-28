@@ -185,12 +185,12 @@ export const ProductManagement = () => {
       price_per_day: product.price_per_day,
       availability_status: product.availability_status || 'Available',
       stock_quantity: product.stock_quantity,
-      sub_category: product.sub_category || '',
-      sort_order: product.sort_order || 0,
       image_url: product.image_url || '',
       image_url_temp: product.image_url || '',
       featured: product.featured ?? false,
       imageFile: null,
+      sub_category: (product as any).sub_category || '',
+      sort_order: (product as any).sort_order || 0,
     });
     setIsEditDialogOpen(true);
   };
