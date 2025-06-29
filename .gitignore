@@ -26,3 +26,4 @@ dist-ssr
 # Env File Ignone
 .env.local
 .env
+
