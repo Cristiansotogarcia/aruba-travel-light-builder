@@ -2,7 +2,20 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Header } from './Header';
-import { describe, it, expect } from 'vitest'; // vi is used by vitest test runner
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: '1' },
+    profile: { role: 'Booker' },
+    signOut: vi.fn(),
+    loading: false,
+  }),
+}));
+
+vi.mock('@/hooks/useSiteAssets', () => ({
+  useSiteAssets: () => ({ assets: {}, refresh: vi.fn() }),
+}));
 
 describe('Header Component', () => {
   const renderHeader = () => {
@@ -34,9 +47,8 @@ describe('Header Component', () => {
     expect(bookNowLink).toBeInTheDocument();
     expect(bookNowLink).toHaveAttribute('href', '/book');
 
-    const loginLink = screen.getByRole('link', { name: /login/i });
-    expect(loginLink).toBeInTheDocument();
-    expect(loginLink).toHaveAttribute('href', '/login');
+    const logoutBtn = screen.getByRole('button', { name: /logout/i });
+    expect(logoutBtn).toBeInTheDocument();
   });
 
   it('toggles the mobile menu on button click', () => {
@@ -65,10 +77,10 @@ describe('Header Component', () => {
     // Since desktop links are always there, we need a way to distinguish.
     // The mobile menu has a specific structure: div with class 'md:hidden' then 'px-2 pt-2 pb-3 ...'
     // This is hard to query directly with RTL. Let's assume clicking changes the button's accessible name or shows X icon.
-    expect(screen.getByRole('button', { name: /x/i })).toBeInTheDocument(); // Or check for X icon's presence
+    expect(screen.getAllByRole('button', { name: /close/i })[0]).toBeInTheDocument();
 
-    // Click to close
-    fireEvent.click(screen.getByRole('button', { name: /x/i }));
+    // Click to close (first close button)
+    fireEvent.click(screen.getAllByRole('button', { name: /close/i })[0]);
     expect(screen.getByRole('button', { name: /menu/i })).toBeInTheDocument(); // Back to Menu icon
   });
 
