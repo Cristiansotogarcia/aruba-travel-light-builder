@@ -14,9 +14,14 @@ Deno.serve(async (req: Request) => {
     const per_page = url.searchParams.get('per_page') || '50';
     const search = url.searchParams.get('search') || '';
 
-    // Get Cloudflare credentials from environment
-    const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID');
-    const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN');
+  // Get Cloudflare credentials from environment
+  // Support both plain and Vite-prefixed variable names for flexibility
+  const accountId =
+    Deno.env.get('CLOUDFLARE_ACCOUNT_ID') ||
+    Deno.env.get('VITE_CLOUDFLARE_ACCOUNT_ID');
+  const apiToken =
+    Deno.env.get('CLOUDFLARE_API_TOKEN') ||
+    Deno.env.get('VITE_CLOUDFLARE_API_TOKEN');
 
     if (!accountId || !apiToken) {
       return new Response(
