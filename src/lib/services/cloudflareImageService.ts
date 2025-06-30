@@ -18,6 +18,8 @@ interface CloudflareImagesResponse {
   messages: any[];
 }
 
+import { supabase } from '@/integrations/supabase/client';
+
 class CloudflareImageService {
   private accountId: string;
   private supabaseUrl: string;
@@ -51,11 +53,11 @@ class CloudflareImageService {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data: CloudflareImagesResponse = await response.json();
       return data;
     } catch (error) {
       console.error('Error fetching Cloudflare images:', error);
@@ -74,11 +76,10 @@ class CloudflareImageService {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
       return data.result;
     } catch (error) {
       console.error('Error fetching image details:', error);
