@@ -21,11 +21,13 @@ interface CloudflareImagesResponse {
 class CloudflareImageService {
   private accountId: string;
   private supabaseUrl: string;
+  private supabaseKey: string;
   private proxyUrl: string;
 
   constructor() {
     this.accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID || '';
     this.supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || '';
+    this.supabaseKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
     this.proxyUrl = `${this.supabaseUrl}/functions/v1/cloudflare-images-proxy`;
   }
 
@@ -44,6 +46,8 @@ class CloudflareImageService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          apikey: this.supabaseKey,
+          Authorization: `Bearer ${this.supabaseKey}`,
         },
       });
 
@@ -65,6 +69,8 @@ class CloudflareImageService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          apikey: this.supabaseKey,
+          Authorization: `Bearer ${this.supabaseKey}`,
         },
       });
 
@@ -85,7 +91,7 @@ class CloudflareImageService {
   }
 
   isConfigured(): boolean {
-    return !!(this.accountId && this.supabaseUrl);
+    return !!(this.accountId && this.supabaseUrl && this.supabaseKey);
   }
 }
 
