@@ -44,7 +44,9 @@ export const useInactivityLogout = ({
       }
     };
 
-    ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, updateActivity));
+    ACTIVITY_EVENTS.forEach((event) =>
+      window.addEventListener(event, updateActivity, { capture: true })
+    );
     window.addEventListener('storage', handleStorage);
     updateActivity();
 
@@ -62,7 +64,9 @@ export const useInactivityLogout = ({
     }, checkInterval);
 
     return () => {
-      ACTIVITY_EVENTS.forEach((event) => window.removeEventListener(event, updateActivity));
+      ACTIVITY_EVENTS.forEach((event) =>
+        window.removeEventListener(event, updateActivity, { capture: true })
+      );
       window.removeEventListener('storage', handleStorage);
       clearInterval(interval);
     };

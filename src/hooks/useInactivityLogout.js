@@ -27,7 +27,9 @@ export const useInactivityLogout = ({ isActive, onInactive, inactivityLimit = 5 
                 lastActivityRef.current = parseInt(e.newValue, 10);
             }
         };
-        ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, updateActivity));
+        ACTIVITY_EVENTS.forEach((event) =>
+            window.addEventListener(event, updateActivity, { capture: true })
+        );
         window.addEventListener('storage', handleStorage);
         updateActivity();
         const interval = setInterval(() => {
@@ -45,7 +47,9 @@ export const useInactivityLogout = ({ isActive, onInactive, inactivityLimit = 5 
             }
         }, checkInterval);
         return () => {
-            ACTIVITY_EVENTS.forEach((event) => window.removeEventListener(event, updateActivity));
+            ACTIVITY_EVENTS.forEach((event) =>
+                window.removeEventListener(event, updateActivity, { capture: true })
+            );
             window.removeEventListener('storage', handleStorage);
             clearInterval(interval);
         };
