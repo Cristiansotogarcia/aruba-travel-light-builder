@@ -44,17 +44,15 @@ class CloudflareImageService {
         params.append('continuation_token', continuationToken);
       }
 
-      const { data, error } = await supabase.functions.invoke<CloudflareImagesResponse>(
-        `cloudflare-images-proxy?${params}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: this.supabaseKey,
-            Authorization: `Bearer ${this.supabaseKey}`,
-          },
-        }
-      );
+      const response = await fetch(`${this.proxyUrl}?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: this.supabaseKey,
+          Authorization: `Bearer ${this.supabaseKey}`,
+        },
+      });
+
 
       if (error) {
         throw new Error(error.message);
@@ -69,17 +67,14 @@ class CloudflareImageService {
 
   async getImageDetails(imageId: string): Promise<CloudflareImage> {
     try {
-      const { data, error } = await supabase.functions.invoke<{ result: CloudflareImage }>(
-        `cloudflare-images-proxy/${imageId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: this.supabaseKey,
-            Authorization: `Bearer ${this.supabaseKey}`,
-          },
-        }
-      );
+      const response = await fetch(`${this.proxyUrl}/${imageId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: this.supabaseKey,
+          Authorization: `Bearer ${this.supabaseKey}`,
+        },
+      });
 
       if (error) {
         throw new Error(error.message);
