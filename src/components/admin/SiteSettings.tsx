@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HighlightProductsSettings } from './HighlightProductsSettings';
+import { SubGroupOrderSettings } from './SubGroupOrderSettings';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -125,6 +126,7 @@ export const SiteSettings = () => {
       </Card>
 
       <HighlightProductsSettings />
+      <SubGroupOrderSettings />
     </div>
   );
 };
