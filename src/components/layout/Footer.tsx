@@ -25,7 +25,10 @@ export const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-gray-400">
               <li><Link to="/equipment" className="hover:text-white transition-colors">Equipment</Link></li>
-              <li><Link to="/book" className="hover:text-white transition-colors">Book Now</Link></li>
+              {/* Temporarily hide booking link until feature is available */}
+              <li hidden className="hidden">
+                <Link to="/book" className="hover:text-white transition-colors">Book Now</Link>
+              </li>
               <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
             </ul>
