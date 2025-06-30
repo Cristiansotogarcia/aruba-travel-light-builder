@@ -16,14 +16,8 @@ describe('Footer Component', () => {
       </BrowserRouter>
     );
     // screen.debug(); // Removed for now
-    const copyrightMatcher = (content: string, element: Element | null): boolean => {
-      if (!element || !content) return false;
-      const currentYear = new Date().getFullYear();
-      const expectedText = `© ${currentYear} Aruba Travel Light. All rights reserved.`;
-      // Check if the element's text content matches the expected dynamic copyright text
-      return element.textContent === expectedText && content === expectedText;
-    };
-    const copyrightElement = screen.getByText(copyrightMatcher);
+    const expected = '© 2025 Travel Light Aruba. All rights reserved.';
+    const copyrightElement = screen.getByText(expected);
     expect(copyrightElement).toBeInTheDocument();
   });
 
