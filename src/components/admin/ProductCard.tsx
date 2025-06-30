@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Package } from 'lucide-react';
 import type { Product as GlobalProduct } from '@/types/types';
+import DOMPurify from 'dompurify';
 
 interface Product extends GlobalProduct {}
 
@@ -17,6 +18,10 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }: ProductCardProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const sanitizedDescription = useMemo(
+    () => DOMPurify.sanitize(product.description || ''),
+    [product.description]
+  );
 
   return (
     <Card key={product.id} className="flex flex-col">
@@ -33,7 +38,10 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }:
       </CardHeader>
       <CardContent className="flex-grow flex flex-col justify-between">
         <div className="space-y-3 mb-4">
-          <p className="text-sm text-gray-600 h-16 overflow-y-auto">{product.description || 'No description available.'}</p>
+          <p
+            className="text-sm text-gray-600 h-16 overflow-y-auto"
+            dangerouslySetInnerHTML={{ __html: sanitizedDescription || 'No description available.' }}
+          />
           <div className="text-sm text-gray-500">Category: {product.category || 'Uncategorized'}</div>
           <div className="text-sm text-gray-500">Sub-Category: {(product as any).sub_category || 'N/A'}</div>
           <div className="text-sm text-gray-500">Stock: {product.stock_quantity}</div>
