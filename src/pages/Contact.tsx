@@ -12,7 +12,9 @@ const Contact = () => {
             We'd love to hear from you. Reach out using the information below.
           </p>
           <div className="space-y-2 text-gray-800">
-            <p>📞 +297 593-2028</p>
+
+            <p>To make a reservation for rentals, please send us an e-mail to:</p>
+
             <p>
               📧 <a href="mailto:info@travelightaruba.com" className="text-blue-600 hover:underline">info@travelightaruba.com</a>
             </p>
