@@ -15,13 +15,8 @@ Deno.serve(async (req: Request) => {
     const search = url.searchParams.get('search') || '';
 
   // Get Cloudflare credentials from environment
-  // Support both plain and Vite-prefixed variable names for flexibility
-  const accountId =
-    Deno.env.get('CLOUDFLARE_ACCOUNT_ID') ||
-    Deno.env.get('VITE_CLOUDFLARE_ACCOUNT_ID');
-  const apiToken =
-    Deno.env.get('CLOUDFLARE_API_TOKEN') ||
-    Deno.env.get('VITE_CLOUDFLARE_API_TOKEN');
+  const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID');
+  const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN');
 
     if (!accountId || !apiToken) {
       return new Response(

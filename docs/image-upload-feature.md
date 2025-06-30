@@ -61,8 +61,8 @@ The admin dashboard now supports uploading images directly from the desktop to C
 
 ### Environment Variables
 Ensure these are set in your environment:
-- `CLOUDFLARE_ACCOUNT_ID` or `VITE_CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN` or `VITE_CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
 
 ### Cloudflare API Token Permissions
 The API token needs the following permissions:
