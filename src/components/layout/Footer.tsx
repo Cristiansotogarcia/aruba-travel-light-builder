@@ -15,7 +15,7 @@ export const Footer = () => {
               Your trusted partner for beach and baby equipment rentals in Aruba.
             </p>
             <div className="text-sm text-gray-400">
-              <p>📞 +297 593-2028</p>
+              <p style={{ display: 'none' }}>📞 +297 593-2028</p>
               <p>📧 info@travelightaruba.com</p>
             </div>
           </div>
