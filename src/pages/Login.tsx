@@ -138,7 +138,8 @@ const Login = () => {
                 </Link>
               </div>
 
-              <div className="mt-4 text-center text-sm">
+              {/* Sign-up link hidden until registration is enabled */}
+              <div className="mt-4 text-center text-sm hidden" hidden>
                 Don't have an account?{' '}
                 <Link to="/signup" className="font-medium text-blue-600 hover:underline">
                   Sign up

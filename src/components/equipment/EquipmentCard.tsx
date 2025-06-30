@@ -95,9 +95,10 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
       </CardContent>
       
       <CardFooter>
-        <Link to="/book" className="w-full">
-          <Button 
-            className="w-full" 
+        {/* Keep booking button in code but hide until feature launch */}
+        <Link to="/book" className="w-full hidden" hidden>
+          <Button
+            className="w-full"
             disabled={equipment.availability === 'unavailable'}
           >
             {'Book Now'}
