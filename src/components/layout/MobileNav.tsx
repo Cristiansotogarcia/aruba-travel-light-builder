@@ -70,7 +70,8 @@ const MobileNav = () => {
             ) : user && profile ? (
               <div className="space-y-2">
                 {profile.role === 'Booker' && (
-                  <Button asChild className="w-full" onClick={() => setIsOpen(false)}>
+                  // Hide Book Now option for now
+                  <Button asChild className="w-full hidden" hidden onClick={() => setIsOpen(false)}>
                     <Link to="/book">Book Now</Link>
                   </Button>
                 )}
