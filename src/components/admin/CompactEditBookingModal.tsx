@@ -48,17 +48,12 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
         name: booking.customer_name,
         email: booking.customer_email,
         phone: booking.customer_phone,
-        address: booking.customer_address
+        address: booking.customer_address || ''
       });
       setBookingItems(booking.booking_items || []);
       setDiscount(0);
     }
   }, [booking, open, setBookingItems]);
-
-  const calculateDays = () => {
-    if (!startDate || !endDate) return 1;
-    return Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) || 1;
-  };
 
   const calculateSubtotal = () => {
     return bookingItems.reduce((total, item) => total + item.subtotal, 0);

@@ -1,11 +1,17 @@
-export interface SupabaseBooking {
+export interface Booking {
   id: string;
-  customer_id: string;
-  equipment_id: string;
+  created_at: string;
   start_date: string;
   end_date: string;
-  status: 'pending' | 'confirmed' | 'canceled';
-  created_at?: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable';
+  total_amount: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  assigned_to: string | null;
+  delivery_failure_reason: string | null;
+  updated_at: string;
 }
 
 export interface Customer {

@@ -24,13 +24,12 @@ class CloudflareImageService {
   private accountId: string;
   private supabaseUrl: string;
   private supabaseKey: string;
-  private proxyUrl: string;
+
 
   constructor() {
     this.accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID || '';
     this.supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || '';
     this.supabaseKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
-    this.proxyUrl = `${this.supabaseUrl}/functions/v1/cloudflare-images-proxy`;
   }
 
   async listImages(page = 1, perPage = 50, continuationToken?: string): Promise<CloudflareImagesResponse> {
@@ -60,6 +59,10 @@ class CloudflareImageService {
         throw new Error(invokeError.message);
       }
 
+      if (!data) {
+        throw new Error('No data received from Cloudflare Images API');
+      }
+
       return data;
     } catch (err) {
       console.error('Error fetching Cloudflare images:', err);
@@ -83,6 +86,10 @@ class CloudflareImageService {
 
       if (invokeError) {
         throw new Error(invokeError.message);
+      }
+
+      if (!data || !data.result) {
+        throw new Error('No image data received from Cloudflare Images API');
       }
 
       return data.result;

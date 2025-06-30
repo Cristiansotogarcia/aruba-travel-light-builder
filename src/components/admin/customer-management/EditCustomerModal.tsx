@@ -8,12 +8,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Edit } from 'lucide-react';
 
+import { Booking } from '@/lib/queries/types';
+
 interface Customer {
-  customer_email: string;
+  id: string;
   customer_name: string;
+  customer_email: string;
   customer_phone: string;
-  customer_address: string;
-  bookings: any[];
+  customer_address?: string;
+  bookings: Booking[];
   total_spent: number;
   last_booking: string;
 }
@@ -42,7 +45,7 @@ export const EditCustomerModal = ({ open, onClose, customer, onCustomerUpdated }
         name: customer.customer_name,
         email: customer.customer_email,
         phone: customer.customer_phone,
-        address: customer.customer_address
+        address: customer.customer_address || ''
       });
     }
   });

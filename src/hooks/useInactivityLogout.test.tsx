@@ -1,8 +1,6 @@
-import { render } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { act } from 'react-dom/test-utils';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, act } from '@testing-library/react';
 import { useInactivityLogout, STORAGE_KEY } from './useInactivityLogout';
-import React from 'react';
 
 function TestComponent({ onInactive, isActive }: { onInactive: () => void; isActive: boolean }) {
   useInactivityLogout({ isActive, onInactive, inactivityLimit: 1000, checkInterval: 100 });

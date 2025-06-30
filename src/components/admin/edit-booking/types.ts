@@ -14,7 +14,6 @@ export interface EditBookingItem extends CalendarBookingItem {
 export interface EditBooking extends CalendarBooking {
   // Add any additional properties specific to editing a booking
   is_editing?: boolean;
-  delivery_failure_reason?: string | null;
 }
 
 export interface CustomerInfo {

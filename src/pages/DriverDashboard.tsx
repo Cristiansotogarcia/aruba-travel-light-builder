@@ -14,13 +14,12 @@ import { useToast } from '@/hooks/use-toast';
 // Define interface for delivery data
 interface DriverDelivery {
   id: string;
-  delivery_address: string | null; // Assuming address can be null
+  customer_address: string | null; // Delivery address
   start_date: string;
-  status: BookingStatus; // Using imported BookingStatus
-  user_id: string | null; // Assuming user_id can be null
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable';
+  assigned_to: string | null; // The ID of the assigned driver
   customer_name: string | null;
   customer_email: string | null;
-  driver_id: string | null;
   notes?: string | null; // Added optional notes based on usage
 }
 
@@ -39,20 +38,19 @@ const DriverDashboard = () => {
         .from('bookings')
         .select(`
           id,
-          delivery_address,
+          customer_address,
           start_date,
           status,
-          user_id,
+          assigned_to,
           customer_name,
-          customer_email,
-          driver_id
+          customer_email
         `)
         .eq('start_date', today)
-        .eq('driver_id', user.id)
+        .eq('assigned_to', user.id)
         .order('start_date', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as DriverDelivery[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -129,7 +127,7 @@ const DriverDashboard = () => {
                     <div className="space-y-2">
                       <div className="flex items-start space-x-2">
                         <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-600">{delivery.delivery_address}</p>
+                        <p className="text-sm text-gray-600">{delivery.customer_address}</p>
                       </div>
                       
                       <div className="flex items-center space-x-2">

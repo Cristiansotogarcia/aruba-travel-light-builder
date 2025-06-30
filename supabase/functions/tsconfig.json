@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "lib": ["deno.ns", "deno.unstable", "dom"],
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": false,
+    "jsx": "react",
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["@supabase/functions-js/edge-runtime.d.ts"],
+    "paths": {
+      "@/*": ["../../src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

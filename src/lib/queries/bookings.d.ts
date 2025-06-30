@@ -1,0 +1,57 @@
+import { Booking, BookingStatus } from '@/components/admin/calendar/types';
+export declare const getBookings: (userId: string) => Promise<import("@supabase/postgrest-js").PostgrestSingleResponse<{
+    assigned_to: string | null;
+    created_at: string;
+    customer_address: string;
+    customer_email: string;
+    customer_name: string;
+    customer_phone: string;
+    delivery_failure_reason: string | null;
+    end_date: string;
+    id: string;
+    start_date: string;
+    status: string;
+    total_amount: number;
+    updated_at: string;
+}[]>>;
+export declare const insertBooking: (booking: Omit<Booking, "id">) => Promise<import("@supabase/postgrest-js").PostgrestSingleResponse<{
+    assigned_to: string | null;
+    created_at: string;
+    customer_address: string;
+    customer_email: string;
+    customer_name: string;
+    customer_phone: string;
+    delivery_failure_reason: string | null;
+    end_date: string;
+    id: string;
+    start_date: string;
+    status: string;
+    total_amount: number;
+    updated_at: string;
+}[]>>;
+export declare const updateBookingStatus: (bookingId: string, newStatus: BookingStatus, oldStatus?: BookingStatus) => Promise<{
+    assigned_to: string | null;
+    created_at: string;
+    customer_address: string;
+    customer_email: string;
+    customer_name: string;
+    customer_phone: string;
+    delivery_failure_reason: string | null;
+    end_date: string;
+    id: string;
+    start_date: string;
+    status: string;
+    total_amount: number;
+    updated_at: string;
+    booking_items: {
+        booking_id: string;
+        created_at: string;
+        equipment_id: string;
+        equipment_name: string;
+        equipment_price: number;
+        id: string;
+        quantity: number;
+        subtotal: number;
+        products: import("node_modules/@supabase/postgrest-js/dist/cjs/select-query-parser/utils").SelectQueryError<"could not find the relation between booking_items and products">;
+    }[];
+}>;

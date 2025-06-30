@@ -18,7 +18,7 @@ export const addEquipment = async (equipment: Omit<Equipment, 'id'>) => {
     .select();
 };
 
-export const updateEquipment = async (userId: string, updates: Partial<Equipment>) => {
+export const updateEquipment = async (userId: string, updates: Partial<Equipment> & { id: string }) => {
   return supabase
     .from('equipment')
     .update(updates)
