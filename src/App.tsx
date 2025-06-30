@@ -10,6 +10,7 @@ import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import Index from "./pages/Index";
 import Equipment from "./pages/Equipment";
 import Book from "./pages/Book";
+import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import DriverDashboard from "./pages/DriverDashboard"; // Import DriverDashboard
@@ -59,7 +60,9 @@ const App = () => (
               {/* Booker role can access their dashboard. Admin/SuperUser might also need access for impersonation or support. */}
               <Route path="/booker" element={<BookerDashboard />} />
             </Route>
-            
+
+            <Route path="/contact" element={<Contact />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
