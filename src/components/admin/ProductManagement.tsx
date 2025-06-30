@@ -5,8 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Upload, Cloud } from 'lucide-react';
+import { Plus, Cloud } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -44,7 +43,7 @@ export const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isCloudflareDialogOpen, setIsCloudflareDialogOpen] = useState(false);
-  const [imageSelectionMethod, setImageSelectionMethod] = useState<'upload' | 'cloudflare'>('upload');
+
 
   const [formState, setFormState] = useState<any>({
     name: '',
@@ -57,7 +56,7 @@ export const ProductManagement = () => {
     image_url: '',
     featured: false,
     sort_order: 0,
-    imageFile: null,
+
   });
 
   const { hasPermission } = useAuth();
@@ -92,7 +91,7 @@ export const ProductManagement = () => {
   };
 
   const handleCloudflareImageSelect = (imageUrl: string) => {
-    setFormState({ ...formState, image_url: imageUrl, imageFile: null });
+    setFormState({ ...formState, image_url: imageUrl });
     toast({ title: "Success", description: "Cloudflare image selected successfully" });
   };
 
@@ -103,15 +102,7 @@ export const ProductManagement = () => {
     }
     let imageUrl = formState.image_url;
     
-    // Handle file upload only if a file is selected and no Cloudflare URL is set
-    if (formState.imageFile && imageSelectionMethod === 'upload') {
-      const { data, error } = await supabase.storage.from('product-images').upload(`products/${Date.now()}-${formState.imageFile.name}`, formState.imageFile, { upsert: true });
-      if (error || !data) {
-        toast({ title: "Error", description: "Failed to upload image", variant: "destructive" });
-        return;
-      }
-      imageUrl = supabase.storage.from('product-images').getPublicUrl(data.path).data.publicUrl;
-    }
+    // Image URL is set from Cloudflare selection only
 
     const dataToSave = {
       name: formState.name,
@@ -151,10 +142,7 @@ export const ProductManagement = () => {
       ...product,
       category_id: product.category_id || '',
       sub_category_id: product.sub_category_id || '',
-      imageFile: null,
     });
-    // Set image selection method based on existing image URL
-    setImageSelectionMethod(product.image_url && product.image_url.includes('imagedelivery.net') ? 'cloudflare' : 'upload');
     setIsEditDialogOpen(true);
   };
 
@@ -201,52 +189,27 @@ export const ProductManagement = () => {
         </div>
         <div>
           <Label>Image</Label>
-          <Tabs value={imageSelectionMethod} onValueChange={(value) => setImageSelectionMethod(value as 'upload' | 'cloudflare')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload" className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                File Upload
-              </TabsTrigger>
-              <TabsTrigger value="cloudflare" className="flex items-center gap-2">
-                <Cloud className="h-4 w-4" />
-                Cloudflare Images
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="upload" className="space-y-2">
-              <Input 
-                type="file" 
-                accept="image/*"
-                onChange={e => {
-                  const file = e.target.files?.[0];
-                  setFormState({ ...formState, imageFile: file, image_url: '' });
-                }} 
-              />
-              {formState.imageFile && (
-                <p className="text-sm text-gray-600">Selected: {formState.imageFile.name}</p>
-              )}
-            </TabsContent>
-            <TabsContent value="cloudflare" className="space-y-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsCloudflareDialogOpen(true)}
-                className="w-full"
-              >
-                <Cloud className="h-4 w-4 mr-2" />
-                Select from Cloudflare Images
-              </Button>
-              {formState.image_url && imageSelectionMethod === 'cloudflare' && (
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Selected Cloudflare image:</p>
-                  <img 
-                    src={formState.image_url} 
-                    alt="Selected" 
-                    className="w-20 h-20 object-cover rounded border"
-                  />
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsCloudflareDialogOpen(true)}
+              className="w-full"
+            >
+              <Cloud className="h-4 w-4 mr-2" />
+              Select from Cloudflare Images
+            </Button>
+            {formState.image_url && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">Selected image:</p>
+                <img 
+                  src={formState.image_url} 
+                  alt="Selected" 
+                  className="w-20 h-20 object-cover rounded border"
+                />
+              </div>
+            )}
+          </div>
         </div>
         <Button onClick={submitHandler} className="w-full">{buttonText}</Button>
       </div>
@@ -262,8 +225,7 @@ export const ProductManagement = () => {
         <div className="flex gap-2">
           <Button onClick={() => { 
             setEditingProduct(null); 
-            setFormState({ name: '', description: '', category_id: '', sub_category_id: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, sort_order: 0, imageFile: null }); 
-            setImageSelectionMethod('upload');
+            setFormState({ name: '', description: '', category_id: '', sub_category_id: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, sort_order: 0 }); 
             setIsCreateDialogOpen(true); 
           }}>
             <Plus className="h-4 w-4 mr-2" /> Add Product
