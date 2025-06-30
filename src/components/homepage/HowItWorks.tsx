@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const steps = [
   {
     step: "1",
-    title: "Browse & Select",
-    description: "Choose from our wide selection of beach and baby equipment online"
+    title: "Browse",
+    description: "Browse in our wide selection of Beach and Baby Equipment online"
   },
   {
     step: "2", 
-    title: "Book Your Dates",
-    description: "Select your rental dates and confirm availability instantly"
+    title: "Email us your dates",
+    description: "Email your rental dates at info@travelightaruba.com and we will confirm availability as soon as possible"
   },
   {
     step: "3",
