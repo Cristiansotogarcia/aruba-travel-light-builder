@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import DOMPurify from 'dompurify';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Cloud } from 'lucide-react';
@@ -106,7 +107,7 @@ export const ProductManagement = () => {
 
     const dataToSave = {
       name: formState.name,
-      description: formState.description,
+      description: DOMPurify.sanitize(formState.description),
       price_per_day: formState.price_per_day,
       stock_quantity: formState.stock_quantity,
       availability_status: formState.availability_status,
@@ -166,7 +167,7 @@ export const ProductManagement = () => {
       </DialogHeader>
       <div className="space-y-4 py-4">
         <Input placeholder="Product Name" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} />
-        <Textarea placeholder="Description" value={formState.description} onChange={e => setFormState({ ...formState, description: e.target.value })} />
+        <RichTextEditor value={formState.description} onChange={html => setFormState({ ...formState, description: html })} />
         <Select value={formState.category_id} onValueChange={value => setFormState({ ...formState, category_id: value, sub_category_id: '' })}>
           <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
           <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
