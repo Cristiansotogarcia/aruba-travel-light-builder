@@ -40,12 +40,11 @@ describe('Header Component', () => {
     expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
   });
 
-  it('renders CTA buttons for Book Now and Login', () => {
+  it('renders CTA button for Login only (Book Now hidden)', () => {
     renderHeader();
     // The buttons are within Link components, so we find the link by its role and name (from button text)
-    const bookNowLink = screen.getByRole('link', { name: /book now/i });
-    expect(bookNowLink).toBeInTheDocument();
-    expect(bookNowLink).toHaveAttribute('href', '/book');
+    // Book Now should not be rendered while booking is disabled
+    expect(screen.queryByRole('link', { name: /book now/i })).not.toBeInTheDocument();
 
     const logoutBtn = screen.getByRole('button', { name: /logout/i });
     expect(logoutBtn).toBeInTheDocument();

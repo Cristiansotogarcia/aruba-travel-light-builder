@@ -39,6 +39,7 @@ describe('Footer Component', () => {
     );
     // Use exact match for the main "Equipment" link to avoid multiple matches
     expect(screen.getByRole('link', { name: /^Equipment$/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Book Now/i })).toBeInTheDocument();
+    // Book Now link is hidden; ensure it is not rendered
+    expect(screen.queryByRole('link', { name: /Book Now/i })).not.toBeInTheDocument();
   });
 });
