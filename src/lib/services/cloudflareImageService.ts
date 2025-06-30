@@ -20,20 +20,13 @@ interface CloudflareImagesResponse {
 
 class CloudflareImageService {
   private accountId: string;
-  private apiToken: string;
-  private baseUrl: string;
+  private supabaseUrl: string;
+  private proxyUrl: string;
 
   constructor() {
     this.accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID || '';
-    this.apiToken = import.meta.env.VITE_CLOUDFLARE_API_TOKEN || '';
-    this.baseUrl = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/images/v1`;
-  }
-
-  private getHeaders(): HeadersInit {
-    return {
-      'Authorization': `Bearer ${this.apiToken}`,
-      'Content-Type': 'application/json',
-    };
+    this.supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || '';
+    this.proxyUrl = `${this.supabaseUrl}/functions/v1/cloudflare-images-proxy`;
   }
 
   async listImages(page = 1, perPage = 50, continuationToken?: string): Promise<CloudflareImagesResponse> {
@@ -47,9 +40,11 @@ class CloudflareImageService {
         params.append('continuation_token', continuationToken);
       }
 
-      const response = await fetch(`${this.baseUrl}?${params}`, {
+      const response = await fetch(`${this.proxyUrl}?${params}`, {
         method: 'GET',
-        headers: this.getHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -66,9 +61,11 @@ class CloudflareImageService {
 
   async getImageDetails(imageId: string): Promise<CloudflareImage> {
     try {
-      const response = await fetch(`${this.baseUrl}/${imageId}`, {
+      const response = await fetch(`${this.proxyUrl}/${imageId}`, {
         method: 'GET',
-        headers: this.getHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -88,7 +85,7 @@ class CloudflareImageService {
   }
 
   isConfigured(): boolean {
-    return !!(this.accountId && this.apiToken);
+    return !!(this.accountId && this.supabaseUrl);
   }
 }
 
