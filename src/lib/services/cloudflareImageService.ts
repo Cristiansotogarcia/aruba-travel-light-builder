@@ -18,14 +18,18 @@ interface CloudflareImagesResponse {
   messages: any[];
 }
 
+import { supabase } from '@/integrations/supabase/client';
+
 class CloudflareImageService {
   private accountId: string;
   private supabaseUrl: string;
+  private supabaseKey: string;
   private proxyUrl: string;
 
   constructor() {
     this.accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID || '';
     this.supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || '';
+    this.supabaseKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
     this.proxyUrl = `${this.supabaseUrl}/functions/v1/cloudflare-images-proxy`;
   }
 
@@ -40,18 +44,22 @@ class CloudflareImageService {
         params.append('continuation_token', continuationToken);
       }
 
-      const response = await fetch(`${this.proxyUrl}?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data, error } = await supabase.functions.invoke<CloudflareImagesResponse>(
+        `cloudflare-images-proxy?${params}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: this.supabaseKey,
+            Authorization: `Bearer ${this.supabaseKey}`,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data: CloudflareImagesResponse = await response.json();
       return data;
     } catch (error) {
       console.error('Error fetching Cloudflare images:', error);
@@ -61,18 +69,22 @@ class CloudflareImageService {
 
   async getImageDetails(imageId: string): Promise<CloudflareImage> {
     try {
-      const response = await fetch(`${this.proxyUrl}/${imageId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data, error } = await supabase.functions.invoke<{ result: CloudflareImage }>(
+        `cloudflare-images-proxy/${imageId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: this.supabaseKey,
+            Authorization: `Bearer ${this.supabaseKey}`,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
       return data.result;
     } catch (error) {
       console.error('Error fetching image details:', error);
@@ -85,7 +97,7 @@ class CloudflareImageService {
   }
 
   isConfigured(): boolean {
-    return !!(this.accountId && this.supabaseUrl);
+    return !!(this.accountId && this.supabaseUrl && this.supabaseKey);
   }
 }
 
