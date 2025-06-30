@@ -44,46 +44,51 @@ class CloudflareImageService {
         params.append('continuation_token', continuationToken);
       }
 
-      const response = await fetch(`${this.proxyUrl}?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: this.supabaseKey,
-          Authorization: `Bearer ${this.supabaseKey}`,
-        },
-      });
+      const { data, error: invokeError } = await supabase.functions.invoke<CloudflareImagesResponse>(
+        `cloudflare-images-proxy?${params}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: this.supabaseKey,
+            Authorization: `Bearer ${this.supabaseKey}`,
+          },
+        }
+      );
 
-
-      if (error) {
-        throw new Error(error.message);
+      if (invokeError) {
+        throw new Error(invokeError.message);
       }
 
       return data;
-    } catch (error) {
-      console.error('Error fetching Cloudflare images:', error);
-      throw error;
+    } catch (err) {
+      console.error('Error fetching Cloudflare images:', err);
+      throw err;
     }
   }
 
   async getImageDetails(imageId: string): Promise<CloudflareImage> {
     try {
-      const response = await fetch(`${this.proxyUrl}/${imageId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: this.supabaseKey,
-          Authorization: `Bearer ${this.supabaseKey}`,
-        },
-      });
+      const { data, error: invokeError } = await supabase.functions.invoke<{ result: CloudflareImage }>(
+        `cloudflare-images-proxy/${imageId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: this.supabaseKey,
+            Authorization: `Bearer ${this.supabaseKey}`,
+          },
+        }
+      );
 
-      if (error) {
-        throw new Error(error.message);
+      if (invokeError) {
+        throw new Error(invokeError.message);
       }
 
       return data.result;
-    } catch (error) {
-      console.error('Error fetching image details:', error);
-      throw error;
+    } catch (err) {
+      console.error('Error fetching image details:', err);
+      throw err;
     }
   }
 
