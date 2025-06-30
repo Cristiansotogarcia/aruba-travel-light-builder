@@ -8,7 +8,7 @@ const steps = [
   },
   {
     step: "2", 
-    title: "Email us your dates",
+    title: "Email Us Your Dates",
     description: "Email your rental dates at info@travelightaruba.com and we will confirm availability as soon as possible"
   },
   {
