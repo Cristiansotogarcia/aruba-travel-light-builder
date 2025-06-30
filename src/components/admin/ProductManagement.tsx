@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BulkProductUpload } from './BulkProductUpload';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ProductCard } from './ProductCard';
-import { CloudflareImageBrowser } from './CloudflareImageBrowser';
+import { CloudflareImageUpload } from './CloudflareImageUpload';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
 
 interface Product extends GlobalProduct {
@@ -42,7 +42,7 @@ export const ProductManagement = () => {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [isCloudflareDialogOpen, setIsCloudflareDialogOpen] = useState(false);
+  const [isImageUploadDialogOpen, setIsImageUploadDialogOpen] = useState(false);
 
 
   const [formState, setFormState] = useState<any>({
@@ -90,9 +90,9 @@ export const ProductManagement = () => {
     }
   };
 
-  const handleCloudflareImageSelect = (imageUrl: string) => {
+  const handleImageUpload = (imageUrl: string) => {
     setFormState({ ...formState, image_url: imageUrl });
-    toast({ title: "Success", description: "Cloudflare image selected successfully" });
+    toast({ title: "Success", description: "Image uploaded successfully" });
   };
 
   const handleSaveProduct = async () => {
@@ -193,11 +193,11 @@ export const ProductManagement = () => {
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => setIsCloudflareDialogOpen(true)}
+              onClick={() => setIsImageUploadDialogOpen(true)}
               className="w-full"
             >
               <Cloud className="h-4 w-4 mr-2" />
-              Select from Cloudflare Images
+              Upload Image to Cloudflare
             </Button>
             {formState.image_url && (
               <div className="space-y-2">
@@ -250,10 +250,10 @@ export const ProductManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      <CloudflareImageBrowser
-        isOpen={isCloudflareDialogOpen}
-        onClose={() => setIsCloudflareDialogOpen(false)}
-        onImageSelect={handleCloudflareImageSelect}
+      <CloudflareImageUpload
+        isOpen={isImageUploadDialogOpen}
+        onClose={() => setIsImageUploadDialogOpen(false)}
+        onImageSelect={handleImageUpload}
         selectedImageUrl={formState.image_url}
       />
     </div>

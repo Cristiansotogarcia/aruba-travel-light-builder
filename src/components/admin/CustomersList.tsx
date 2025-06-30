@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,12 +8,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Users, Phone, Calendar, Search } from 'lucide-react';
 import { CustomerDetailsModal } from './customer-management/CustomerDetailsModal';
 
+import { Booking } from './calendar/types';
+
 interface Customer {
-  customer_email: string;
+  id: string;
   customer_name: string;
+  customer_email: string;
   customer_phone: string;
-  customer_address: string;
-  bookings: any[];
+  customer_address?: string;
+  bookings: Booking[];
   total_spent: number;
   last_booking: string;
 }
@@ -39,18 +42,29 @@ export const CustomersList = () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('*');
+        .select(`
+          *,
+          booking_items (
+            id,
+            product_id,
+            quantity,
+            price_per_day,
+            subtotal,
+            equipment_name
+          )
+        `);
 
       if (error) throw error;
 
       // Group bookings by customer email
       const customerMap = new Map<string, Customer>();
 
-      data?.forEach((booking) => {
+      data?.forEach((booking: any) => {
         const email = booking.customer_email;
         
         if (!customerMap.has(email)) {
           customerMap.set(email, {
+            id: email, // Using email as unique identifier
             customer_email: email,
             customer_name: booking.customer_name,
             customer_phone: booking.customer_phone,
@@ -61,7 +75,7 @@ export const CustomersList = () => {
           });
         }
 
-        const customer = customerMap.get(email)!;
+        const customer = customerMap.get(email) as Customer;
         customer.bookings.push(booking);
         customer.total_spent += Number(booking.total_amount);
         

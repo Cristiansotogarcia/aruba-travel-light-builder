@@ -11,12 +11,15 @@ import { format } from 'date-fns';
 import { EditCustomerModal } from './EditCustomerModal';
 import { getStatusColor } from '../calendar/statusUtils';
 
+import { Booking } from '../calendar/types';
+
 interface Customer {
-  customer_email: string;
+  id: string;
   customer_name: string;
+  customer_email: string;
   customer_phone: string;
-  customer_address: string;
-  bookings: any[];
+  customer_address?: string;
+  bookings: Booking[];
   total_spent: number;
   last_booking: string;
 }
@@ -38,7 +41,7 @@ export const CustomerDetailsModal = ({
 }: CustomerDetailsModalProps) => {
   const [showBookings, setShowBookings] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -58,17 +61,19 @@ export const CustomerDetailsModal = ({
         .select(`
           *,
           booking_items (
-            equipment_name,
+            id,
+            equipment_id,
             quantity,
+            equipment_price,
             subtotal,
-            equipment_price
+            equipment_name
           )
         `)
         .eq('customer_email', customer.customer_email)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      setBookings((data || []) as Booking[]);
     } catch (error) {
       console.error('Error fetching booking details:', error);
       toast({
@@ -95,7 +100,7 @@ export const CustomerDetailsModal = ({
     setShowEditModal(false);
   };
 
-  const isCurrentBooking = (booking: any) => {
+  const isCurrentBooking = (booking: Booking) => {
     const today = new Date();
     const startDate = new Date(booking.start_date);
     const endDate = new Date(booking.end_date);

@@ -1,0 +1,43 @@
+import { Equipment } from './types';
+export declare const getEquipment: (userId: string) => Promise<import("@supabase/postgrest-js").PostgrestSingleResponse<{
+    availability: boolean;
+    availability_status: string | null;
+    category: string | null;
+    category_id: string | null;
+    created_at: string;
+    description: string | null;
+    featured: boolean;
+    id: string;
+    image_url: string | null;
+    images: string[] | null;
+    name: string;
+    price_per_day: number;
+    sort_order: number | null;
+    stock_quantity: number;
+    sub_category: string | null;
+    sub_category_id: string | null;
+    updated_at: string;
+}[]>>;
+export declare const addEquipment: (equipment: Omit<Equipment, "id">) => Promise<import("@supabase/postgrest-js").PostgrestSingleResponse<{
+    availability: boolean;
+    availability_status: string | null;
+    category: string | null;
+    category_id: string | null;
+    created_at: string;
+    description: string | null;
+    featured: boolean;
+    id: string;
+    image_url: string | null;
+    images: string[] | null;
+    name: string;
+    price_per_day: number;
+    sort_order: number | null;
+    stock_quantity: number;
+    sub_category: string | null;
+    sub_category_id: string | null;
+    updated_at: string;
+}[]>>;
+export declare const updateEquipment: (userId: string, updates: Partial<Equipment> & {
+    id: string;
+}) => Promise<import("@supabase/postgrest-js").PostgrestSingleResponse<null>>;
+export declare const deleteEquipment: (userId: string, equipmentId: string) => Promise<import("@supabase/postgrest-js").PostgrestSingleResponse<null>>;

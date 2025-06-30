@@ -15,7 +15,7 @@ export const FeaturedCategories = () => {
   const categories = useMemo(() => {
     const groups: Record<string, any[]> = {};
     for (const product of products) {
-      if (product.category === 'Water Sports') continue; // remove Water Sports
+      if (!product.category || product.category === 'Water Sports') continue; // remove Water Sports and null categories
       if (!groups[product.category]) groups[product.category] = [];
       groups[product.category].push(product);
     }

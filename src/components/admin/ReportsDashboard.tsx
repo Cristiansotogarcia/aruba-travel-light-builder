@@ -203,7 +203,7 @@ export const ReportsDashboard: React.FC = () => {
     try {
       let bookingsQuery = supabase
         .from('bookings')
-        .select('id, start_date, end_date, status, total_amount, customer_name, customer_email, customer_phone, customer_address, created_at, updated_at, booking_items(equipment_name, quantity, equipment_id)') // Added end_date, customer_email, customer_phone, customer_address
+        .select('id, start_date, end_date, status, total_amount, customer_name, customer_email, customer_phone, customer_address, assigned_to, delivery_failure_reason, created_at, updated_at, booking_items(equipment_name, quantity, equipment_id)') // Added end_date, customer_email, customer_phone, customer_address, assigned_to, delivery_failure_reason
         .order('created_at', { ascending: false });
 
       if (filters.dateRange?.from) {
@@ -225,6 +225,7 @@ export const ReportsDashboard: React.FC = () => {
       let mappedBookings = bookingsData ? bookingsData.map(b => ({
         ...b,
         status: b.status as BookingStatus, // Cast status to BookingStatus
+        assigned_to: b.assigned_to || null, // Ensure assigned_to field exists
         // Ensure booking_items is always an array, even if null/undefined from DB
         booking_items: (b.booking_items || []).map((item: any) => ({
           equipment_name: item.equipment_name,

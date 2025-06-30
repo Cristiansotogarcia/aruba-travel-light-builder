@@ -22,9 +22,9 @@ export interface Booking {
   end_date: string;
   status: BookingStatus;
   total_amount: number;
-  delivery_failure_reason?: string | null;
+  delivery_failure_reason: string | null;
   booking_items: BookingItem[];
-  assigned_to?: string | null;
+  assigned_to: string | null;
   created_at: string;
   updated_at: string;
 }
