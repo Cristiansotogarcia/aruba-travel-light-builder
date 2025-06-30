@@ -216,7 +216,10 @@ class EnhancedCloudflareUploadService {
       return cachedUrl;
     }
 
-    const url = `https://imagedelivery.net/${import.meta.env.VITE_CLOUDFLARE_IMAGES_HASH}/${imageId}/${variant}`;
+    // Since we don't store the account ID in frontend, we'll need to get it from the Edge Function
+    // or store it in the image data. For now, return a placeholder that should be handled by the backend.
+    console.warn('getImageUrl called without account ID. Consider storing full URLs in the database.');
+    const url = `https://imagedelivery.net/ACCOUNT_ID_NEEDED/${imageId}/${variant}`;
     imageCache.set(cacheKey, url);
     
     return url;

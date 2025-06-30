@@ -44,15 +44,10 @@ class CloudflareUploadService {
   }
 
   getImageUrl(imageId: string, variant: string = 'public'): string {
-    // Get account ID from environment or use a default format
-    const accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID;
-    
-    if (accountId) {
-      return `https://imagedelivery.net/${accountId}/${imageId}/${variant}`;
-    }
-    
-    // Fallback: return the imageId as-is (might be a full URL already)
-    return imageId;
+    // Since we don't store the account ID in frontend, we'll need to get it from the Edge Function
+    // or store it in the image data. For now, return a placeholder that should be handled by the backend.
+    console.warn('getImageUrl called without account ID. Consider storing full URLs in the database.');
+    return `https://imagedelivery.net/ACCOUNT_ID_NEEDED/${imageId}/${variant}`;
   }
 
   validateFile(file: File): { valid: boolean; error?: string } {

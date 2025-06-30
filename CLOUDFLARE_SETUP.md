@@ -34,11 +34,8 @@ This guide explains how to set up and use the Cloudflare Images integration in y
 
 2. Add your Cloudflare credentials to `.env`:
    ```env
-   VITE_CLOUDFLARE_ACCOUNT_ID=your-actual-account-id
-   VITE_CLOUDFLARE_API_TOKEN=your-actual-api-token
-   # Edge function variables (can reuse the above values)
-   CLOUDFLARE_ACCOUNT_ID=$VITE_CLOUDFLARE_ACCOUNT_ID
-   CLOUDFLARE_API_TOKEN=$VITE_CLOUDFLARE_API_TOKEN
+   CLOUDFLARE_ACCOUNT_ID=your-actual-account-id
+   CLOUDFLARE_API_TOKEN=your-actual-api-token
    ```
 
 ### 3. Upload Images to Cloudflare

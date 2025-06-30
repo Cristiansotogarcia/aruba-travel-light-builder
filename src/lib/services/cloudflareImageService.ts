@@ -21,13 +21,10 @@ interface CloudflareImagesResponse {
 import { supabase } from '@/integrations/supabase/client';
 
 class CloudflareImageService {
-  private accountId: string;
   private supabaseUrl: string;
   private supabaseKey: string;
 
-
   constructor() {
-    this.accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID || '';
     this.supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || '';
     this.supabaseKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
   }
@@ -100,11 +97,14 @@ class CloudflareImageService {
   }
 
   getImageUrl(imageId: string, variant = 'public'): string {
-    return `https://imagedelivery.net/${this.accountId}/${imageId}/${variant}`;
+    // Since we don't store the account ID in frontend, we'll need to get it from the Edge Function
+    // or store it in the image data. For now, return a placeholder that should be handled by the backend.
+    console.warn('getImageUrl called without account ID. Consider storing full URLs in the database.');
+    return `https://imagedelivery.net/ACCOUNT_ID_NEEDED/${imageId}/${variant}`;
   }
 
   isConfigured(): boolean {
-    return !!(this.accountId && this.supabaseUrl && this.supabaseKey);
+    return !!(this.supabaseUrl && this.supabaseKey);
   }
 }
 

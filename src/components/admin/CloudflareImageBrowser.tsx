@@ -112,8 +112,11 @@ export const CloudflareImageBrowser: React.FC<CloudflareImageBrowserProps> = ({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
-            <code className="block">VITE_CLOUDFLARE_ACCOUNT_ID=your_account_id</code>
-            <code className="block">VITE_CLOUDFLARE_API_TOKEN=your_api_token</code>
+            <code className="block">CLOUDFLARE_ACCOUNT_ID=your_account_id</code>
+            <code className="block">CLOUDFLARE_API_TOKEN=your_api_token</code>
+            <p className="text-sm text-gray-600 mt-2">
+              Note: These should be configured in your Supabase Edge Function environment, not as VITE_ prefixed variables.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
