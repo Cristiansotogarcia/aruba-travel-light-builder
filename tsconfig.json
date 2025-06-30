@@ -23,7 +23,8 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "dompurify": ["src/lib/dompurify.ts"]
     }
   },
   "include": ["src", "scripts"],

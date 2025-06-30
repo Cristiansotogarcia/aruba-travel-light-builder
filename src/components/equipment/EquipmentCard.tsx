@@ -3,6 +3,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
+import DOMPurify from 'dompurify';
 
 interface Equipment {
   id: string;
@@ -20,6 +22,11 @@ interface EquipmentCardProps {
 }
 
 export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
+  const sanitizedDescription = useMemo(
+    () => DOMPurify.sanitize(equipment.description),
+    [equipment.description]
+  );
+
   const getAvailabilityColor = (availability: string) => {
     switch (availability) {
       case 'available':
@@ -70,7 +77,10 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             {equipment.category}
           </Badge>
         </div>
-        <p className="text-gray-600 text-sm">{equipment.description}</p>
+        <p
+          className="text-gray-600 text-sm"
+          dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+        />
       </CardHeader>
       
       <CardContent>
