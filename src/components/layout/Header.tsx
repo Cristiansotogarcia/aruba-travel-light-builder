@@ -63,7 +63,8 @@ export const Header = () => {
             ) : user && profile ? (
               <>
                 {profile.role === 'Booker' && (
-                  <Button asChild>
+                  // Hide Book Now button until booking is enabled
+                  <Button asChild className="hidden" hidden>
                     <Link to="/book">Book Now</Link>
                   </Button>
                 )}
