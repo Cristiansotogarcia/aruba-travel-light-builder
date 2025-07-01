@@ -41,7 +41,7 @@ export const SiteAssetsProvider = ({ children }) => {
     useEffect(() => {
         if (assets.favicon) {
             const link = document.querySelector("link[rel*='icon']");
-            if (link)
+            if (link && link.href !== assets.favicon)
                 link.href = assets.favicon;
         }
     }, [assets.favicon]);
