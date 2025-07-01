@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import Index from "./pages/Index";
 import Equipment from "./pages/Equipment";
+import About from "./pages/About";
 import Book from "./pages/Book";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
@@ -38,6 +39,7 @@ const App = () => (
             <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
             <Route path="/equipment" element={<Equipment />} />
             <Route path="/login" element={<Login />} />
 

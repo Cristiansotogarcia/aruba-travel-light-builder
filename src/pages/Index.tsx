@@ -13,6 +13,10 @@ const Index = () => {
         <HeroSection />
         <FeaturedProducts />
         <HowItWorks />
+        <div className="about-section">
+          <h2>About Us</h2>
+          <p>Short description here. <a href="/about">More about us</a></p>
+        </div>
       </main>
       <Footer />
     </div>
