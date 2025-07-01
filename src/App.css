@@ -40,3 +40,9 @@
 .read-the-docs {
   color: #888;
 }
+
+.about-section {
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+}
