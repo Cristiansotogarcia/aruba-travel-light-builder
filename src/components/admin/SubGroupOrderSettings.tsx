@@ -22,20 +22,22 @@ export const SubGroupOrderSettings = () => {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  const loadSubCategories = async () => {
+    const { data, error } = await supabase
+      .from('equipment_sub_category')
+      .select('id,name,sort_order,equipment_category(id,name,sort_order)')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('name', { ascending: true });
+    if (!error && data) {
+      setSubCategories(data as SubCategory[]);
+    } else {
+      toast({ title: 'Error', description: 'Failed to load subgroups', variant: 'destructive' });
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const load = async () => {
-      const { data, error } = await supabase
-        .from('equipment_sub_category')
-        .select('id,name,sort_order,equipment_category(id,name,sort_order)')
-        .order('sort_order', { ascending: true, nullsFirst: false });
-      if (!error && data) {
-        setSubCategories(data as SubCategory[]);
-      } else {
-        toast({ title: 'Error', description: 'Failed to load subgroups', variant: 'destructive' });
-      }
-      setLoading(false);
-    };
-    load();
+    loadSubCategories();
   }, [toast]);
 
   const grouped = useMemo(() => {
@@ -49,7 +51,7 @@ export const SubGroupOrderSettings = () => {
       }
       map[catId].items.push(sc);
     });
-    const sortedCats = Object.entries(map).sort((a, b) => a[1].sort_order - b[1].sort_order);
+    const sortedCats = Object.entries(map).sort((a, b) => (a[1].sort_order ?? 0) - (b[1].sort_order ?? 0));
     const result: [string, string, SubCategory[]][] = sortedCats.map(([id, data]) => {
       const sortedSubs = data.items.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
       return [id, data.name, sortedSubs];
@@ -79,6 +81,9 @@ export const SubGroupOrderSettings = () => {
         toast({ title: 'Error', description: 'Failed to save order', variant: 'destructive' });
         return;
       }
+
+      // Reload data after save
+      await loadSubCategories();
 
       toast({ title: 'Success', description: 'Subgroup order updated' });
     } catch (err) {
