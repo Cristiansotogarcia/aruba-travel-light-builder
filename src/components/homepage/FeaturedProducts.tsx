@@ -11,7 +11,23 @@ export const FeaturedProducts = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (products.length === 0) return null;
+  const order = [
+    'Ostrich Loung Chairs',
+    'Tommy Bahama Beach Chair',
+    'Shibumi Quiet Canopy',
+    'Dream On Me Full Size Foldable Crib',
+    'Jeep Jogger Stroller | Single',
+    'Summer Portable Play Yard with Canopy',
+  ];
+
+  const sortedProducts = products
+    .filter((p) => order.includes(p.name))
+    .sort(
+      (a, b) => order.indexOf(a.name as string) - order.indexOf(b.name as string)
+    )
+    .slice(0, 6);
+
+  if (sortedProducts.length === 0) return null;
 
   return (
     <section className="py-16 bg-gray-50">
@@ -25,7 +41,7 @@ export const FeaturedProducts = () => {
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
-          {products.slice(0, 6).map((product) => (
+          {sortedProducts.map((product) => (
             <Card
               key={product.id}
               className="overflow-hidden hover:shadow-lg transition-shadow"
