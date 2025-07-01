@@ -37,10 +37,10 @@ export const HighlightProductsSettings = () => {
       if (prev.includes(id)) {
         return prev.filter((p) => p !== id);
       }
-      if (prev.length >= 3) {
+      if (prev.length >= 6) {
         toast({
           title: 'Limit reached',
-          description: 'You can only select up to 3 products',
+          description: 'You can only select up to 6 products',
           variant: 'destructive',
         });
         return prev;
@@ -71,7 +71,7 @@ export const HighlightProductsSettings = () => {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
-          Select up to 3 products to display under "Popular Equipment" on the home page.
+          Select up to 6 products to display under "Popular Equipment" on the home page.
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((product) => (
