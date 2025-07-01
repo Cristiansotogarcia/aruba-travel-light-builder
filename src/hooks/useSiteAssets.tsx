@@ -59,7 +59,7 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (assets.favicon) {
       const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
-      if (link) link.href = assets.favicon;
+      if (link && link.href !== assets.favicon) link.href = assets.favicon;
     }
   }, [assets.favicon]);
 
