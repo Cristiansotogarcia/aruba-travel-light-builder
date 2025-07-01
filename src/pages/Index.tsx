@@ -2,7 +2,7 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/homepage/HeroSection';
-import { FeaturedProducts } from '@/components/homepage/FeaturedProducts';
+import { FeaturedProducts } from '@/components/homepage/FeaturedProducts.jsx';
 import { HowItWorks } from '@/components/homepage/HowItWorks';
 
 const Index = () => {
