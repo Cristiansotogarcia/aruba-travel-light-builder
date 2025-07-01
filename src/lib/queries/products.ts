@@ -27,6 +27,7 @@ export const getFeaturedProducts = async () => {
     .from('equipment')
     .select('*')
     .eq('featured', true)
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
