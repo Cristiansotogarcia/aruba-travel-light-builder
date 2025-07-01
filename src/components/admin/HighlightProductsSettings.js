@@ -28,10 +28,10 @@ export const HighlightProductsSettings = () => {
             if (prev.includes(id)) {
                 return prev.filter((p) => p !== id);
             }
-            if (prev.length >= 3) {
+            if (prev.length >= 6) {
                 toast({
                     title: 'Limit reached',
-                    description: 'You can only select up to 3 products',
+                    description: 'You can only select up to 6 products',
                     variant: 'destructive',
                 });
                 return prev;
@@ -55,6 +55,6 @@ export const HighlightProductsSettings = () => {
             setSaving(false);
         }
     };
-    return (_jsxs(Card, { children: [_jsx(CardHeader, { children: _jsx(CardTitle, { children: "Homepage Highlight Products" }) }), _jsxs(CardContent, { children: [_jsx("p", { className: "text-sm text-gray-500 mb-4", children: "Select up to 3 products to display under \"Popular Equipment\" on the home page." }), _jsx("div", { className: "grid md:grid-cols-2 lg:grid-cols-3 gap-4", children: products.map((product) => (_jsxs("label", { className: `flex items-center gap-2 border rounded p-2 cursor-pointer ${selected.includes(product.id) ? 'bg-blue-50 border-blue-300' : ''}`, children: [_jsx(Checkbox, { checked: selected.includes(product.id), onCheckedChange: () => toggle(product.id) }), product.image_url && (_jsx("img", { src: product.image_url, alt: product.name, className: "w-12 h-12 object-cover rounded" })), _jsx("span", { className: "font-medium", children: product.name })] }, product.id))) }), _jsx(Button, { onClick: save, disabled: saving, className: "mt-4", children: saving ? 'Saving...' : 'Save' })] })] }));
+    return (_jsxs(Card, { children: [_jsx(CardHeader, { children: _jsx(CardTitle, { children: "Homepage Highlight Products" }) }), _jsxs(CardContent, { children: [_jsx("p", { className: "text-sm text-gray-500 mb-4", children: "Select up to 6 products to display under \"Popular Equipment\" on the home page." }), _jsx("div", { className: "grid md:grid-cols-2 lg:grid-cols-3 gap-4", children: products.map((product) => (_jsxs("label", { className: `flex items-center gap-2 border rounded p-2 cursor-pointer ${selected.includes(product.id) ? 'bg-blue-50 border-blue-300' : ''}`, children: [_jsx(Checkbox, { checked: selected.includes(product.id), onCheckedChange: () => toggle(product.id) }), product.image_url && (_jsx("img", { src: product.image_url, alt: product.name, className: "w-12 h-12 object-cover rounded" })), _jsx("span", { className: "font-medium", children: product.name })] }, product.id))) }), _jsx(Button, { onClick: save, disabled: saving, className: "mt-4", children: saving ? 'Saving...' : 'Save' })] })] }));
 };
 export default HighlightProductsSettings;
