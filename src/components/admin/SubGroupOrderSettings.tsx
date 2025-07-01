@@ -57,17 +57,28 @@ export const SubGroupOrderSettings = () => {
   }, [subCategories]);
 
   const handleChange = (id: string, value: number) => {
-    setSubCategories(prev => prev.map(sc => sc.id === id ? { ...sc, sort_order: value } : sc));
+    const sanitized = Math.max(0, value);
+    setSubCategories(prev => prev.map(sc => sc.id === id ? { ...sc, sort_order: sanitized } : sc));
   };
 
   const save = async () => {
     setSaving(true);
     try {
-      await Promise.all(
+      const results = await Promise.all(
         subCategories.map(sc =>
-          supabase.from('equipment_sub_category').update({ sort_order: sc.sort_order ?? 0 }).eq('id', sc.id)
+          supabase
+            .from('equipment_sub_category')
+            .update({ sort_order: sc.sort_order ?? 0 })
+            .eq('id', sc.id)
         )
       );
+
+      const firstError = results.find(r => r.error)?.error;
+      if (firstError) {
+        toast({ title: 'Error', description: 'Failed to save order', variant: 'destructive' });
+        return;
+      }
+
       toast({ title: 'Success', description: 'Subgroup order updated' });
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to save order', variant: 'destructive' });
@@ -94,6 +105,7 @@ export const SubGroupOrderSettings = () => {
                 <span className="flex-1">{sc.name}</span>
                 <Input
                   type="number"
+                  min={0}
                   value={sc.sort_order ?? 0}
                   onChange={e => handleChange(sc.id, Number(e.target.value))}
                   className="w-24"
