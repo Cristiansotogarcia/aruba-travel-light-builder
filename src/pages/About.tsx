@@ -5,7 +5,7 @@ const About: React.FC = () => {
     <div>
       <h1>About Us</h1>
       <p>This is the full story about our company.</p>
-      <img src="/about.jpg" alt="About Us" />
+      <img src="https://example.cloudflare.com/about.jpg" alt="About Us" />
     </div>
   );
 };
