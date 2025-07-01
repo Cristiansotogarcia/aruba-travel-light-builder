@@ -25,7 +25,7 @@ export const FeaturedProducts = () => {
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
-          {products.slice(0, 3).map((product) => (
+          {products.slice(0, 6).map((product) => (
             <Card
               key={product.id}
               className="overflow-hidden hover:shadow-lg transition-shadow"
