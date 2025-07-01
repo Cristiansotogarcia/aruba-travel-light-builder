@@ -39,25 +39,26 @@ export const SubGroupOrderSettings = () => {
   }, [toast]);
 
   const grouped = useMemo(() => {
-    const map: Record<string, { sort_order: number; items: SubCategory[] }> = {};
+    const map: Record<string, { sort_order: number; name: string; items: SubCategory[] }> = {};
     subCategories.forEach(sc => {
+      const catId = sc.equipment_category?.id || 'uncategorized';
       const catName = sc.equipment_category?.name || 'Uncategorized';
       const catOrder = sc.equipment_category?.sort_order ?? 0;
-      if (!map[catName]) {
-        map[catName] = { sort_order: catOrder, items: [] };
+      if (!map[catId]) {
+        map[catId] = { sort_order: catOrder, name: catName, items: [] };
       }
-      map[catName].items.push(sc);
+      map[catId].items.push(sc);
     });
     const sortedCats = Object.entries(map).sort((a, b) => a[1].sort_order - b[1].sort_order);
-    const result: [string, SubCategory[]][] = sortedCats.map(([name, data]) => {
+    const result: [string, string, SubCategory[]][] = sortedCats.map(([id, data]) => {
       const sortedSubs = data.items.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-      return [name, sortedSubs];
+      return [id, data.name, sortedSubs];
     });
     return result;
   }, [subCategories]);
 
   const handleChange = (id: string, value: number) => {
-    const sanitized = Math.max(0, value);
+    const sanitized = !isNaN(value) ? Math.max(0, value) : 0;
     setSubCategories(prev => prev.map(sc => sc.id === id ? { ...sc, sort_order: sanitized } : sc));
   };
 
@@ -97,8 +98,8 @@ export const SubGroupOrderSettings = () => {
         <CardTitle>Subgroup Display Order</CardTitle>
       </CardHeader>
       <CardContent>
-        {grouped.map(([catName, subs]) => (
-          <div key={catName} className="mb-6">
+        {grouped.map(([catId, catName, subs]) => (
+          <div key={catId} className="mb-6">
             <h4 className="font-semibold mb-2">{catName}</h4>
             {subs.map(sc => (
               <div key={sc.id} className="flex items-center gap-2 mb-2">
