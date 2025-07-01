@@ -42,7 +42,7 @@ export const HowItWorks = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
           {steps.map((step, index) => (
             <Card key={index} className="text-center border-2 hover:border-blue-200 transition-colors">
               <CardHeader>
