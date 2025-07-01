@@ -4,23 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const steps = [
   {
     step: "1",
-    title: "Browse",
-    description: "Browse in our wide selection of Beach and Baby Equipment online"
+    title: "Browse Our Selection",
+    description: "🧺 Explore our wide range of Beach and Baby Equipment online and pick what you need for your stay."
   },
-  {
-    step: "2", 
-    title: "Email us your dates",
-    description: "Email your rental dates at info@travelightaruba.com and we will confirm availability as soon as possible"
-  },
-  {
+ {
+  step: "2",
+  title: "Send Us Your Info",
+  description: "📧 Email info@travelightaruba.com with:\n• Full Name\n• Phone Number\n• Rental Dates\n• Preferred Delivery & Pickup Time Slots\n• Accommodation Address"
+},
+ {
     step: "3",
-    title: "Delivery & Pickup",
-    description: "We deliver to your hotel or vacation rental and pick up when you're done"
+    title: "Confirm & Pay",
+    description: "✅ We'll check availability, confirm your order, and send you a secure payment link to complete your booking."
   },
   {
     step: "4",
+    title: "Delivery & Pickup",
+    description: "🚗 We deliver your equipment directly to your hotel or vacation rental and pick it up when you're done."
+  },
+  {
+    step: "5",
     title: "Enjoy Your Vacation",
-    description: "Relax and enjoy Aruba with everything you need at your fingertips"
+    description: "🌞 Relax and enjoy Aruba with everything you need right at your fingertips."
   }
 ];
 
@@ -33,7 +38,7 @@ export const HowItWorks = () => {
             How It Works
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Renting equipment has never been easier. Get everything you need in just a few simple steps.
+            Renting beach and baby gear has never been easier. Just follow these simple steps:
           </p>
         </div>
 
