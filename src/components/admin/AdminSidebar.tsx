@@ -22,7 +22,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: null },
-    { id: 'seo', label: 'SEO Manager', icon: Search, permission: null },
+    { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SeoManager' },
     { id: 'bookings', label: 'Bookings', icon: Calendar, permission: 'BookingManagement' },
     { id: 'assignment', label: 'Assignments', icon: UserPlus, permission: 'BookingAssignment' },
     { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
