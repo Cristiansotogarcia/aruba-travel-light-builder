@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SubGroupOrderSettings } from './SubGroupOrderSettings.tsx';
+import { SubGroupOrderSettings } from './SubGroupOrderSettings';
 
 // Mock supabase client
 let db: any[] = [];
@@ -86,4 +86,3 @@ describe('SubGroupOrderSettings', () => {
     expect(coolersInput).toHaveAttribute('min', '0');
   });
 });
-
