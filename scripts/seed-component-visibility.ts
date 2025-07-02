@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
 const supabaseAdmin = createClient(
   process.env.VITE_PUBLIC_SUPABASE_URL!,
@@ -72,6 +72,12 @@ async function seedComponentVisibility() {
     { component_name: 'settings', role: 'Admin', is_visible: true },
     { component_name: 'settings', role: 'Booker', is_visible: false },
     { component_name: 'settings', role: 'Driver', is_visible: false },
+
+    // SEO Manager
+    { component_name: 'SeoManager', role: 'SuperUser', is_visible: true },
+    { component_name: 'SeoManager', role: 'Admin', is_visible: true },
+    { component_name: 'SeoManager', role: 'Booker', is_visible: false },
+    { component_name: 'SeoManager', role: 'Driver', is_visible: false },
   ];
 
   // Insert or update component visibility rules

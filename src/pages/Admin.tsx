@@ -46,7 +46,7 @@ const Admin = () => {
       case 'taskmaster':
         return <DriverTasks />; // TODO: Create dedicated TaskMaster component
       case 'seo':
-        return <SeoManager slug="home" />;
+        return <SeoManager />;
       case 'settings':
         return <SiteSettings />;
       default:
