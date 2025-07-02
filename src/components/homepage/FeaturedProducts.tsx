@@ -61,7 +61,8 @@ export const FeaturedProducts = () => {
                                     </p>
                                 )}
                                 <div className="text-lg font-bold mb-4">
-                                    ${Number(product.price_per_day).toFixed(2)}/day
+                                    ${Number(product.price_per_day).toFixed(2)}/day |
+                                    ${Number(product.price_per_day * 5).toFixed(2)}/week
                                 </div>
                                 <Link to="/equipment" className="block">
                                     <Button className="w-full">View All</Button>
