@@ -82,6 +82,10 @@ const componentVisibilitySettings: ComponentVisibility[] = [
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
   {
+    component_name: 'ReportingAccess',
+    roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
+  },
+  {
     component_name: 'TaskMaster',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
