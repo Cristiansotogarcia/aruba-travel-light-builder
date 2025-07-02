@@ -43,6 +43,8 @@ const Admin = () => {
         return <VisibilitySettings />;
       case 'tasks':
         return <DriverTasks />;
+      case 'taskmaster':
+        return <DriverTasks />; // TODO: Create dedicated TaskMaster component
       case 'seo':
         return <SeoManager slug="home" />;
       case 'settings':
