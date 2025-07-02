@@ -22,6 +22,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: null },
+    { id: 'seo', label: 'SEO Manager', icon: Search, permission: null },
     { id: 'bookings', label: 'Bookings', icon: Calendar, permission: 'BookingManagement' },
     { id: 'assignment', label: 'Assignments', icon: UserPlus, permission: 'BookingAssignment' },
     { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
@@ -32,8 +33,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     { id: 'visibility', label: 'Visibility Settings', icon: Eye, permission: 'VisibilitySettings' },
     { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
     { id: 'taskmaster', label: 'Task Management', icon: CheckSquare, permission: 'TaskMaster' },
-    { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SiteSettings' },
-    { id: 'settings', label: 'Settings', icon: Settings, permission: null },
+    { id: 'settings', label: 'Settings', icon: Settings, permission: 'settings' },
   ];
 
   const visibleMenuItems = menuItems.filter(item => 

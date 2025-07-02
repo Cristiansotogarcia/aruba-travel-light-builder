@@ -17,6 +17,8 @@ import Login from "./pages/Login";
 import DriverDashboard from "./pages/DriverDashboard"; // Import DriverDashboard
 import CustomerDashboard from "./pages/CustomerDashboard"; // Import CustomerDashboard
 import BookerDashboard from "./pages/BookerDashboard"; // Import BookerDashboard
+import SeoDemo from "./pages/SeoDemo"; // Import SeoDemo
+import SeoTest from "./pages/SeoTest"; // Import SeoTest
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/layout/ProtectedRoute"; // Import ProtectedRoute
 
@@ -64,6 +66,8 @@ const App = () => (
             </Route>
 
             <Route path="/contact" element={<Contact />} />
+            <Route path="/seo-demo" element={<SeoDemo />} />
+            <Route path="/seo-test" element={<SeoTest />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
