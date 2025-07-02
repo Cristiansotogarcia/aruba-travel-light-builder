@@ -12,6 +12,7 @@ import { CategoryManagement } from '@/components/admin/CategoryManagement';
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
 import { ReportsDashboard } from '@/components/admin/ReportsDashboard'; // Import ReportsDashboard
+import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { SiteSettings } from '@/components/admin/SiteSettings';
 import { SeoManager } from '@/components/admin/SeoManager';
 
@@ -34,6 +35,8 @@ const Admin = () => {
         return <CategoryManagement />;
       case 'reports': // Add case for reports
         return <ReportsDashboard />;
+      case 'analytics':
+        return <AnalyticsDashboard />;
       case 'users':
         return <UserManagement />;
       case 'visibility':

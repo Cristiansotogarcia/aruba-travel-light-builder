@@ -1,22 +1,22 @@
-# Welcome to your Lovable project
+# Travel Light Aruba
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/c9f55d9a-6a4d-42a9-a8e5-b94b970d9ea7
+**URL**: https://travellightaruba.com
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
+**Use the Travel Light Aruba builder**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c9f55d9a-6a4d-42a9-a8e5-b94b970d9ea7) and start prompting.
+Visit your [Travel Light Aruba project](https://travellightaruba.com) to make changes directly in the online editor.
 
-Changes made via Lovable will be committed automatically to this repo.
+Changes made via the builder will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in the builder.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -62,15 +62,15 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/c9f55d9a-6a4d-42a9-a8e5-b94b970d9ea7) and click on Share -> Publish.
+Simply open the Travel Light Aruba builder and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+## Can I connect a custom domain to my site?
 
 Yes, you can!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Read more in our documentation about [setting up a custom domain](https://travellightaruba.com/docs/custom-domain)
 
 ## Environment variables
 
