@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, FileText, ListOrdered } from 'lucide-react';
+import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, FileText, ListOrdered, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
@@ -32,6 +32,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     { id: 'visibility', label: 'Visibility Settings', icon: Eye, permission: 'VisibilitySettings' },
     { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
     { id: 'taskmaster', label: 'Task Management', icon: CheckSquare, permission: 'TaskMaster' },
+    { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SiteSettings' },
     { id: 'settings', label: 'Settings', icon: Settings, permission: null },
   ];
 
