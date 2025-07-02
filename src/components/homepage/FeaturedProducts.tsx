@@ -8,26 +8,24 @@ export const FeaturedProducts = () => {
     const { data: products = [] } = useQuery({
         queryKey: ['featured-products'],
         queryFn: getFeaturedProducts,
-        staleTime: 5 * 60 * 1000,
+        staleTime: 30 * 1000, // 30 seconds
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
     });
+
+    // Debug logging
+    console.log('FeaturedProducts - Raw products from query:', products);
+    console.log('FeaturedProducts - Products length:', products.length);
+    console.log('FeaturedProducts - Product names:', products.map(p => p.name));
+    console.log('FeaturedProducts - Product sort orders:', products.map(p => ({ name: p.name, sort_order: p.sort_order })));
 
     if (products.length === 0) return null;
 
-    const order = [
-        'Ostrich Loung Chairs',
-        'Tommy Bahama Beach Chair',
-        'Shibumi Quiet Canopy',
-        'Dream On Me Full Size Foldable Crib',
-        'Jeep Jogger Stroller | Single',
-        'Summer Portable Play Yard with Canopy',
-    ];
+    // Products are already sorted by sort_order in the query
+    // Limit to exactly 6 products for the grid layout
+    const featuredProducts = products.slice(0, 6);
 
-    const sortedProducts = products
-        .filter((p) => order.includes(p.name))
-        .sort((a, b) => order.indexOf(a.name as string) - order.indexOf(b.name as string))
-        .slice(0, 6);
-
-    if (sortedProducts.length === 0) return null;
+    if (featuredProducts.length === 0) return null;
 
     return (
         <section className="py-16 bg-gray-50">
@@ -40,8 +38,8 @@ export const FeaturedProducts = () => {
                         Discover our most popular rental items
                     </p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-8">
-                    {sortedProducts.map((product) => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {featuredProducts.map((product) => (
                         <Card
                             key={product.id}
                             className="overflow-hidden hover:shadow-lg transition-shadow"
