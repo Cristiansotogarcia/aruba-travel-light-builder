@@ -4,23 +4,33 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
-import Index from "./pages/Index";
-import Equipment from "./pages/Equipment";
-import About from "./pages/About";
-import Book from "./pages/Book";
-import Contact from "./pages/Contact";
-import Admin from "./pages/Admin";
-import Login from "./pages/Login";
-import DriverDashboard from "./pages/DriverDashboard"; // Import DriverDashboard
-import CustomerDashboard from "./pages/CustomerDashboard"; // Import CustomerDashboard
-import BookerDashboard from "./pages/BookerDashboard"; // Import BookerDashboard
-import SeoDemo from "./pages/SeoDemo"; // Import SeoDemo
-import SeoTest from "./pages/SeoTest"; // Import SeoTest
-import NotFound from "./pages/NotFound";
-import ProtectedRoute from "@/components/layout/ProtectedRoute"; // Import ProtectedRoute
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
+
+// Lazy load all pages for code splitting
+const Index = lazy(() => import("./pages/Index"));
+const Equipment = lazy(() => import("./pages/Equipment"));
+const About = lazy(() => import("./pages/About"));
+const Book = lazy(() => import("./pages/Book"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Login = lazy(() => import("./pages/Login"));
+const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
+const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
+const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
+const SeoDemo = lazy(() => import("./pages/SeoDemo"));
+const SeoTest = lazy(() => import("./pages/SeoTest"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Loading component for Suspense fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,41 +49,43 @@ const App = () => (
           <Sonner />
           <ErrorBoundary>
             <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/equipment" element={<Equipment />} />
-            <Route path="/login" element={<Login />} />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/equipment" element={<Equipment />} />
+                  <Route path="/login" element={<Login />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['Customer', 'Booker', 'Admin', 'SuperUser']} />}>
-              <Route path="/book" element={<Book />} />
-            </Route>
+                  {/* Protected Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['Customer', 'Booker', 'Admin', 'SuperUser']} />}>
+                    <Route path="/book" element={<Book />} />
+                  </Route>
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['Admin', 'SuperUser']} />}>
-              <Route path="/admin" element={<Admin />} />
-            </Route>
-            <Route element={<ProtectedRoute allowedRoles={['Driver']} />}>
-              <Route path="/driver-dashboard" element={<DriverDashboard />} />
-            </Route>
-            <Route element={<ProtectedRoute allowedRoles={['Customer']} />}> 
-              <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-            </Route>
-            <Route element={<ProtectedRoute allowedRoles={['Booker', 'Admin', 'SuperUser']} />}>
-              {/* Booker role can access their dashboard. Admin/SuperUser might also need access for impersonation or support. */}
-              <Route path="/booker" element={<BookerDashboard />} />
-            </Route>
+                  {/* Protected Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['Admin', 'SuperUser']} />}>
+                    <Route path="/admin" element={<Admin />} />
+                  </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['Driver']} />}>
+                    <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                  </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['Customer']} />}> 
+                    <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                  </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['Booker', 'Admin', 'SuperUser']} />}>
+                    {/* Booker role can access their dashboard. Admin/SuperUser might also need access for impersonation or support. */}
+                    <Route path="/booker" element={<BookerDashboard />} />
+                  </Route>
 
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/seo-demo" element={<SeoDemo />} />
-            <Route path="/seo-test" element={<SeoTest />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/seo-demo" element={<SeoDemo />} />
+                  <Route path="/seo-test" element={<SeoTest />} />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-        </ErrorBoundary>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </ErrorBoundary>
         </SiteAssetsProvider>
       </AuthProvider>
     </TooltipProvider>

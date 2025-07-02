@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import { randomUUID } from 'crypto';
 
 dotenv.config();
 
@@ -45,44 +44,54 @@ interface ComponentVisibility {
 }
 
 const componentVisibilitySettings: ComponentVisibility[] = [
+  // ReportingAccess - Analytics/Reports dashboard
   {
-    component_name: 'dashboard',
-    roles: { SuperUser: true, Admin: true, Booker: true, Driver: true }
+    component_name: 'ReportingAccess',
+    roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
+  // BookingManagement - Bookings and Customers
   {
-    component_name: 'bookings',
+    component_name: 'BookingManagement',
     roles: { SuperUser: true, Admin: true, Booker: true, Driver: false }
   },
+  // BookingAssignment - Assignments
   {
-    component_name: 'customers',
+    component_name: 'BookingAssignment',
     roles: { SuperUser: true, Admin: true, Booker: true, Driver: false }
   },
+  // ProductManagement - Equipment
   {
-    component_name: 'assignment',
+    component_name: 'ProductManagement',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
+  // CategoryManagement - Category Order
   {
-    component_name: 'equipment',
+    component_name: 'CategoryManagement',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
+  // UserManagement - User Management
   {
-    component_name: 'users',
+    component_name: 'UserManagement',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
+  // VisibilitySettings - Visibility Settings
   {
-    component_name: 'visibility',
-    roles: { SuperUser: true, Admin: false, Booker: false, Driver: false }
+    component_name: 'VisibilitySettings',
+    roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
+  // DriverTasks - My Tasks
   {
-    component_name: 'tasks',
+    component_name: 'DriverTasks',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: true }
   },
-  {
-    component_name: 'settings',
-    roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
-  },
+  // TaskMaster - Task Management
   {
     component_name: 'TaskMaster',
+    roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
+  },
+  // settings - Settings (lowercase to match AdminSidebar.tsx)
+  {
+    component_name: 'settings',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
 ];
@@ -92,8 +101,8 @@ async function seedUsers() {
 
   for (const userData of users) {
     try {
-      // Generate a temporary password
-      const tempPassword = `${randomUUID().substring(0, 8)}!Aa1`;
+      // Use standard password for all users
+      const tempPassword = 'Aruba1290@@';
       
       // Check if user already exists
       const { data: existingUsers } = await supabaseAdmin
