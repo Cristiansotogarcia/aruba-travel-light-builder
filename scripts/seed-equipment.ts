@@ -22,10 +22,86 @@ interface Equipment {
   image_url: string;
   availability: boolean;
   availability_status: 'Available' | 'Low Stock' | 'Out of Stock';
+  featured?: boolean;
+  sort_order?: number;
 }
 
 const equipmentData: Equipment[] = [
-  // Beach Equipment
+  // Featured Products for Popular Equipment Section
+  {
+    name: 'Ostrich Loung Chairs',
+    category: 'Beach Equipment',
+    price_per_day: 25,
+    description: 'Premium comfortable lounge chairs perfect for beach relaxation',
+    images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
+    image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
+    availability: true,
+    availability_status: 'Available',
+    featured: true,
+    sort_order: 1
+  },
+  {
+    name: 'Tommy Bahama Beach Chair',
+    category: 'Beach Equipment',
+    price_per_day: 20,
+    description: 'Stylish and comfortable Tommy Bahama beach chair',
+    images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
+    image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
+    availability: true,
+    availability_status: 'Available',
+    featured: true,
+    sort_order: 2
+  },
+  {
+    name: 'Shibumi Quiet Canopy',
+    category: 'Beach Equipment',
+    price_per_day: 30,
+    description: 'Innovative wind-powered beach canopy for natural shade',
+    images: ['https://images.unsplash.com/photo-1500375592092-40eb2168fd21'],
+    image_url: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21',
+    availability: true,
+    availability_status: 'Available',
+    featured: true,
+    sort_order: 3
+  },
+  {
+    name: 'Dream On Me Full Size Foldable Crib',
+    category: 'Baby Equipment',
+    price_per_day: 35,
+    description: 'Full-size foldable crib for safe and comfortable baby sleep',
+    images: ['https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0'],
+    image_url: 'https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0',
+    availability: true,
+    availability_status: 'Available',
+    featured: true,
+    sort_order: 4
+  },
+  {
+    name: 'Jeep Jogger Stroller | Single',
+    category: 'Baby Equipment',
+    price_per_day: 40,
+    description: 'All-terrain Jeep jogger stroller perfect for active families',
+    images: ['https://images.unsplash.com/photo-1721322800607-8c38375eef04'],
+    image_url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04',
+    availability: true,
+    availability_status: 'Available',
+    featured: true,
+    sort_order: 5
+  },
+  {
+    name: 'Summer Portable Play Yard with Canopy',
+    category: 'Baby Equipment',
+    price_per_day: 32,
+    description: 'Portable play yard with UV protection canopy for outdoor fun',
+    images: ['https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e'],
+    image_url: 'https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e',
+    availability: true,
+    availability_status: 'Available',
+    featured: true,
+    sort_order: 6
+  },
+
+  // Other Beach Equipment
   {
     name: 'Premium Beach Umbrella',
     category: 'Beach Equipment',
@@ -34,7 +110,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1500375592092-40eb2168fd21'],
     image_url: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 10
   },
   {
     name: 'Beach Chair Set (2)',
@@ -44,7 +122,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
     image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 11
   },
   {
     name: 'Premium Cooler (48qt)',
@@ -54,7 +134,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96'],
     image_url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 12
   },
   {
     name: 'Snorkel Gear Set',
@@ -64,7 +146,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
     image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 13
   },
 
   // Baby Equipment
@@ -76,7 +160,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1721322800607-8c38375eef04'],
     image_url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 20
   },
   {
     name: 'Convertible Car Seat',
@@ -86,7 +172,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1586015555751-63bb77f4322a'],
     image_url: 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 21
   },
   {
     name: 'Portable Baby Crib',
@@ -96,7 +184,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0'],
     image_url: 'https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 22
   },
   {
     name: 'High Chair',
@@ -106,7 +196,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e'],
     image_url: 'https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e',
     availability: false,
-    availability_status: 'Out of Stock'
+    availability_status: 'Out of Stock',
+    featured: false,
+    sort_order: 23
   },
 
   // Beach Equipment (Water Sports)
@@ -118,7 +210,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1506744038136-46273834b3fb'],
     image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 30
   },
   {
     name: 'Stand-up Paddleboard',
@@ -128,7 +222,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1544551763-46a013bb70d5'],
     image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 31
   },
   {
     name: 'Life Jacket Set (4)',
@@ -138,7 +234,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1530549387789-4c1017266635'],
     image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 32
   },
   {
     name: 'Water Toys Bundle',
@@ -148,7 +246,9 @@ const equipmentData: Equipment[] = [
     images: ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b'],
     image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b',
     availability: true,
-    availability_status: 'Available'
+    availability_status: 'Available',
+    featured: false,
+    sort_order: 33
   }
 ];
 
