@@ -47,7 +47,7 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }:
           <div className="text-sm text-gray-500">Stock: {product.stock_quantity}</div>
           <div className="text-lg font-bold text-green-600">
             {"$"}
-            {Number(product.price_per_day).toFixed(2)}/day
+            {Number(product.price_per_day).toFixed(2)}/day | {Number(product.price_per_day * 5).toFixed(2)}/week
           </div>
         </div>
         <div className="flex gap-2 pt-2 border-t mt-auto">

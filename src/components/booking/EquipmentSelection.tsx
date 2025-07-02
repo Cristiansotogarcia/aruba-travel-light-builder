@@ -62,8 +62,8 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                 <option value="">Select equipment...</option>
                 {products.map(equipment => (
                   <option key={equipment.id} value={equipment.id} disabled={equipment.stock_quantity <= 0}>
-                    {equipment.name} - ${equipment.price_per_day}/day
-                    {equipment.availability_status === 'Out of Stock' ? ' (Out of Stock)' : 
+                    {equipment.name} - ${equipment.price_per_day}/day | ${Number(equipment.price_per_day * 5).toFixed(2)}/week
+                    {equipment.availability_status === 'Out of Stock' ? ' (Out of Stock)' :
                      equipment.availability_status === 'Low Stock' ? ` (Low Stock: ${equipment.stock_quantity} left)` : ''}
                     {/* Fallback for safety, though availability_status should be set */}
                     {!equipment.availability_status && equipment.stock_quantity <= 0 ? ' (Out of stock)' : 
@@ -110,8 +110,9 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                     <div>
                       <p className="font-medium">{item.equipment_name}</p>
                       <p className="text-sm text-gray-600">
-                        Quantity: {item.quantity} × ${item.equipment_price}/day {/* Use equipment_price from BookingItem */}
-                      </p>
+                          Quantity: {item.quantity} × ${item.equipment_price}/day |
+                          ${Number(item.equipment_price * 5).toFixed(2)}/week {/* Use equipment_price from BookingItem */}
+                        </p>
                     </div>
                   </div>
                   <Button
