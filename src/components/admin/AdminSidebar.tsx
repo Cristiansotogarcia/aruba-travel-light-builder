@@ -29,6 +29,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     { id: 'equipment', label: 'Equipment', icon: Package, permission: 'ProductManagement' },
     { id: 'categories', label: 'Category Order', icon: ListOrdered, permission: 'CategoryManagement' },
     { id: 'reports', label: 'Reports', icon: FileText, permission: 'ReportingAccess' }, // Added Reports
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, permission: 'ReportingAccess' },
     { id: 'users', label: 'User Management', icon: Users, permission: 'UserManagement' },
     { id: 'visibility', label: 'Visibility Settings', icon: Eye, permission: 'VisibilitySettings' },
     { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
