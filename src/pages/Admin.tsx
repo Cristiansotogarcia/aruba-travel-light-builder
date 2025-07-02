@@ -13,6 +13,7 @@ import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
 import { ReportsDashboard } from '@/components/admin/ReportsDashboard'; // Import ReportsDashboard
 import { SiteSettings } from '@/components/admin/SiteSettings';
+import { SeoManager } from '@/components/admin/SeoManager';
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -39,6 +40,8 @@ const Admin = () => {
         return <VisibilitySettings />;
       case 'tasks':
         return <DriverTasks />;
+      case 'seo':
+        return <SeoManager slug="home" />;
       case 'settings':
         return <SiteSettings />;
       default:
