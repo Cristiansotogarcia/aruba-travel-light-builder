@@ -5,7 +5,7 @@ dotenv.config({ path: '.env' });
 
 const supabaseAdmin = createClient(
   process.env.VITE_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY!
 );
 
 async function seedComponentVisibility() {
@@ -78,6 +78,12 @@ async function seedComponentVisibility() {
     { component_name: 'SeoManager', role: 'Admin', is_visible: true },
     { component_name: 'SeoManager', role: 'Booker', is_visible: false },
     { component_name: 'SeoManager', role: 'Driver', is_visible: false },
+
+    // AnalyticsDashboard
+    { component_name: 'AnalyticsDashboard', role: 'SuperUser', is_visible: true },
+    { component_name: 'AnalyticsDashboard', role: 'Admin', is_visible: true },
+    { component_name: 'AnalyticsDashboard', role: 'Booker', is_visible: false },
+    { component_name: 'AnalyticsDashboard', role: 'Driver', is_visible: false },
   ];
 
   // Insert or update component visibility rules

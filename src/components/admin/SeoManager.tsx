@@ -39,11 +39,15 @@ const defaultPages: PageOption[] = [
   { slug: 'book', title: 'Booking Page', type: 'page' },
 ];
 
-export const SeoManager: React.FC = () => {
+interface SeoManagerProps {
+  slug?: string;
+}
+
+export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedSlug, setSelectedSlug] = useState('home');
+  const [selectedSlug, setSelectedSlug] = useState(slug);
   const [availablePages] = useState<PageOption[]>(defaultPages);
   const [formData, setFormData] = useState<Partial<SeoData>>({
     page_slug: 'home',
@@ -182,12 +186,29 @@ export const SeoManager: React.FC = () => {
         twitter_image_url: formData.twitter_image_url?.trim() || null,
       };
 
-      const { error } = await supabase
+      const { data: savedData, error } = await supabase
         .from('seo_meta')
-        .upsert(dataToSave, { onConflict: 'page_slug' });
+        .upsert(dataToSave, { onConflict: 'page_slug' })
+        .select()
+        .single();
 
       if (error) {
         throw error;
+      }
+
+      if (savedData) {
+        setFormData({
+          id: savedData.id,
+          page_slug: savedData.page_slug,
+          meta_title: savedData.meta_title || '',
+          meta_description: savedData.meta_description || '',
+          canonical_url: savedData.canonical_url || '',
+          og_title: savedData.og_title || '',
+          og_description: savedData.og_description || '',
+          og_image_url: savedData.og_image_url || '',
+          twitter_title: savedData.twitter_title || '',
+          twitter_image_url: savedData.twitter_image_url || '',
+        });
       }
 
       toast({
@@ -423,5 +444,3 @@ export const SeoManager: React.FC = () => {
     </div>
   );
 };
-
-export default SeoManager;

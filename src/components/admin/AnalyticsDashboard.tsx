@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, Users, Eye, TrendingUp, AlertCircle } from 'lucide-react';
+import { BarChart3, Users, Eye, TrendingUp, AlertCircle, Clock, Activity } from 'lucide-react';
+import { umamiService, type UmamiMetrics } from '@/lib/services/umamiService';
 
-interface AnalyticsData {
-  pageviews: number;
-  visitors: number;
-  sessions: number;
-  bounceRate: number;
+interface AnalyticsData extends UmamiMetrics {
+  realTimeVisitors: number;
 }
 
 export const AnalyticsDashboard: React.FC = () => {
@@ -20,27 +18,40 @@ export const AnalyticsDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Simulate API call with mock data for now
-        // In production, replace this with actual Umami API call
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        
-        const mockData: AnalyticsData = {
-          pageviews: 1247,
-          visitors: 892,
-          sessions: 1056,
-          bounceRate: 34.2
+        // Fetch real-time data from Umami
+        const [stats, realTimeVisitors] = await Promise.all([
+          umamiService.getWebsiteStats(),
+          umamiService.getRealTimeVisitors()
+        ]);
+
+        const analyticsData: AnalyticsData = {
+          ...stats,
+          realTimeVisitors
         };
 
-        setData(mockData);
+        setData(analyticsData);
       } catch (err) {
         console.error('Analytics fetch error:', err);
-        setError('Failed to load analytics data');
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        
+        if (errorMessage.includes('Authentication required')) {
+          setError('Please log in to view analytics data.');
+        } else if (errorMessage.includes('401 Unauthorized')) {
+          setError('Unable to access Umami analytics. Please check your credentials or try logging in again.');
+        } else {
+          setError('Failed to load analytics data from Umami. Please check your API configuration.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAnalytics();
+
+    // Set up auto-refresh every 30 seconds for real-time data
+    const interval = setInterval(fetchAnalytics, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -95,7 +106,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Page Views</CardTitle>
@@ -120,11 +131,11 @@ export const AnalyticsDashboard: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">Visits</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.sessions.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{data?.visits.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
@@ -137,6 +148,41 @@ export const AnalyticsDashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{data?.bounceRate}%</div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Live Visitors</CardTitle>
+            <Activity className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{data?.realTimeVisitors}</div>
+            <p className="text-xs text-muted-foreground">Right now</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Session Duration</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data?.avgSessionDuration.toFixed(1)} min</div>
+            <p className="text-xs text-muted-foreground">Average time per visit</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Data Source</CardTitle>
+            <BarChart3 className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold text-blue-600">Umami Analytics</div>
+            <p className="text-xs text-muted-foreground">Real-time data • Updates every 30s</p>
           </CardContent>
         </Card>
       </div>
