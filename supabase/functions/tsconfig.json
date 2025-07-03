@@ -1,18 +1,19 @@
 {
   "extends": "../../tsconfig.json",
-  "types": ["_shared", "./"],
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./_shared/*"]
+    },
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "composite": true,
     "strict": true,
     "skipLibCheck": false,
     "allowJs": true,
-    "typeRoots": ["./"],
-
     "outDir": "./dist",
     "emitDeclarationOnly": true
   },

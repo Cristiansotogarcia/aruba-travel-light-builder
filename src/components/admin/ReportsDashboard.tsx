@@ -13,7 +13,8 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-} from 'recharts';
+  DynamicChartWrapper
+} from '@/components/common/dynamic/DynamicChart';
 import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from 'date-fns'; // Added formatDistanceToNow
 import { Product } from '@/types/types';
 import { DateRange } from 'react-day-picker'; // Re-adding based on error, assuming it's needed.
@@ -397,16 +398,18 @@ export const ReportsDashboard: React.FC = () => {
           {!loading && !error && bookingTrends.length === 0 && <p>No booking data available for trends.</p>}
           {!loading && !error && bookingTrends.length > 0 && (
             <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <LineChart data={bookingTrends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tickFormatter={(tick) => format(parseISO(tick), 'MMM d')} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="count" stroke="#8884d8" name="Bookings" />
-                </LineChart>
-              </ResponsiveContainer>
+              <DynamicChartWrapper>
+                <ResponsiveContainer>
+                  <LineChart data={bookingTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tickFormatter={(tick) => format(parseISO(tick), 'MMM d')} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="count" stroke="#8884d8" name="Bookings" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </DynamicChartWrapper>
             </div>
           )}
         </CardContent>
@@ -429,16 +432,18 @@ export const ReportsDashboard: React.FC = () => {
                 <div>
                   <h4 className="text-lg font-semibold mb-2">Monthly Revenue (Last 12 Months)</h4>
                   <div style={{ width: '100%', height: 300 }}>
-                    <ResponsiveContainer>
-                      <BarChart data={revenueTrends}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Revenue']} />
-                        <Legend />
-                        <Bar dataKey="revenue" fill="#82ca9d" name="Monthly Revenue" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <DynamicChartWrapper>
+                      <ResponsiveContainer>
+                        <BarChart data={revenueTrends}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Revenue']} />
+                          <Legend />
+                          <Bar dataKey="revenue" fill="#82ca9d" name="Monthly Revenue" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </DynamicChartWrapper>
                   </div>
                 </div>
               )}
@@ -457,16 +462,18 @@ export const ReportsDashboard: React.FC = () => {
           {!loading && !error && equipmentUtilization.length === 0 && <p>No equipment utilization data available.</p>}
           {!loading && !error && equipmentUtilization.length > 0 && (
             <div style={{ width: '100%', height: 400 }}> {/* Increased height for better visibility if many items */}
-              <ResponsiveContainer>
-                <BarChart data={equipmentUtilization} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={150} interval={0} />
-                  <Tooltip formatter={(value: number) => [value, 'Times Booked']} />
-                  <Legend />
-                  <Bar dataKey="bookedQuantity" fill="#8884d8" name="Total Quantity Booked" />
-                </BarChart>
-              </ResponsiveContainer>
+              <DynamicChartWrapper>
+                <ResponsiveContainer>
+                  <BarChart data={equipmentUtilization} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={150} interval={0} />
+                    <Tooltip formatter={(value: number) => [value, 'Times Booked']} />
+                    <Legend />
+                    <Bar dataKey="bookedQuantity" fill="#8884d8" name="Total Quantity Booked" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </DynamicChartWrapper>
             </div>
           )}
         </CardContent>
