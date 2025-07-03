@@ -44,6 +44,14 @@ serve(async (req) => {
         url = `${apiEndpoint}/websites/${websiteId}/pageviews?startAt=${params.startAt}&endAt=${params.endAt}&unit=${params.unit}&timezone=${params.timezone}`;
         break;
 
+      case 'getWebsiteMetrics':
+        url = `${apiEndpoint}/websites/${websiteId}/metrics?type=${params.type}&startAt=${params.startAt}&endAt=${params.endAt}&limit=${params.limit}&timezone=${params.timezone}`;
+        break;
+
+      case 'getWebsiteActive':
+        url = `${apiEndpoint}/websites/${websiteId}/active`;
+        break;
+
       default:
         return new Response(JSON.stringify({ error: 'Invalid method' }), {
           status: 400,
