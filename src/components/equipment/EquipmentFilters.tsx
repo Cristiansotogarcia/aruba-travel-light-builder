@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,7 @@ interface FilterOptions {
 interface ActiveFiltersState {
   search: string;
   categories: string[];
-  priceRange: [number, number]; // Assuming priceRange can also be part of what's changed, though not directly modified in handlers here
+  priceRange: [number, number];
   availability: string[];
 }
 
@@ -26,11 +25,11 @@ interface EquipmentFiltersProps {
   onClearFilters: () => void;
 }
 
-export const EquipmentFilters = ({ 
-  filters, 
-  activeFilters, 
+export const EquipmentFilters = ({
+  filters,
+  activeFilters,
   onFiltersChange,
-  onClearFilters 
+  onClearFilters
 }: EquipmentFiltersProps) => {
   const handleSearchChange = (value: string) => {
     onFiltersChange({ ...activeFilters, search: value });
@@ -43,16 +42,7 @@ export const EquipmentFilters = ({
     onFiltersChange({ ...activeFilters, categories });
   };
 
-  const handleAvailabilityToggle = (availability: string) => {
-    const availabilityList = activeFilters.availability.includes(availability)
-      ? activeFilters.availability.filter(a => a !== availability)
-      : [...activeFilters.availability, availability];
-    onFiltersChange({ ...activeFilters, availability: availabilityList });
-  };
-
-  const hasActiveFilters = activeFilters.search || 
-    activeFilters.categories.length > 0 || 
-    activeFilters.availability.length > 0;
+  const hasActiveFilters = activeFilters.search || activeFilters.categories.length > 0;
 
   return (
     <Card>
@@ -65,7 +55,7 @@ export const EquipmentFilters = ({
           </Button>
         )}
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Search */}
         <div className="space-y-2">
@@ -95,32 +85,6 @@ export const EquipmentFilters = ({
                 {category}
               </Badge>
             ))}
-          </div>
-        </div>
-
-        {/* Availability */}
-        <div className="space-y-3">
-          <Label>Availability</Label>
-          <div className="flex flex-wrap gap-2">
-            {filters.availability.map((availability) => (
-              <Badge
-                key={availability}
-                variant={activeFilters.availability.includes(availability) ? "default" : "outline"}
-                className="cursor-pointer capitalize"
-                onClick={() => handleAvailabilityToggle(availability)}
-              >
-                {availability === 'available' ? 'Available' : 
-                 availability === 'limited' ? 'Limited Stock' : 'Out of Stock'}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Price Range */}
-        <div className="space-y-3">
-          <Label>Price Range (per day)</Label>
-          <div className="text-sm text-gray-600">
-            ${filters.priceRange[0]} - ${filters.priceRange[1]}
           </div>
         </div>
       </CardContent>

@@ -1,24 +1,18 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
-import type { Equipment as BaseEquipment } from '@/data/mockEquipment';
+import { FaqAccordion } from '@/components/common/FaqAccordion';
 import { getProducts } from '@/lib/queries/products';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
-interface EquipmentItem extends BaseEquipment {
-  sub_category?: string;
-  category_sort_order: number;
-  sub_category_sort_order: number;
-}
-
 const Equipment = () => {
   const [filters, setFilters] = useState({
     search: '',
-    categories: [] as string[],
-    priceRange: [0, 0] as [number, number],
-    availability: [] as string[]
+    categories: [],
+    priceRange: [0, 0],
+    availability: []
   });
 
   const { data: products = [], isLoading } = useQuery({
@@ -27,19 +21,18 @@ const Equipment = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const equipmentData: EquipmentItem[] = useMemo(() => {
-    return products.map((p: any) => {
+  const equipmentData = useMemo(() => {
+    return products.map((p) => {
       const stock = p.stock_quantity ?? 0;
-      let availability: 'available' | 'limited' | 'unavailable';
+      let availability;
       if (stock <= 0) availability = 'unavailable';
       else if (stock <= 5) availability = 'limited';
       else availability = 'available';
-
       return {
         id: p.id,
         name: p.name,
-        category: p.equipment_category ? p.equipment_category.name : 'Uncategorized',
-        sub_category: p.equipment_sub_category ? p.equipment_sub_category.name : 'General',
+        category: p.equipment_category?.name || 'Uncategorized',
+        sub_category: p.equipment_sub_category?.name || 'General',
         price: p.price_per_day,
         image: p.image_url || (p.images && p.images[0]) || '',
         description: p.description || '',
@@ -47,16 +40,14 @@ const Equipment = () => {
         features: [],
         category_sort_order: p.equipment_category?.sort_order ?? 0,
         sub_category_sort_order: p.equipment_sub_category?.sort_order ?? 0,
-      } as EquipmentItem;
+      };
     });
   }, [products]);
 
   const filterOptions = useMemo(() => {
     const categories = Array.from(new Set(equipmentData.map(e => e.category)));
     const prices = equipmentData.map(e => e.price);
-    const priceRange: [number, number] = prices.length
-      ? [Math.min(...prices), Math.max(...prices)]
-      : [0, 0];
+    const priceRange = prices.length ? [Math.min(...prices), Math.max(...prices)] : [0, 0];
     return {
       categories,
       priceRange,
@@ -64,29 +55,31 @@ const Equipment = () => {
     };
   }, [equipmentData]);
 
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    setFilters(f => ({ ...f, priceRange: filterOptions.priceRange }));
+    if (isInitialMount.current) {
+      setFilters(f => ({ ...f, priceRange: filterOptions.priceRange }));
+      isInitialMount.current = false;
+    }
   }, [filterOptions.priceRange]);
 
   const filteredEquipment = useMemo(() => {
     return equipmentData.filter(item => {
-      // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        if (!item.name.toLowerCase().includes(searchLower) &&
-            !item.description.toLowerCase().includes(searchLower)) {
+        if (
+          !item.name.toLowerCase().includes(searchLower) &&
+          !item.description.toLowerCase().includes(searchLower)
+        ) {
           return false;
         }
       }
-      // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(item.category)) {
         return false;
       }
-      // Price range filter
       if (item.price < filters.priceRange[0] || item.price > filters.priceRange[1]) {
         return false;
       }
-      // Availability filter
       if (filters.availability.length > 0 && !filters.availability.includes(item.availability)) {
         return false;
       }
@@ -95,7 +88,7 @@ const Equipment = () => {
   }, [filters, equipmentData]);
 
   const groupedEquipment = useMemo(() => {
-    const map: Record<string, { order: number; subs: Record<string, { order: number; items: EquipmentItem[] }> }> = {};
+    const map: Record<string, any> = {};
     filteredEquipment.forEach(item => {
       const category = item.category || 'Uncategorized';
       const subCategory = item.sub_category || 'General';
@@ -109,7 +102,7 @@ const Equipment = () => {
     });
 
     const sortedCategories = Object.entries(map).sort((a, b) => a[1].order - b[1].order);
-    const result: Record<string, Record<string, EquipmentItem[]>> = {};
+    const result: Record<string, Record<string, any[]>> = {};
     sortedCategories.forEach(([catName, catData]) => {
       const sortedSubs = Object.entries(catData.subs).sort((a, b) => a[1].order - b[1].order);
       result[catName] = {};
@@ -117,13 +110,12 @@ const Equipment = () => {
         result[catName][subName] = subData.items;
       });
     });
+
     return result;
   }, [filteredEquipment]);
 
   if (isLoading) {
-    return (
-      <div className="py-8 text-center">Loading equipment...</div>
-    );
+    return <div className="py-8 text-center">Loading equipment...</div>;
   }
 
   return (
@@ -133,15 +125,29 @@ const Equipment = () => {
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
           Our Equipment
         </h1>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar: Filters + FAQ */}
           <div className="lg:col-span-1">
-            <EquipmentFilters 
-              filters={filterOptions} 
-              activeFilters={filters} 
-              onFiltersChange={setFilters} 
-              onClearFilters={() => setFilters({ search: '', categories: [], priceRange: filterOptions.priceRange, availability: [] })}
-            />
+            <div className="space-y-6 sticky top-0 lg:top-4">
+              <EquipmentFilters
+                filters={filterOptions}
+                activeFilters={filters}
+                onFiltersChange={setFilters}
+                onClearFilters={() =>
+                  setFilters({
+                    search: '',
+                    categories: [],
+                    priceRange: filterOptions.priceRange,
+                    availability: []
+                  })
+                }
+              />
+              <FaqAccordion />
+            </div>
           </div>
+
+          {/* Main content: Equipment listing */}
           <div className="lg:col-span-3 space-y-8">
             {Object.entries(groupedEquipment).map(([category, subCategories]) => (
               <div key={category}>
