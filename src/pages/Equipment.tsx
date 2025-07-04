@@ -1,3 +1,4 @@
+// src/pages/Equipment.tsx
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
@@ -12,22 +13,25 @@ const Equipment = () => {
     search: '',
     categories: [],
     priceRange: [0, 0],
-    availability: []
+    availability: [],
   });
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['equipment-products'],
-    queryFn: getProducts,
-    staleTime: 5 * 60 * 1000,
-  });
+const { data: products = [], isLoading } = useQuery({
+  queryKey: ['equipment-products'],
+  queryFn: getProducts,
+  staleTime: 5 * 60 * 1000,  // 5 minutes "fresh"
+  cacheTime: 30 * 60 * 1000, // 30 minutes in cache
+});
+
 
   const equipmentData = useMemo(() => {
     return products.map((p) => {
       const stock = p.stock_quantity ?? 0;
-      let availability;
+      let availability: 'available' | 'limited' | 'unavailable';
       if (stock <= 0) availability = 'unavailable';
       else if (stock <= 5) availability = 'limited';
       else availability = 'available';
+
       return {
         id: p.id,
         name: p.name,
@@ -127,7 +131,7 @@ const Equipment = () => {
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar: Filters + FAQ */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="space-y-6 sticky top-0 lg:top-4">
               <EquipmentFilters
@@ -139,7 +143,7 @@ const Equipment = () => {
                     search: '',
                     categories: [],
                     priceRange: filterOptions.priceRange,
-                    availability: []
+                    availability: [],
                   })
                 }
               />
@@ -147,13 +151,11 @@ const Equipment = () => {
             </div>
           </div>
 
-          {/* Main content: Equipment listing */}
+          {/* Main Content */}
           <div className="lg:col-span-3 space-y-8">
             {Object.entries(groupedEquipment).map(([category, subCategories]) => (
               <div key={category}>
-                <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl mb-4">
-                  {category}
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">{category}</h2>
                 {Object.entries(subCategories).map(([subCategory, items]) => (
                   <div key={subCategory}>
                     <h3 className="text-xl font-semibold text-gray-800 mb-3">{subCategory}</h3>

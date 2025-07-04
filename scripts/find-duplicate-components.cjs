@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const rootDir = path.resolve(__dirname, 'src');
-const duplicates = [];
+const rootDir = path.resolve(__dirname, '../src');
+const filesByBasename = new Map();
+
+const allowedExtensions = ['.js', '.jsx', '.ts', '.tsx'];
 
 function walk(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -10,42 +12,48 @@ function walk(dir) {
     const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
+      if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
+        continue;
+      }
       walk(fullPath);
+      continue;
     }
 
-    if (entry.isFile() && entry.name.endsWith('.js')) {
-      const baseName = entry.name.replace(/\.js$/, '');
-      const tsxFile = path.join(dir, baseName + '.tsx');
-
-      if (fs.existsSync(tsxFile)) {
-        const jsContent = fs.readFileSync(fullPath, 'utf-8').trim();
-        const tsxContent = fs.readFileSync(tsxFile, 'utf-8').trim();
-        const identical = jsContent === tsxContent;
-
-        duplicates.push({
-          js: fullPath,
-          tsx: tsxFile,
-          identical,
-        });
+    const extension = path.extname(entry.name);
+    if (allowedExtensions.includes(extension)) {
+      const basename = path.basename(entry.name, extension);
+      const key = path.join(dir, basename);
+      if (!filesByBasename.has(key)) {
+        filesByBasename.set(key, new Set());
       }
+      filesByBasename.get(key).add(fullPath);
     }
   }
 }
 
 walk(rootDir);
 
-// Output
-console.log('\n🔍 Duplicate .js/.tsx files found:\n');
-
-if (duplicates.length === 0) {
-  console.log('✅ No duplicates found.\n');
-} else {
-  duplicates.forEach((entry, index) => {
-    console.log(`#${index + 1}`);
-    console.log(`  JS File:  ${entry.js}`);
-    console.log(`  TSX File: ${entry.tsx}`);
-    console.log(`  🔁 Identical: ${entry.identical ? '✅ Yes' : '❌ No'}\n`);
-  });
-
-  console.log(`💡 Total duplicates found: ${duplicates.length}\n`);
+const duplicates = [];
+for (const fileSet of filesByBasename.values()) {
+  if (fileSet.size > 1) {
+    duplicates.push(Array.from(fileSet));
+  }
 }
+
+// Output
+console.clear();
+let output = '';
+if (duplicates.length > 0) {
+  output += '\n🔍 Duplicate component files found:\n\n';
+  duplicates.forEach((fileGroup, index) => {
+    output += `#${index + 1}: ${path.basename(fileGroup[0], path.extname(fileGroup[0]))}\n`;
+    fileGroup.forEach(file => {
+      output += `  - ${path.relative(path.join(rootDir, '..'), file)}\n`;
+    });
+    output += '\n';
+  });
+  output += `💡 Total sets of duplicates found: ${duplicates.length}\n`;
+} else {
+  output += '✅ No duplicates found.\n';
+}
+console.log(output);

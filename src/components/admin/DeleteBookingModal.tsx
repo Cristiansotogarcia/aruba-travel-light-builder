@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -147,6 +147,9 @@ export const DeleteBookingModal = ({ booking, onBookingDeleted, onClose, open }:
             <AlertTriangle className="h-5 w-5" />
             Delete Booking
           </DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. This will permanently delete the booking and all associated data.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">

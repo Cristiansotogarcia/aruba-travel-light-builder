@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -108,6 +108,9 @@ export const DayPopupDialog = ({
           <DialogTitle>
             Equipment Schedule for {format(selectedDate, 'EEEE, dd/MM/yyyy')}
           </DialogTitle>
+          <DialogDescription>
+            This dialog shows all the deliveries and pickups scheduled for the selected date.
+          </DialogDescription>
         </DialogHeader>
         
         {totalCount > 0 ? (

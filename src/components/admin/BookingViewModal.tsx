@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { DeleteBookingModal } from './DeleteBookingModal';
 import { UndeliverableModal } from './UndeliverableModal';
@@ -75,6 +75,9 @@ export const BookingViewModal = ({
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Booking Details #{booking.id.substring(0, 8)}</DialogTitle>
+            <DialogDescription>
+              View the details of the booking and perform actions such as updating the status, editing, or deleting the booking.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">

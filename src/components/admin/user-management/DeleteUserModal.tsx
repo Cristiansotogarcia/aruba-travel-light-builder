@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -211,6 +211,9 @@ export const DeleteUserModal = ({ open, onClose, user, onUserDeleted }: DeleteUs
             <AlertTriangle className="h-5 w-5 text-red-500" />
             Delete User: {user?.name}
           </DialogTitle>
+          <DialogDescription>
+            You can either deactivate the user, which preserves their data, or permanently delete the user and all their associated data.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">

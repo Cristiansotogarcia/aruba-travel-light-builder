@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +40,9 @@ export const TempPasswordDialog = ({ open, onClose, result }: TempPasswordDialog
       <DialogContent>
         <DialogHeader>
           <DialogTitle>User Created Successfully</DialogTitle>
+          <DialogDescription>
+            A new user has been created. Share the temporary password with them. They will need to change it on their first login.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
