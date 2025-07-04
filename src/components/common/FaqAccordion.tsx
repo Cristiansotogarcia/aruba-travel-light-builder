@@ -48,8 +48,8 @@ export const FaqAccordion: React.FC<FaqAccordionProps> = ({ className }) => {
           <Accordion type="single" collapsible className="w-full space-y-2">
             {faqData.map((item, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-sm font-medium py-2">
-                  {item.question}
+                <AccordionTrigger className="text-sm lg:text-base font-small text-left leading-tight break-words">
+  {item.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-sm text-gray-700 pt-1 pb-2">
                   {item.answer}
