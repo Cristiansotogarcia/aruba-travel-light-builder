@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -144,6 +144,9 @@ export const CreateUserDialog = ({ onUserCreated, onRefreshProfiles }: CreateUse
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
+          <DialogDescription>
+            Fill in the details to create a new user account. The user will be required to change their password on first login.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>

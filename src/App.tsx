@@ -1,17 +1,18 @@
+// src/App.tsx
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy, useEffect } from "react";
-import { getProducts } from "@/lib/queries/products";
+import { Suspense, lazy } from "react";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import { AppPrefetch } from "@/AppPrefetch"; //
 
-// Lazy load all pages for code splitting
+// Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
 const Equipment = lazy(() => import("./pages/Equipment"));
 const About = lazy(() => import("./pages/About"));
@@ -26,13 +27,14 @@ const SeoDemo = lazy(() => import("./pages/SeoDemo"));
 const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Loading component for Suspense fallback
+// Loading fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
   </div>
 );
 
+// React Query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -42,12 +44,9 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  useEffect(() => {
-    queryClient.prefetchQuery(['equipment-products'], getProducts);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
+      <AppPrefetch /> {/* ✅ altijd prefetch de equipment producten */}
       <TooltipProvider>
         <AuthProvider>
           <SiteAssetsProvider>
@@ -57,46 +56,60 @@ const App = () => {
               <BrowserRouter>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/equipment" element={<Equipment />} />
-                  <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/equipment" element={<Equipment />} />
+                    <Route path="/login" element={<Login />} />
 
-                  {/* Protected Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['Customer', 'Booker', 'Admin', 'SuperUser']} />}>
-                    <Route path="/book" element={<Book />} />
-                  </Route>
+                    {/* Protected Routes */}
+                    <Route
+                      element={
+                        <ProtectedRoute allowedRoles={["Customer", "Booker", "Admin", "SuperUser"]} />
+                      }
+                    >
+                      <Route path="/book" element={<Book />} />
+                    </Route>
 
-                  {/* Protected Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['Admin', 'SuperUser']} />}>
-                    <Route path="/admin" element={<Admin />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Driver']} />}>
-                    <Route path="/driver-dashboard" element={<DriverDashboard />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Customer']} />}> 
-                    <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-                  </Route>
-                  <Route element={<ProtectedRoute allowedRoles={['Booker', 'Admin', 'SuperUser']} />}>
-                    {/* Booker role can access their dashboard. Admin/SuperUser might also need access for impersonation or support. */}
-                    <Route path="/booker" element={<BookerDashboard />} />
-                  </Route>
+                    <Route
+                      element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
+                    >
+                      <Route path="/admin" element={<Admin />} />
+                    </Route>
 
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/seo-demo" element={<SeoDemo />} />
-                  <Route path="/seo-test" element={<SeoTest />} />
+                    <Route
+                      element={<ProtectedRoute allowedRoles={["Driver"]} />}
+                    >
+                      <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                    </Route>
 
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </ErrorBoundary>
-        </SiteAssetsProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+                    <Route
+                      element={<ProtectedRoute allowedRoles={["Customer"]} />}
+                    >
+                      <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                    </Route>
 
+                    <Route
+                      element={
+                        <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
+                      }
+                    >
+                      <Route path="/booker" element={<BookerDashboard />} />
+                    </Route>
+
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/seo-demo" element={<SeoDemo />} />
+                    <Route path="/seo-test" element={<SeoTest />} />
+
+                    {/* Catch all */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </ErrorBoundary>
+          </SiteAssetsProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -4,8 +4,17 @@ import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/homepage/HeroSection';
 import { FeaturedProducts } from '@/components/homepage/FeaturedProducts.jsx';
 import { HowItWorks } from '@/components/homepage/HowItWorks';
+import { useQuery } from '@tanstack/react-query';
+import { getProducts } from '@/lib/queries/products';
 
 const Index = () => {
+  useQuery({
+    queryKey: ['equipment-products'],
+    queryFn: getProducts,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    cacheTime: 15 * 60 * 1000, // 15 minutes
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

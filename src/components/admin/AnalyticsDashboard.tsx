@@ -58,20 +58,22 @@ export const AnalyticsDashboard: React.FC = () => {
         const stats = await statsRes.json();
         const realTime = await realTimeRes.json();
 
-        const visits = stats.visits ?? 0;
-        const bounces = stats.bounces ?? 0;
-        const totaltime = stats.totaltime ?? 0;
+        const pageviews = stats.pageviews?.value ?? 0;
+        const visitors = stats.uniques?.value ?? 0;
+        const visits = stats.visits?.value ?? 0;
+        const bounces = stats.bounces?.value ?? 0;
+        const totaltime = stats.totaltime?.value ?? 0;
 
         const bounceRate = visits > 0 ? (bounces / visits) * 100 : 0;
-        const avgSessionDuration = visits > 0 ? totaltime / visits / 1000 / 60 : 0;
+        const avgSessionDuration = visits > 0 ? totaltime / visits / 60 : 0; // Umami totaltime is in seconds
 
         setData({
-          pageviews: stats.pageviews ?? 0,
-          visitors: stats.uniques ?? 0,
+          pageviews: pageviews,
+          visitors: visitors,
           visits: visits,
           bounceRate: Math.round(bounceRate * 10) / 10,
           avgSessionDuration: Math.round(avgSessionDuration * 10) / 10,
-          realTimeVisitors: Array.isArray(realTime) && realTime.length > 0 ? realTime[0].x : 0
+          realTimeVisitors: Array.isArray(realTime) ? realTime.length : 0
         });
       } catch (err) {
         console.error('Analytics fetch error:', err);
@@ -195,7 +197,7 @@ export const AnalyticsDashboard: React.FC = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg. Session Duration</CardTitle>
@@ -204,17 +206,6 @@ export const AnalyticsDashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{data?.avgSessionDuration.toFixed(1)} min</div>
             <p className="text-xs text-muted-foreground">Average time per visit</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Data Source</CardTitle>
-            <BarChart3 className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold text-blue-600">Umami Analytics</div>
-            <p className="text-xs text-muted-foreground">Real-time data • Updates every 30s</p>
           </CardContent>
         </Card>
       </div>
