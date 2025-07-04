@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Users, Eye, TrendingUp, AlertCircle, Clock, Activity } from 'lucide-react';
-import { umamiService, type UmamiMetrics } from '@/lib/services/umamiService';
 
-interface AnalyticsData extends UmamiMetrics {
+interface AnalyticsData {
+  pageviews: number;
+  visitors: number;
+  visits: number;
+  bounceRate: number;
+  avgSessionDuration: number;
   realTimeVisitors: number;
 }
 
@@ -18,43 +22,71 @@ export const AnalyticsDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch real-time data from Umami
-        const [stats, realTimeVisitors] = await Promise.all([
-          umamiService.getWebsiteStats(),
-          umamiService.getRealTimeVisitors()
-        ]);
+      const endpoint = import.meta.env.VITE_UMAMI_API_CLIENT_ENDPOINT || '';
+      const apiKey = import.meta.env.VITE_UMAMI_API_KEY || '';
+      const websiteId = import.meta.env.VITE_UMAMI_WEBSITE_ID || '';
 
-        const analyticsData: AnalyticsData = {
-          ...stats,
-          realTimeVisitors
-        };
 
-        setData(analyticsData);
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+        const startAt = Math.floor(thirtyDaysAgo.getTime());
+        const endAt = Math.floor(now.getTime());
+        const timezone = 'Europe/Amsterdam';
+
+        const statsRes = await fetch(
+          `${endpoint}/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&timezone=${timezone}`,
+          {
+            headers: {
+              'x-umami-api-key': apiKey,
+              Accept: 'application/json'
+            }
+          }
+        );
+
+        const realTimeRes = await fetch(`${endpoint}/websites/${websiteId}/active`, {
+          headers: {
+            'x-umami-api-key': apiKey,
+            Accept: 'application/json'
+          }
+        });
+
+        if (!statsRes.ok || !realTimeRes.ok) {
+          throw new Error('Failed to fetch Umami data');
+        }
+
+        const stats = await statsRes.json();
+        const realTime = await realTimeRes.json();
+
+        const visits = stats.visits ?? 0;
+        const bounces = stats.bounces ?? 0;
+        const totaltime = stats.totaltime ?? 0;
+
+        const bounceRate = visits > 0 ? (bounces / visits) * 100 : 0;
+        const avgSessionDuration = visits > 0 ? totaltime / visits / 1000 / 60 : 0;
+
+        setData({
+          pageviews: stats.pageviews ?? 0,
+          visitors: stats.uniques ?? 0,
+          visits: visits,
+          bounceRate: Math.round(bounceRate * 10) / 10,
+          avgSessionDuration: Math.round(avgSessionDuration * 10) / 10,
+          realTimeVisitors: Array.isArray(realTime) && realTime.length > 0 ? realTime[0].x : 0
+        });
       } catch (err) {
         console.error('Analytics fetch error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        
-        if (errorMessage.includes('Authentication required')) {
-          setError('Please log in to view analytics data.');
-        } else if (errorMessage.includes('401 Unauthorized')) {
-          setError('Unable to access Umami analytics. Please check your credentials or try logging in again.');
-        } else {
-          setError('Failed to load analytics data from Umami. Please check your API configuration.');
-        }
+        setError('Failed to load analytics data from Umami. Please check your API configuration.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchAnalytics();
-
-    // Set up auto-refresh every 30 seconds for real-time data
     const interval = setInterval(fetchAnalytics, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2 mb-6">

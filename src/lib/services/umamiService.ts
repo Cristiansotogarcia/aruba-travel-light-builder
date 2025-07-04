@@ -16,130 +16,102 @@ interface UmamiApiResponse {
   sessions: UmamiPageView[];
 }
 
+// ✅ Constantes bovenin voor hergebruik
+const API_KEY = import.meta.env.VITE_UMAMI_API_KEY;
+const API_ENDPOINT = import.meta.env.VITE_UMAMI_API_CLIENT_ENDPOINT;
+const WEBSITE_ID = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+
 class UmamiService {
-
-  private async apiCall(method: string, ...params: any[]) {
-
-    const umamiProxyUrl = `https://abofxrgdxfzrhjbvhdkj.supabase.co/functions/v1/umami-proxy`;
-
-    const response = await fetch(umamiProxyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ method, params }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
   async getWebsiteStats(startDate?: Date, endDate?: Date): Promise<UmamiMetrics> {
     const now = Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-    const start = startDate?.getTime() || thirtyDaysAgo;
-    const end = endDate?.getTime() || now;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
 
-    try {
-      const data = await this.apiCall('getWebsiteStats', {
-        startAt: start,
-        endAt: end,
-      });
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/stats?startAt=${start}&endAt=${end}`;
 
-      if (!data) {
-        throw new Error(`Umami API error: Failed to get website stats`);
-      }
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
 
-      const bounceRate = data.visits?.value > 0 
-        ? (data.bounces?.value / data.visits?.value) * 100 
-        : 0;
-      const avgSessionDuration = data.visits?.value > 0
-        ? data.totaltime?.value / data.visits?.value / 1000 / 60
-        : 0;
-
-      return {
-        pageviews: data.pageviews?.value || 0,
-        visitors: data.visitors?.value || 0,
-        visits: data.visits?.value || 0,
-        bounceRate: Math.round(bounceRate * 10) / 10,
-        avgSessionDuration: Math.round(avgSessionDuration * 10) / 10,
-      };
-    } catch (error) {
-      console.error('Error fetching Umami stats:', error);
-      throw error;
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
     }
+
+    const data = await res.json();
+
+    return {
+      pageviews: data.pageviews?.value ?? 0,
+      visitors: data.visitors?.value ?? 0,
+      visits: data.visits?.value ?? 0,
+      bounceRate: data.bouncerate?.value ?? 0,
+      avgSessionDuration: data.totaltime?.value ?? 0,
+    };
   }
 
   async getPageViews(startDate?: Date, endDate?: Date): Promise<UmamiApiResponse> {
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-    const start = startDate?.getTime() || sevenDaysAgo;
-    const end = endDate?.getTime() || now;
+    const start = startDate?.getTime() ?? sevenDaysAgo;
+    const end = endDate?.getTime() ?? now;
 
-    try {
-      const data = await this.apiCall('getWebsitePageviews', {
-        startAt: start,
-        endAt: end,
-        unit: 'day',
-        timezone: ''
-      });
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/pageviews?startAt=${start}&endAt=${end}&unit=day`;
 
-      if (!data) {
-        throw new Error(`Umami API error: Failed to get page views`);
-      }
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
 
-      return {
-  pageviews: data.pageviews.map((p: { t: string; y: number }) => ({ x: p.t, y: p.y })),
-  sessions: data.sessions.map((s: { t: string; y: number }) => ({ x: s.t, y: s.y })),
-};
-
-    } catch (error) {
-      console.error('Error fetching Umami pageviews:', error);
-      throw error;
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
     }
+
+    return res.json();
   }
 
   async getTopPages(startDate?: Date, endDate?: Date, limit: number = 10) {
     const now = Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-    const start = startDate?.getTime() || thirtyDaysAgo;
-    const end = endDate?.getTime() || now;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
 
-    try {
-      const data = await this.apiCall('getWebsiteMetrics', {
-        startAt: start,
-        endAt: end,
-        type: 'url',
-        limit,
-      });
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=url&startAt=${start}&endAt=${end}&limit=${limit}`;
 
-      if (!data) {
-        throw new Error(`Umami API error: Failed to get top pages`);
-      }
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
 
-      return data;
-    } catch (error) {
-      console.error('Error fetching Umami top pages:', error);
-      throw error;
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
     }
+
+    return res.json();
   }
 
   async getRealTimeVisitors(): Promise<number> {
-    try {
-      const data = await this.apiCall('getWebsiteActive');
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/active`;
 
-      if (!data) {
-        throw new Error(`Umami API error: Failed to get real-time visitors`);
-      }
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
 
-      return data?.x || 0;
-    } catch (error) {
-      console.error('Error fetching real-time visitors:', error);
-      return 0;
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
     }
+
+    const data = await res.json();
+    return data?.x ?? 0;
   }
 }
 
