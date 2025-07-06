@@ -28,7 +28,7 @@ const faqData = [
  
   {
     question: "What if we need a crib or pack and play on sunday?",
-    answer: "Sunday deliveries are available only if your order includes a crib or pack and play. Additional fees may apply for Sunday deliveries.",
+    answer: "Sunday deliveries are available only if your order includes a crib or pack and play. A $20 delivery fee applies for Sunday crib delivery",
   },
 ];
 
