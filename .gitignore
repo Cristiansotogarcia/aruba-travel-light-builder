@@ -27,3 +27,8 @@ dist-ssr
 .env.local
 .env
 
+# Compiled artifacts
+src/components/**/*.js
+src/components/**/*.d.ts
+*.tsbuildinfo
+
