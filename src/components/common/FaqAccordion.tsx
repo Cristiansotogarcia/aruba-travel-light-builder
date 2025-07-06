@@ -17,7 +17,7 @@ const faqData = [
   },
   {
     question: "Is delivery and pickup free?",
-    answer: "Yes, delivery and pickup are free for weekly rentals (5–7 days). For non-weekly rentals, there is a one-time $10 delivery fee that covers both delivery and pickup.",
+    answer: "Delivery and pickup are free ONLY for weekly rentals (5–7 days). For non-weekly rentals, there is a one-time $10 delivery fee that covers both delivery and pickup. A $20 delivery fee applies for Sunday crib delivery",
   },
   
  {
@@ -25,13 +25,10 @@ const faqData = [
   answer: `We offer two time slots for both delivery and pickup from Monday through Saturday:\n\n• Morning: 8:00 AM – 10:00 AM\n• Afternoon: 4:00 PM – 6:00 PM\n\n
   On Saturdays, afternoon slots are extended until 7:00 PM.\n\nSunday deliveries are only available for crib or pack and play rentals and are limited to the afternoon time slot.`,
 },
-  {
-    question: "When do you deliver?",
-    answer: "Delivery is available Monday through Saturday.",
-  },
+ 
   {
     question: "What if we need a crib or pack and play on sunday?",
-    answer: "Sunday deliveries are available only if your order includes a crib or pack and play.",
+    answer: "Sunday deliveries are available only if your order includes a crib or pack and play. Additional fees may apply for Sunday deliveries.",
   },
 ];
 
