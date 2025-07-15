@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/admin/DashboardLayout';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -11,10 +10,11 @@ import { ProductManagement } from '@/components/admin/ProductManagement';
 import { CategoryManagement } from '@/components/admin/CategoryManagement';
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
-import { ReportsDashboard } from '@/components/admin/ReportsDashboard'; // Import ReportsDashboard
+import { ReportsDashboard } from '@/components/admin/ReportsDashboard';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { SiteSettings } from '@/components/admin/SiteSettings';
 import { SeoManager } from '@/components/admin/SeoManager';
+import AboutUsManagement from '@/components/admin/AboutUsManagement';
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -33,7 +33,9 @@ const Admin = () => {
         return <ProductManagement />;
       case 'categories':
         return <CategoryManagement />;
-      case 'reports': // Add case for reports
+      case 'about-us':
+        return <AboutUsManagement />;
+      case 'reports':
         return <ReportsDashboard />;
       case 'analytics':
         return <AnalyticsDashboard />;
@@ -44,7 +46,7 @@ const Admin = () => {
       case 'tasks':
         return <DriverTasks />;
       case 'taskmaster':
-        return <DriverTasks />; // TODO: Create dedicated TaskMaster component
+        return <DriverTasks />;
       case 'seo':
         return <SeoManager />;
       case 'settings':
