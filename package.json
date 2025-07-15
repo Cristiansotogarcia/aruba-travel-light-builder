@@ -16,7 +16,8 @@
     "seed:users": "ts-node --esm scripts/seed-users.ts",
     "seed:equipment": "ts-node --esm scripts/seed-equipment.ts",
     "seed:component-visibility": "ts-node-esm scripts/seed-component-visibility.ts",
-    "seed:all": "npm run seed:users && npm run seed:equipment && npm run seed:component-visibility"
+    "seed:about-us": "node scripts/seed-about-us-content.js",
+    "seed:all": "npm run seed:users && npm run seed:equipment && npm run seed:component-visibility && npm run seed:about-us"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

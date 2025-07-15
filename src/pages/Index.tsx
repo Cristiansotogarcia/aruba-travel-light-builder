@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/homepage/HeroSection';
 import { FeaturedProducts } from '@/components/homepage/FeaturedProducts.jsx';
 import { HowItWorks } from '@/components/homepage/HowItWorks';
+import AboutUsSection from '@/components/homepage/AboutUsSection';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from '@/lib/queries/products';
 
@@ -12,7 +13,7 @@ const Index = () => {
     queryKey: ['equipment-products'],
     queryFn: getProducts,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   return (
@@ -22,10 +23,7 @@ const Index = () => {
         <HeroSection />
         <FeaturedProducts />
         <HowItWorks />
-        <div className="about-section">
-          <h2>About Us</h2>
-          <p>Short description here. <a href="/about">More about us</a></p>
-        </div>
+        <AboutUsSection />
       </main>
       <Footer />
     </div>
