@@ -67,6 +67,21 @@ const AboutUsSection: React.FC = () => {
             </h2>
           </div>
           <div className="grid md:grid-cols-2 gap-8 items-center">
+            {/* Image first on mobile, text first on desktop */}
+            <div className="flex justify-center md:order-last">
+              {aboutContent?.about_image ? (
+                <img 
+                  src={aboutContent.about_image}
+                  alt="About Us"
+                  className="w-80 h-80 rounded-full object-cover shadow-lg"
+                />
+              ) : (
+                <div className="w-80 h-80 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400">No image uploaded</span>
+                </div>
+              )}
+            </div>
+            
             <div className="space-y-6">
               <p className="text-lg text-gray-600 leading-relaxed">
                 {aboutContent?.short_description}
@@ -80,20 +95,6 @@ const AboutUsSection: React.FC = () => {
                   Read Complete Story
                 </Button>
               </div>
-            </div>
-            
-            <div className="flex justify-center">
-              {aboutContent?.about_image ? (
-                <img 
-                  src={aboutContent.about_image}
-                  alt="About Us"
-                  className="w-80 h-80 rounded-full object-cover shadow-lg"
-                />
-              ) : (
-                <div className="w-80 h-80 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400">No image uploaded</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
