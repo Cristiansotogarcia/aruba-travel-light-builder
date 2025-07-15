@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
+  process.env.VITE_PUBLIC_SUPABASE_URL,
+  process.env.VITE_PUBLIC_SUPABASE_ANON_KEY
 );
 
 async function seedAboutUsContent() {
@@ -17,7 +17,9 @@ async function seedAboutUsContent() {
         title: 'About Us',
         content: 'Learn more about our company and what we do. We provide excellent service and quality products to our customers.',
         block_type: 'text',
-        is_active: true
+        is_active: true,
+        image_url: null,
+        metadata: {}
       }, {
         onConflict: 'block_key,page_slug'
       });
@@ -37,7 +39,9 @@ async function seedAboutUsContent() {
         title: 'About Us',
         content: 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers. Our mission is to deliver outstanding value and ensure customer satisfaction through our comprehensive range of services.',
         block_type: 'text',
-        is_active: true
+        is_active: true,
+        image_url: null,
+        metadata: {}
       }, {
         onConflict: 'block_key,page_slug'
       });
