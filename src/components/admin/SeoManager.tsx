@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Search, Save } from 'lucide-react';
+import { Search, Save, Image as ImageIcon, Upload, ExternalLink, X } from 'lucide-react';
+import { CloudflareImageUpload } from './CloudflareImageUpload';
+import { CloudflareImageBrowser } from './CloudflareImageBrowser';
 
 interface SeoData {
   id?: string;
@@ -60,6 +62,10 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
     twitter_title: '',
     twitter_image_url: '',
   });
+
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [showImageBrowser, setShowImageBrowser] = useState(false);
+  const [currentImageField, setCurrentImageField] = useState<'og_image_url' | 'twitter_image_url' | null>(null);
 
   useEffect(() => {
     if (selectedSlug) {
@@ -238,6 +244,34 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
     return 'text-green-500';
   };
 
+  const ImagePreview = ({ imageUrl, onRemove, label }: { imageUrl: string; onRemove: () => void; label: string }) => (
+    <div className="relative group">
+      <img
+        src={imageUrl}
+        alt={label}
+        className="w-full max-w-md h-48 object-cover rounded-lg border"
+      />
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          onClick={onRemove}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <a
+        href={imageUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-2 right-2 bg-black/70 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </a>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -246,7 +280,7 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
             <Search className="h-8 w-8" />
             SEO Manager
           </h1>
-          <p className="text-gray-600 mt-1">Optimize your pages for search engines</p>
+          <p className="text-gray-600 mt-1">Optimize your pages for search engines and social media</p>
         </div>
         <Badge variant="outline" className="text-sm">
           {availablePages.find(p => p.slug === selectedSlug)?.type || 'page'}
@@ -352,7 +386,7 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
             <CardHeader>
               <CardTitle>Social Media Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div>
                 <Label htmlFor="ogTitle">Open Graph Title (Facebook, LinkedIn)</Label>
                 <Input
@@ -382,6 +416,53 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
                 </p>
               </div>
 
+              {/* Open Graph Image */}
+              <div>
+                <Label>Open Graph Image (Facebook)</Label>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCurrentImageField('og_image_url');
+                        setShowImageUpload(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload New
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCurrentImageField('og_image_url');
+                        setShowImageBrowser(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                      Browse Library
+                    </Button>
+                  </div>
+                  
+                  {formData.og_image_url && (
+                    <ImagePreview 
+                      imageUrl={formData.og_image_url} 
+                      onRemove={() => handleInputChange('og_image_url', '')}
+                      label="Open Graph"
+                    />
+                  )}
+                  
+                  <p className="text-xs text-gray-500">
+                    Recommended: 1200×630 pixels for optimal Facebook display
+                  </p>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="twitterTitle">Twitter Title</Label>
                 <Input
@@ -395,25 +476,112 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
                   {formData.twitter_title?.length || 0}/60 characters
                 </p>
               </div>
+
+              {/* Twitter Image */}
+              <div>
+                <Label>Twitter Image</Label>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCurrentImageField('twitter_image_url');
+                        setShowImageUpload(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload New
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCurrentImageField('twitter_image_url');
+                        setShowImageBrowser(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                      Browse Library
+                    </Button>
+                  </div>
+                  
+                  {formData.twitter_image_url && (
+                    <ImagePreview 
+                      imageUrl={formData.twitter_image_url} 
+                      onRemove={() => handleInputChange('twitter_image_url', '')}
+                      label="Twitter"
+                    />
+                  )}
+                  
+                  <p className="text-xs text-gray-500">
+                    Recommended: 1200×675 pixels for optimal Twitter display
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Preview */}
+          {/* Social Media Preview */}
           <Card>
             <CardHeader>
-              <CardTitle>Search Result Preview</CardTitle>
+              <CardTitle>Social Media Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border rounded-lg p-4 bg-white space-y-2 max-w-2xl">
-                <p className="text-sm text-green-600">
-                  {formData.canonical_url || `https://travelightaruba.com/${selectedSlug}`}
-                </p>
-                <h4 className="text-xl text-blue-600 hover:underline cursor-pointer">
-                  {formData.meta_title || 'Your page title will appear here'}
-                </h4>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {formData.meta_description || 'Your meta description will appear here. Make it compelling to encourage clicks from search results.'}
-                </p>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Facebook Preview */}
+                <div>
+                  <h4 className="font-medium mb-3">Facebook Preview</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    {formData.og_image_url && (
+                      <img 
+                        src={formData.og_image_url} 
+                        alt="Facebook preview" 
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    <div className="p-3 bg-gray-50">
+                      <p className="text-xs text-gray-600 mb-1">
+                        travelightaruba.com
+                      </p>
+                      <h5 className="font-semibold text-sm mb-1">
+                        {formData.og_title || formData.meta_title || 'Your page title'}
+                      </h5>
+                      <p className="text-xs text-gray-700">
+                        {formData.og_description || formData.meta_description || 'Your page description'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Twitter Preview */}
+                <div>
+                  <h4 className="font-medium mb-3">Twitter Preview</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    {formData.twitter_image_url && (
+                      <img 
+                        src={formData.twitter_image_url} 
+                        alt="Twitter preview" 
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    <div className="p-3 bg-gray-50">
+                      <h5 className="font-semibold text-sm mb-1">
+                        {formData.twitter_title || formData.meta_title || 'Your page title'}
+                      </h5>
+                      <p className="text-xs text-gray-700">
+                        {formData.meta_description || 'Your page description'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        travelightaruba.com
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -441,6 +609,34 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
           </div>
         </>
       )}
+
+      {/* Cloudflare Image Upload Modal */}
+      <CloudflareImageUpload
+        isOpen={showImageUpload}
+        onClose={() => setShowImageUpload(false)}
+        onImageSelect={(imageUrl) => {
+          if (currentImageField) {
+            handleInputChange(currentImageField, imageUrl);
+          }
+          setShowImageUpload(false);
+          setCurrentImageField(null);
+        }}
+        selectedImageUrl={currentImageField ? formData[currentImageField] || '' : ''}
+      />
+
+      {/* Cloudflare Image Browser Modal */}
+      <CloudflareImageBrowser
+        isOpen={showImageBrowser}
+        onClose={() => setShowImageBrowser(false)}
+        onImageSelect={(imageUrl) => {
+          if (currentImageField) {
+            handleInputChange(currentImageField, imageUrl);
+          }
+          setShowImageBrowser(false);
+          setCurrentImageField(null);
+        }}
+        selectedImageUrl={currentImageField ? formData[currentImageField] || '' : ''}
+      />
     </div>
   );
 };
