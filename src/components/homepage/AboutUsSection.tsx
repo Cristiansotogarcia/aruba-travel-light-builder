@@ -16,33 +16,20 @@ const AboutUsSection: React.FC = () => {
   const { data: aboutContent, isLoading } = useQuery({
     queryKey: ['about-us-content'],
     queryFn: async () => {
-      // Get about us content
+      // Get about us content and image from metadata
       const { data: contentData } = await supabase
         .from('content_blocks')
-        .select('title, content')
+        .select('title, content, metadata')
         .eq('block_key', 'about_us_short')
         .eq('page_slug', 'homepage')
         .single();
 
-      // Get about us image
-      const { data: imageData } = await supabase
-        .from('content_images')
-        .select('file_path, alt_text')
-        .eq('image_key', 'about_us_image')
-        .single();
-
-      let imageUrl = undefined;
-      if (imageData?.file_path) {
-        const { data: url } = supabase.storage
-          .from('site-assets')
-          .getPublicUrl(imageData.file_path);
-        imageUrl = url.publicUrl;
-      }
-
+      const metadata = (contentData?.metadata as any) || {};
+      
       return {
         title: contentData?.title || 'About Us',
         short_description: contentData?.content || 'Learn more about our company and what we do.',
-        about_image: imageUrl
+        about_image: metadata?.about_image || undefined
       } as AboutContent;
     }
   });
