@@ -37,37 +37,64 @@ const AboutUsManagement = () => {
   const { data: aboutContent, isLoading } = useQuery({
     queryKey: ['about-us-management'],
     queryFn: async () => {
-      // Get homepage content
-      const { data: homepageContent } = await supabase
-        .from('content_blocks')
-        .select('title, content')
-        .eq('block_key', 'about_us_short')
-        .eq('page_slug', 'homepage')
-        .single();
+      try {
+        // Get homepage content
+        const { data: homepageContent, error: homepageError } = await supabase
+          .from('content_blocks')
+          .select('*')
+          .eq('block_key', 'about_us_short')
+          .eq('page_slug', 'homepage')
+          .single();
 
-      // Get about page content
-      const { data: aboutPageContent } = await supabase
-        .from('content_blocks')
-        .select('title, content')
-        .eq('block_key', 'about_us_full')
-        .eq('page_slug', 'about-us')
-        .single();
-
-      // For now, we'll use placeholder images or null
-      // The actual image URLs will be stored in the content itself
-      return {
-        homepage: {
-          title: homepageContent?.title || 'About Us',
-          short_description: homepageContent?.content || 'Learn more about our company and what we do.',
-          about_image: undefined
-        },
-        aboutPage: {
-          title: aboutPageContent?.title || 'About Us',
-          full_description: aboutPageContent?.content || 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
-          about_image: undefined,
-          additional_image: undefined
+        if (homepageError && homepageError.code !== 'PGRST116') {
+          throw homepageError;
         }
-      } as AboutContent;
+
+        // Get about page content
+        const { data: aboutPageContent, error: aboutPageError } = await supabase
+          .from('content_blocks')
+          .select('*')
+          .eq('block_key', 'about_us_full')
+          .eq('page_slug', 'about-us')
+          .single();
+
+        if (aboutPageError && aboutPageError.code !== 'PGRST116') {
+          throw aboutPageError;
+        }
+
+        // Parse metadata for image URLs
+        const homepageMetadata = (homepageContent?.metadata as any) || {};
+        const aboutPageMetadata = (aboutPageContent?.metadata as any) || {};
+
+        return {
+          homepage: {
+            title: homepageContent?.title || 'About Us',
+            short_description: homepageContent?.content || 'Learn more about our company and what we do.',
+            about_image: (homepageMetadata as any)?.about_image || ''
+          },
+          aboutPage: {
+            title: aboutPageContent?.title || 'About Us',
+            full_description: aboutPageContent?.content || 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
+            about_image: (aboutPageMetadata as any)?.about_image || '',
+            additional_image: (aboutPageMetadata as any)?.additional_image || ''
+          }
+        } as AboutContent;
+      } catch (error) {
+        console.error('Error fetching content:', error);
+        return {
+          homepage: {
+            title: 'About Us',
+            short_description: 'Learn more about our company and what we do.',
+            about_image: ''
+          },
+          aboutPage: {
+            title: 'About Us',
+            full_description: 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
+            about_image: '',
+            additional_image: ''
+          }
+        };
+      }
     }
   });
 
@@ -94,15 +121,103 @@ const AboutUsManagement = () => {
 
   const handleImageUpload = async (imageUrl: string, imageKey: string) => {
     try {
-      // Simply update the local state for now
-      // The images will be handled by the Cloudflare service
       if (imageKey === 'about_us_image') {
+        // Update both homepage and about page with the same main image
+        const { data: homepageData } = await supabase
+          .from('content_blocks')
+          .select('metadata')
+          .eq('block_key', 'about_us_short')
+          .eq('page_slug', 'homepage')
+          .single();
+
+        const { data: aboutPageData } = await supabase
+          .from('content_blocks')
+          .select('metadata')
+          .eq('block_key', 'about_us_full')
+          .eq('page_slug', 'about-us')
+          .single();
+
+        const homepageMetadata = (homepageData?.metadata as any) || {};
+        const aboutPageMetadata = (aboutPageData?.metadata as any) || {};
+
+        // Update homepage
+        const { error: homepageError } = await supabase
+          .from('content_blocks')
+          .upsert({
+            block_key: 'about_us_short',
+            page_slug: 'homepage',
+            title: formData.homepage.title,
+            content: formData.homepage.short_description,
+            block_type: 'text',
+            is_active: true,
+            metadata: {
+              ...homepageMetadata,
+              about_image: imageUrl
+            }
+          }, {
+            onConflict: 'block_key,page_slug'
+          });
+
+        if (homepageError) throw homepageError;
+
+        // Update about page
+        const { error: aboutPageError } = await supabase
+          .from('content_blocks')
+          .upsert({
+            block_key: 'about_us_full',
+            page_slug: 'about-us',
+            title: formData.aboutPage.title,
+            content: formData.aboutPage.full_description,
+            block_type: 'text',
+            is_active: true,
+            metadata: {
+              ...aboutPageMetadata,
+              about_image: imageUrl
+            }
+          }, {
+            onConflict: 'block_key,page_slug'
+          });
+
+        if (aboutPageError) throw aboutPageError;
+
+        // Update local state
         setFormData(prev => ({
           ...prev,
           homepage: { ...prev.homepage, about_image: imageUrl },
           aboutPage: { ...prev.aboutPage, about_image: imageUrl }
         }));
       } else if (imageKey === 'about_us_additional_image') {
+        // Update additional image
+        const { data: aboutPageData } = await supabase
+          .from('content_blocks')
+          .select('metadata')
+          .eq('block_key', 'about_us_full')
+          .eq('page_slug', 'about-us')
+          .single();
+
+        const aboutPageMetadata = (aboutPageData?.metadata as any) || {};
+
+        const { error } = await supabase
+          .from('content_blocks')
+          .upsert({
+            block_key: 'about_us_full',
+            page_slug: 'about-us',
+            title: formData.aboutPage.title,
+            content: formData.aboutPage.full_description,
+            block_type: 'text',
+            is_active: true,
+            metadata: {
+              ...aboutPageMetadata,
+              about_image: formData.aboutPage.about_image,
+              additional_image: imageUrl
+            }
+          }, {
+            onConflict: 'block_key,page_slug'
+          });
+
+        if (error) throw error;
+
+        // Update local state
         setFormData(prev => ({
           ...prev,
           aboutPage: { ...prev.aboutPage, additional_image: imageUrl }
@@ -113,6 +228,8 @@ const AboutUsManagement = () => {
         title: "Success",
         description: "Image updated successfully"
       });
+
+      queryClient.invalidateQueries({ queryKey: ['about-us-management'] });
     } catch (error) {
       console.error('Error updating image:', error);
       toast({
@@ -127,6 +244,15 @@ const AboutUsManagement = () => {
     setSaving(true);
     try {
       if (type === 'homepage') {
+        const { data: homepageData } = await supabase
+          .from('content_blocks')
+          .select('metadata')
+          .eq('block_key', 'about_us_short')
+          .eq('page_slug', 'homepage')
+          .single();
+
+        const homepageMetadata = (homepageData?.metadata as any) || {};
+
         const { error } = await supabase
           .from('content_blocks')
           .upsert({
@@ -135,13 +261,26 @@ const AboutUsManagement = () => {
             title: formData.homepage.title,
             content: formData.homepage.short_description,
             block_type: 'text',
-            is_active: true
+            is_active: true,
+            metadata: {
+              ...homepageMetadata,
+              about_image: formData.homepage.about_image
+            }
           }, {
             onConflict: 'block_key,page_slug'
           });
 
         if (error) throw error;
       } else {
+        const { data: aboutPageData } = await supabase
+          .from('content_blocks')
+          .select('metadata')
+          .eq('block_key', 'about_us_full')
+          .eq('page_slug', 'about-us')
+          .single();
+
+        const aboutPageMetadata = (aboutPageData?.metadata as any) || {};
+
         const { error } = await supabase
           .from('content_blocks')
           .upsert({
@@ -150,7 +289,12 @@ const AboutUsManagement = () => {
             title: formData.aboutPage.title,
             content: formData.aboutPage.full_description,
             block_type: 'text',
-            is_active: true
+            is_active: true,
+            metadata: {
+              ...aboutPageMetadata,
+              about_image: formData.aboutPage.about_image,
+              additional_image: formData.aboutPage.additional_image
+            }
           }, {
             onConflict: 'block_key,page_slug'
           });
