@@ -13,13 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Edit, Save, X } from 'lucide-react';
 
-interface AboutContent {
-  title: string;
-  full_description: string;
-  about_image?: string;
-  additional_image?: string;
-}
-
 const About = () => {
   const { user } = useAuth();
   const { toast } = useToast();

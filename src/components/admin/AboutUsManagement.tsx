@@ -117,7 +117,7 @@ const AboutUsManagement = () => {
     }
   }, [aboutContent]);
 
-  const handleImageUpload = async (imageUrl: string, imageKey: string, type: 'homepage' | 'aboutPage') => {
+  const handleImageUpload = async (imageUrl: string, imageKey: string) => {
     try {
       const urlParts = imageUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
@@ -449,7 +449,7 @@ const AboutUsManagement = () => {
       <CloudflareImageUpload
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
-        onImageSelect={(url) => handleImageUpload(url, currentImageKey, currentImageType)}
+        onImageSelect={(url) => handleImageUpload(url, currentImageKey)}
         selectedImageUrl={
           currentImageKey === 'about_us_image' 
             ? formData[currentImageType].about_image 
@@ -460,7 +460,7 @@ const AboutUsManagement = () => {
       <CloudflareImageUpload
         isOpen={isAdditionalUploadOpen}
         onClose={() => setIsAdditionalUploadOpen(false)}
-        onImageSelect={(url) => handleImageUpload(url, 'about_us_additional_image', 'aboutPage')}
+        onImageSelect={(url) => handleImageUpload(url, 'about_us_additional_image')}
         selectedImageUrl={formData.aboutPage.additional_image}
       />
     </div>
