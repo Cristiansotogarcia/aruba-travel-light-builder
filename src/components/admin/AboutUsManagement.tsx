@@ -53,44 +53,19 @@ const AboutUsManagement = () => {
         .eq('page_slug', 'about-us')
         .single();
 
-      // Get images
-      const { data: homepageImage } = await supabase
-        .from('content_images')
-        .select('file_path, alt_text')
-        .eq('image_key', 'about_us_image')
-        .single();
-
-      const { data: aboutPageImage } = await supabase
-        .from('content_images')
-        .select('file_path, alt_text')
-        .eq('image_key', 'about_us_image')
-        .single();
-
-      const { data: additionalImage } = await supabase
-        .from('content_images')
-        .select('file_path, alt_text')
-        .eq('image_key', 'about_us_additional_image')
-        .single();
-
-      const getImageUrl = (imageData: any) => {
-        if (!imageData?.file_path) return undefined;
-        const { data: url } = supabase.storage
-          .from('site-assets')
-          .getPublicUrl(imageData.file_path);
-        return url.publicUrl;
-      };
-
+      // For now, we'll use placeholder images or null
+      // The actual image URLs will be stored in the content itself
       return {
         homepage: {
           title: homepageContent?.title || 'About Us',
           short_description: homepageContent?.content || 'Learn more about our company and what we do.',
-          about_image: getImageUrl(homepageImage)
+          about_image: undefined
         },
         aboutPage: {
           title: aboutPageContent?.title || 'About Us',
           full_description: aboutPageContent?.content || 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
-          about_image: getImageUrl(aboutPageImage),
-          additional_image: getImageUrl(additionalImage)
+          about_image: undefined,
+          additional_image: undefined
         }
       } as AboutContent;
     }
@@ -119,23 +94,8 @@ const AboutUsManagement = () => {
 
   const handleImageUpload = async (imageUrl: string, imageKey: string) => {
     try {
-      const urlParts = imageUrl.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${imageKey}/${fileName}`;
-
-      const { error } = await supabase
-        .from('content_images')
-        .upsert({
-          image_key: imageKey,
-          file_path: filePath,
-          alt_text: imageKey === 'about_us_image' ? 'About Us Main Image' : 'About Us Additional Image'
-        }, {
-          onConflict: 'image_key'
-        });
-
-      if (error) throw error;
-
-      // Update local state
+      // Simply update the local state for now
+      // The images will be handled by the Cloudflare service
       if (imageKey === 'about_us_image') {
         setFormData(prev => ({
           ...prev,
@@ -153,8 +113,6 @@ const AboutUsManagement = () => {
         title: "Success",
         description: "Image updated successfully"
       });
-
-      queryClient.invalidateQueries({ queryKey: ['about-us-management'] });
     } catch (error) {
       console.error('Error updating image:', error);
       toast({
