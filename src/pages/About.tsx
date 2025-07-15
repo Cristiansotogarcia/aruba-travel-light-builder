@@ -27,48 +27,21 @@ const About = () => {
   const { data: aboutContent, isLoading, refetch } = useQuery({
     queryKey: ['about-us-full-content'],
     queryFn: async () => {
-      // Get about us content
+      // Get about us content and images from metadata
       const { data: contentData } = await supabase
         .from('content_blocks')
-        .select('title, content')
+        .select('title, content, metadata')
         .eq('block_key', 'about_us_full')
         .eq('page_slug', 'about-us')
         .single();
 
-      // Get about us images
-      const { data: mainImageData } = await supabase
-        .from('content_images')
-        .select('file_path, alt_text')
-        .eq('image_key', 'about_us_image')
-        .single();
-
-      const { data: additionalImageData } = await supabase
-        .from('content_images')
-        .select('file_path, alt_text')
-        .eq('image_key', 'about_us_additional_image')
-        .single();
-
-      let mainImageUrl = undefined;
-      if (mainImageData?.file_path) {
-        const { data: url } = supabase.storage
-          .from('site-assets')
-          .getPublicUrl(mainImageData.file_path);
-        mainImageUrl = url.publicUrl;
-      }
-
-      let additionalImageUrl = undefined;
-      if (additionalImageData?.file_path) {
-        const { data: url } = supabase.storage
-          .from('site-assets')
-          .getPublicUrl(additionalImageData.file_path);
-        additionalImageUrl = url.publicUrl;
-      }
-
+      const metadata = (contentData?.metadata as any) || {};
+      
       const result = {
         title: contentData?.title || 'About Us',
         full_description: contentData?.content || 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
-        about_image: mainImageUrl,
-        additional_image: additionalImageUrl
+        about_image: metadata?.about_image || undefined,
+        additional_image: metadata?.additional_image || undefined
       };
 
       setEditedContent({
@@ -82,20 +55,34 @@ const About = () => {
 
   const handleImageUpload = async (imageUrl: string, imageKey: string) => {
     try {
-      // Extract the file path from the Cloudflare URL
-      const urlParts = imageUrl.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${imageKey}/${fileName}`;
+      // Get current metadata
+      const { data: contentData } = await supabase
+        .from('content_blocks')
+        .select('metadata')
+        .eq('block_key', 'about_us_full')
+        .eq('page_slug', 'about-us')
+        .single();
 
-      // Update or insert the image record
+      const metadata = (contentData?.metadata as any) || {};
+
+      // Update metadata with new image URL
+      const updatedMetadata = {
+        ...metadata,
+        [imageKey === 'about_us_image' ? 'about_image' : 'additional_image']: imageUrl
+      };
+
       const { error } = await supabase
-        .from('content_images')
+        .from('content_blocks')
         .upsert({
-          image_key: imageKey,
-          file_path: filePath,
-          alt_text: imageKey === 'about_us_image' ? 'About Us Main Image' : 'About Us Additional Image'
+          block_key: 'about_us_full',
+          page_slug: 'about-us',
+          title: aboutContent?.title || 'About Us',
+          content: aboutContent?.full_description || '',
+          block_type: 'text',
+          is_active: true,
+          metadata: updatedMetadata
         }, {
-          onConflict: 'image_key'
+          onConflict: 'block_key,page_slug'
         });
 
       if (error) throw error;
