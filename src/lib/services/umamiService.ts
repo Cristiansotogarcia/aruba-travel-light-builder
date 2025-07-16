@@ -16,6 +16,26 @@ interface UmamiApiResponse {
   sessions: UmamiPageView[];
 }
 
+interface UmamiGeoData {
+  x: string;
+  y: number;
+}
+
+interface UmamiDeviceData {
+  x: string;
+  y: number;
+}
+
+interface UmamiReferrerData {
+  x: string;
+  y: number;
+}
+
+interface UmamiTopPage {
+  x: string;
+  y: number;
+}
+
 // ✅ Constantes bovenin voor hergebruik
 const API_KEY = import.meta.env.VITE_UMAMI_API_KEY;
 const API_ENDPOINT = import.meta.env.VITE_UMAMI_API_CLIENT_ENDPOINT;
@@ -47,7 +67,7 @@ class UmamiService {
       pageviews: data.pageviews?.value ?? 0,
       visitors: data.visitors?.value ?? 0,
       visits: data.visits?.value ?? 0,
-      bounceRate: data.bouncerate?.value ?? 0,
+      bounceRate: data.bounce_rate?.value ?? data.bouncerate?.value ?? 0,
       avgSessionDuration: data.totaltime?.value ?? 0,
     };
   }
@@ -74,7 +94,7 @@ class UmamiService {
     return res.json();
   }
 
-  async getTopPages(startDate?: Date, endDate?: Date, limit: number = 10) {
+  async getTopPages(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiTopPage[]> {
     const now = Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
     const start = startDate?.getTime() ?? thirtyDaysAgo;
@@ -93,7 +113,8 @@ class UmamiService {
       throw new Error(`Umami error ${res.status}: ${await res.text()}`);
     }
 
-    return res.json();
+    const data = await res.json();
+    return data || [];
   }
 
   async getRealTimeVisitors(): Promise<number> {
@@ -111,9 +132,170 @@ class UmamiService {
     }
 
     const data = await res.json();
-    return data?.x ?? 0;
+    return Array.isArray(data) ? data.length : data?.x || 0;
+  }
+
+  async getCountries(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiGeoData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=country&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
+  }
+
+  async getDevices(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiDeviceData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=device&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
+  }
+
+  async getBrowsers(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiDeviceData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=browser&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
+  }
+
+  async getReferrers(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiReferrerData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=referrer&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
+  }
+
+  async getEvents(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiGeoData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=event&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
+  }
+
+  async getOperatingSystems(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiDeviceData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=os&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
+  }
+
+  async getCities(startDate?: Date, endDate?: Date, limit: number = 10): Promise<UmamiGeoData[]> {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const start = startDate?.getTime() ?? thirtyDaysAgo;
+    const end = endDate?.getTime() ?? now;
+
+    const url = `${API_ENDPOINT}/websites/${WEBSITE_ID}/metrics?type=city&startAt=${start}&endAt=${end}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'x-umami-api-key': API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Umami error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data || [];
   }
 }
 
 export const umamiService = new UmamiService();
-export type { UmamiMetrics, UmamiApiResponse };
+export type { UmamiMetrics, UmamiApiResponse, UmamiGeoData, UmamiDeviceData, UmamiReferrerData, UmamiTopPage };
