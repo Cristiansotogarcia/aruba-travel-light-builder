@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/admin/DashboardLayout';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -16,7 +16,21 @@ import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
 
 const Admin = () => {
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState(() => {
+    // Initialize from sessionStorage if available
+    const savedSection = sessionStorage.getItem('admin:activeSection');
+    return savedSection || 'dashboard';
+  });
+
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
+    sessionStorage.setItem('admin:activeSection', section);
+  };
+
+  useEffect(() => {
+    // Save current section to sessionStorage whenever it changes
+    sessionStorage.setItem('admin:activeSection', activeSection);
+  }, [activeSection]);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -56,7 +70,7 @@ const Admin = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen flex w-full">
-        <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+        <AdminSidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
         <main className="flex-1 p-6 bg-gray-50">
           {renderActiveSection()}
         </main>

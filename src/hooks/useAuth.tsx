@@ -111,40 +111,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Tab is visible, re-validating session...');
-        setLoading(true);
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          if (error) {
-            console.error('Error re-validating session:', error);
-            // Handle error, maybe sign out the user
-            await signOut();
-            return;
-          }
-          
-          if (data.session) {
-            console.log('Session re-validated successfully.');
-            setSession(data.session);
-            setUser(data.session.user);
-            if (data.session.user) {
-              await loadUserProfile(data.session.user.id);
-            }
-          } else {
-            console.log('No active session found on re-validation.');
-            await signOut();
-          }
-        } catch (error) {
-          console.error('Exception during session re-validation:', error);
-          await signOut();
-        } finally {
-          setLoading(false);
-        }
-      }
+    // Handle tab close to ensure logout
+    const handleBeforeUnload = async () => {
+      // Clear any stored admin section state
+      sessionStorage.removeItem('admin:activeSection');
+      
+      // Note: We can't reliably call signOut() here due to browser restrictions
+      // The sessionStorage change will handle the logout on next load
     };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Initial session load
     const getInitialSession = async () => {
@@ -180,9 +154,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
 
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       subscription.unsubscribe();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [loadUserProfile]);
 
