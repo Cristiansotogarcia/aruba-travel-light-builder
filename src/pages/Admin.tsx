@@ -7,11 +7,10 @@ import { CustomersList } from '@/components/admin/CustomersList';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { VisibilitySettings } from '@/components/admin/VisibilitySettings';
 import { ProductManagement } from '@/components/admin/ProductManagement';
-import { CategoryManagement } from '@/components/admin/CategoryManagement';
+import { UnifiedCategoryOrderManager } from '@/components/admin/UnifiedCategoryOrderManager';
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { DriverTasks } from '@/components/admin/DriverTasks';
-import { ReportsDashboard } from '@/components/admin/ReportsDashboard';
-import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { EnhancedReportsDashboard } from '@/components/admin/EnhancedReportsDashboard';
 import { SiteSettings } from '@/components/admin/SiteSettings';
 import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
@@ -32,13 +31,11 @@ const Admin = () => {
       case 'equipment':
         return <ProductManagement />;
       case 'categories':
-        return <CategoryManagement />;
+        return <UnifiedCategoryOrderManager />;
       case 'about-us':
         return <AboutUsManagement />;
       case 'reports':
-        return <ReportsDashboard />;
-      case 'analytics':
-        return <AnalyticsDashboard />;
+        return <EnhancedReportsDashboard />;
       case 'users':
         return <UserManagement />;
       case 'visibility':
