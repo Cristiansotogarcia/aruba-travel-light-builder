@@ -7,20 +7,21 @@ import { FaqAccordion } from '@/components/common/FaqAccordion';
 import { getProducts } from '@/lib/queries/products';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import type { ActiveFiltersState } from '@/components/equipment/EquipmentFilters';
 
 const Equipment = () => {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<ActiveFiltersState>({
     search: '',
-    categories: [],
-    priceRange: [0, 0],
-    availability: [],
+    categories: [] as string[],
+    priceRange: [0, 0] as [number, number],
+    availability: [] as string[],
   });
 
 const { data: products = [], isLoading } = useQuery({
   queryKey: ['equipment-products'],
   queryFn: getProducts,
   staleTime: 5 * 60 * 1000,  // 5 minutes "fresh"
-  cacheTime: 30 * 60 * 1000, // 30 minutes in cache
+  gcTime: 30 * 60 * 1000, // 30 minutes in cache (renamed from cacheTime in v5)
 });
 
 
@@ -51,10 +52,11 @@ const { data: products = [], isLoading } = useQuery({
   const filterOptions = useMemo(() => {
     const categories = Array.from(new Set(equipmentData.map(e => e.category)));
     const prices = equipmentData.map(e => e.price);
-    const priceRange = prices.length ? [Math.min(...prices), Math.max(...prices)] : [0, 0];
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
     return {
       categories,
-      priceRange,
+      priceRange: [minPrice, maxPrice] as [number, number],
       availability: ['available', 'limited', 'unavailable'],
     };
   }, [equipmentData]);
@@ -62,7 +64,7 @@ const { data: products = [], isLoading } = useQuery({
   const isInitialMount = useRef(true);
   useEffect(() => {
     if (isInitialMount.current) {
-      setFilters(f => ({ ...f, priceRange: filterOptions.priceRange }));
+      setFilters(f => ({ ...f, priceRange: filterOptions.priceRange as [number, number] }));
       isInitialMount.current = false;
     }
   }, [filterOptions.priceRange]);
@@ -92,7 +94,7 @@ const { data: products = [], isLoading } = useQuery({
   }, [filters, equipmentData]);
 
   const groupedEquipment = useMemo(() => {
-    const map: Record<string, any> = {};
+    const map: Record<string, { order: number; subs: Record<string, { order: number; items: any[] }> }> = {};
     filteredEquipment.forEach(item => {
       const category = item.category || 'Uncategorized';
       const subCategory = item.sub_category || 'General';
@@ -111,7 +113,8 @@ const { data: products = [], isLoading } = useQuery({
       const sortedSubs = Object.entries(catData.subs).sort((a, b) => a[1].order - b[1].order);
       result[catName] = {};
       sortedSubs.forEach(([subName, subData]) => {
-        result[catName][subName] = subData.items;
+        // Sort items within each subcategory by their sort_order
+        result[catName][subName] = subData.items.sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
       });
     });
 

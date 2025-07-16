@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Product {
   id: string;
@@ -63,6 +64,7 @@ export const UnifiedCategoryOrderManager = () => {
 
   const { hasPermission } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (hasPermission('CategoryManagement')) {
@@ -167,6 +169,9 @@ export const UnifiedCategoryOrderManager = () => {
         }
       }
 
+      // Invalidate React Query cache to reflect changes on the frontend
+      await queryClient.invalidateQueries({ queryKey: ['equipment-products'] });
+      
       toast({ title: "Success", description: "All changes saved successfully" });
     } catch (error) {
       console.error('Error saving changes:', error);
@@ -234,6 +239,7 @@ export const UnifiedCategoryOrderManager = () => {
       toast({ title: "Success", description: "Category saved" });
       setIsCategoryDialogOpen(false);
       setEditingCategory(null);
+      queryClient.invalidateQueries({ queryKey: ['equipment-products'] });
       fetchData();
     }
   };
