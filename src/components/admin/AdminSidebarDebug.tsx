@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, FileText, ListOrdered, Search } from 'lucide-react';
+import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
@@ -38,8 +38,7 @@ export const AdminSidebarDebug = ({ activeSection, onSectionChange }: AdminSideb
     { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
     { id: 'equipment', label: 'Equipment', icon: Package, permission: 'ProductManagement' },
     { id: 'categories', label: 'Category Order', icon: ListOrdered, permission: 'CategoryManagement' },
-    { id: 'reports', label: 'Reports', icon: FileText, permission: 'ReportingAccess' },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, permission: 'ReportingAccess' },
+    { id: 'reports', label: 'Reports', icon: BarChart3, permission: 'ReportingAccess' },
     { id: 'users', label: 'User Management', icon: Users, permission: 'UserManagement' },
     { id: 'visibility', label: 'Visibility Settings', icon: Eye, permission: 'VisibilitySettings' },
     { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
@@ -56,7 +55,7 @@ export const AdminSidebarDebug = ({ activeSection, onSectionChange }: AdminSideb
   console.log('Visible menu items:', visibleMenuItems.map(item => item.label));
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200">
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
       <div className="p-6">
         <div className="flex items-center mb-4">
           <img
@@ -76,7 +75,7 @@ export const AdminSidebarDebug = ({ activeSection, onSectionChange }: AdminSideb
           <div>Items: {visibleMenuItems.length}</div>
         </div>
       </div>
-      <nav className="px-4 pb-4 space-y-2">
+      <nav className="px-4 pb-4 space-y-2 flex-1 overflow-y-auto">
         {visibleMenuItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -95,7 +94,7 @@ export const AdminSidebarDebug = ({ activeSection, onSectionChange }: AdminSideb
           );
         })}
       </nav>
-      <div className="absolute bottom-4 left-4 right-4">
+      <div className="p-4 border-t border-gray-200">
         <Button 
           onClick={signOut} 
           variant="outline" 

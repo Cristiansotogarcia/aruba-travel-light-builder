@@ -41,7 +41,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
   );
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200">
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
       <div className="p-6">
         <div className="flex items-center mb-4">
           <img
@@ -55,7 +55,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
           {profile?.name} ({profile?.role})
         </p>
       </div>
-      <nav className="px-4 pb-4 space-y-2">
+      <nav className="px-4 pb-4 space-y-2 flex-1 overflow-y-auto">
         {visibleMenuItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -74,7 +74,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
           );
         })}
       </nav>
-      <div className="absolute bottom-4 left-4 right-4">
+      <div className="p-4 border-t border-gray-200">
         <Button 
           onClick={signOut} 
           variant="outline" 

@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Search, X } from 'lucide-react';
 
-interface FilterOptions {
+export interface FilterOptions {
   categories: string[];
   priceRange: [number, number];
   availability: string[];
 }
 
-interface ActiveFiltersState {
+export interface ActiveFiltersState {
   search: string;
   categories: string[];
   priceRange: [number, number];
