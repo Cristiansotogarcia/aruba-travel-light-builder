@@ -20,7 +20,7 @@ const Equipment = () => {
     priceRange: [0, 0] as [number, number],
     availability: [] as string[],
   }));
-
+  
   // When URL parameters change, update the filters
   useEffect(() => {
     if (categoryParam) {
