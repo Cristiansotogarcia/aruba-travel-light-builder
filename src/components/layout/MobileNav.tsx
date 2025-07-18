@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
   const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -61,7 +63,19 @@ const MobileNav = () => {
           </Button>
         </div>
         <nav className="py-4">
-          <NavLink to="/equipment">Equipment</NavLink>
+          <Collapsible open={equipmentOpen} onOpenChange={setEquipmentOpen}>
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-gray-700 hover:text-blue-600">
+              <span>Equipment</span>
+              {equipmentOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="pl-4 border-l ml-3 mt-1 space-y-1">
+                <NavLink to="/equipment">All Equipment</NavLink>
+                <NavLink to="/equipment?category=Baby Equipment">Baby Equipment</NavLink>
+                <NavLink to="/equipment?category=Beach Equipment">Beach Equipment</NavLink>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
           <NavLink to="/about">About</NavLink>
           <NavLink to="/contact">Contact</NavLink>
           <div className="mt-4 pt-4 border-t">

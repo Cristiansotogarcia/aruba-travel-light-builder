@@ -8,22 +8,35 @@ import { getProducts } from '@/lib/queries/products';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import type { ActiveFiltersState } from '@/components/equipment/EquipmentFilters';
+import { useSearchParams } from 'react-router-dom';
 
 const Equipment = () => {
-  const [filters, setFilters] = useState<ActiveFiltersState>({
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+  
+  const [filters, setFilters] = useState<ActiveFiltersState>(() => ({
     search: '',
-    categories: [] as string[],
+    categories: categoryParam ? [categoryParam] : [] as string[],
     priceRange: [0, 0] as [number, number],
     availability: [] as string[],
+  }));
+
+  // When URL parameters change, update the filters
+  useEffect(() => {
+    if (categoryParam) {
+      setFilters(prev => ({
+        ...prev,
+        categories: [categoryParam]
+      }));
+    }
+  }, [categoryParam]);
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['equipment-products'],
+    queryFn: getProducts,
+    staleTime: 5 * 60 * 1000,  // 5 minutes "fresh"
+    gcTime: 30 * 60 * 1000, // 30 minutes in cache (renamed from cacheTime in v5)
   });
-
-const { data: products = [], isLoading } = useQuery({
-  queryKey: ['equipment-products'],
-  queryFn: getProducts,
-  staleTime: 5 * 60 * 1000,  // 5 minutes "fresh"
-  gcTime: 30 * 60 * 1000, // 30 minutes in cache (renamed from cacheTime in v5)
-});
-
 
   const equipmentData = useMemo(() => {
     return products.map((p) => {
