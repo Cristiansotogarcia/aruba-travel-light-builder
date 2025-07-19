@@ -206,6 +206,7 @@ export type Database = {
           created_at: string
           description: string | null
           featured: boolean
+          featured_sort_order: number | null
           id: string
           image_url: string | null
           images: string[] | null
@@ -225,6 +226,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           featured?: boolean
+          featured_sort_order?: number | null
           id?: string
           image_url?: string | null
           images?: string[] | null
@@ -244,6 +246,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           featured?: boolean
+          featured_sort_order?: number | null
           id?: string
           image_url?: string | null
           images?: string[] | null
