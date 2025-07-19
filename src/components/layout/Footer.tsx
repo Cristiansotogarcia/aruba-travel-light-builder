@@ -38,8 +38,8 @@ export const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Categories</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><Link to="/equipment?category=beach" className="hover:text-white transition-colors">Beach Equipment</Link></li>
-              <li><Link to="/equipment?category=baby" className="hover:text-white transition-colors">Baby Equipment</Link></li>
+              <li><Link to="/equipment?category=Beach Equipment" className="hover:text-white transition-colors">Beach Equipment</Link></li>
+              <li><Link to="/equipment?category=Baby Equipment" className="hover:text-white transition-colors">Baby Equipment</Link></li>
             </ul>
           </div>
 
