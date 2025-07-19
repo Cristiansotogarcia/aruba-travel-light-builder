@@ -13,6 +13,7 @@ interface Product {
   image_url: string | null;
   featured: boolean;
   sort_order?: number | null;
+  featured_sort_order?: number | null;
 }
 
 export const HighlightProductsSettings = () => {
@@ -27,19 +28,19 @@ export const HighlightProductsSettings = () => {
     const load = async () => {
       const { data, error } = await supabase
         .from('equipment')
-        .select('id,name,image_url,featured,sort_order')
-        .order('sort_order', { ascending: true })
+        .select('id,name,image_url,featured,featured_sort_order')
+        .order('featured_sort_order', { ascending: true })
         .order('name');
       if (!error && data) {
         setProducts(data as Product[]);
         const featuredProducts = data.filter((p) => p.featured);
         setSelected(featuredProducts.map((p) => p.id));
         setOrderedProducts(featuredProducts.sort((a, b) => {
-          // Sort by sort_order first, then by name if sort_order is the same
-          if (a.sort_order === b.sort_order) {
+          // Sort by featured_sort_order first, then by name if featured_sort_order is the same
+          if ((a.featured_sort_order ?? 999) === (b.featured_sort_order ?? 999)) {
             return a.name.localeCompare(b.name);
           }
-          return (a.sort_order || 999) - (b.sort_order || 999);
+          return (a.featured_sort_order || 999) - (b.featured_sort_order || 999);
         }));
       }
     };
@@ -81,27 +82,28 @@ export const HighlightProductsSettings = () => {
     [newOrderedProducts[index], newOrderedProducts[newIndex]] = 
       [newOrderedProducts[newIndex], newOrderedProducts[index]];
     
-    // Update sort_order values
+    // Update featured_sort_order values
     setOrderedProducts(newOrderedProducts.map((product, idx) => ({
       ...product,
-      sort_order: idx + 1 // Start from 1 for better readability
+      featured_sort_order: idx + 1 // Start from 1 for better readability
     })));
   };
 
+  // In the save function, update to use featured_sort_order instead of sort_order
   const save = async () => {
     setSaving(true);
     try {
       // First, reset all products to not featured
       await supabase.from('equipment').update({ featured: false }).eq('featured', true);
       
-      // Then update each selected product with its featured status and sort order
+      // Then update each selected product with its featured status and featured_sort_order
       for (let i = 0; i < orderedProducts.length; i++) {
         const product = orderedProducts[i];
         await supabase
           .from('equipment')
           .update({ 
             featured: true, 
-            sort_order: i + 1 // Start from 1 for better readability
+            featured_sort_order: i + 1 // Start from 1 for better readability
           })
           .eq('id', product.id);
       }
