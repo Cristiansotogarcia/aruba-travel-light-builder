@@ -18,25 +18,18 @@ const Equipment = () => {
   const [filters, setFilters] = useState<ActiveFiltersState>(() => ({
     search: '',
     categories: categoryParam ? [categoryParam] : [] as string[],
+    subcategory: subcategoryParam || '',
     priceRange: [0, 0] as [number, number],
     availability: [] as string[],
   }));
   
-  const [subcategoryFilter, setSubcategoryFilter] = useState<string>(
-    subcategoryParam || ''
-  );
-  
   // When URL parameters change, update the filters
   useEffect(() => {
-    if (categoryParam) {
-      setFilters(prev => ({
-        ...prev,
-        categories: [categoryParam]
-      }));
-    }
-    if (subcategoryParam) {
-      setSubcategoryFilter(subcategoryParam);
-    }
+    setFilters(prev => ({
+      ...prev,
+      categories: categoryParam ? [categoryParam] : [],
+      subcategory: subcategoryParam || ''
+    }));
   }, [categoryParam, subcategoryParam]);
 
   const { data: products = [], isLoading } = useQuery({
@@ -104,7 +97,7 @@ const Equipment = () => {
       if (filters.categories.length > 0 && !filters.categories.includes(item.category)) {
         return false;
       }
-      if (subcategoryFilter && item.sub_category !== subcategoryFilter) {
+      if (filters.subcategory && item.sub_category !== filters.subcategory) {
         return false;
       }
       if (item.price < filters.priceRange[0] || item.price > filters.priceRange[1]) {
@@ -115,7 +108,7 @@ const Equipment = () => {
       }
       return true;
     });
-  }, [filters, equipmentData, subcategoryFilter]);
+  }, [filters, equipmentData]);
 
   const groupedEquipment = useMemo(() => {
     const map: Record<string, { order: number; subs: Record<string, { order: number; items: any[] }> }> = {};
@@ -169,6 +162,7 @@ const Equipment = () => {
                   setFilters({
                     search: '',
                     categories: [],
+                    subcategory: '',
                     priceRange: filterOptions.priceRange,
                     availability: [],
                   })
