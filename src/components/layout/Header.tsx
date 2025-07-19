@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
+import { useCategories } from '@/hooks/useCategories';
 import MobileNav from './MobileNav';
 import {
   NavigationMenu,
@@ -16,6 +17,7 @@ import {
 export const Header = () => {
   const { user, profile, signOut, loading } = useAuth();
   const { assets } = useSiteAssets();
+  const { categories, loading: categoriesLoading } = useCategories();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -59,7 +61,7 @@ export const Header = () => {
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Equipment</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="grid gap-3 p-4 w-[400px]">
+                    <div className="grid gap-3 p-4 w-[500px]">
                       <NavigationMenuLink asChild>
                         <Link 
                           to="/equipment" 
@@ -69,24 +71,37 @@ export const Header = () => {
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">Browse our complete equipment catalog</p>
                         </Link>
                       </NavigationMenuLink>
-                      <NavigationMenuLink asChild>
-                        <Link 
-                          to="/equipment?category=Baby Equipment" 
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Baby Equipment</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">Cribs, strollers, car seats, and more</p>
-                        </Link>
-                      </NavigationMenuLink>
-                      <NavigationMenuLink asChild>
-                        <Link 
-                          to="/equipment?category=Beach Equipment" 
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                        >
-                          <div className="text-sm font-medium leading-none">Beach Equipment</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">Chairs, umbrellas, coolers, and more</p>
-                        </Link>
-                      </NavigationMenuLink>
+                      
+                      {!categoriesLoading && categories.map((category) => (
+                        <div key={category.id} className="space-y-2">
+                          <NavigationMenuLink asChild>
+                            <Link 
+                              to={`/equipment?category=${encodeURIComponent(category.name)}`}
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            >
+                              <div className="text-sm font-medium leading-none">{category.name}</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {category.description || `Browse all ${category.name.toLowerCase()}`}
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                          
+                          {category.sub_categories.length > 0 && (
+                            <div className="ml-4 space-y-1">
+                              {category.sub_categories.map((subCategory) => (
+                                <NavigationMenuLink key={subCategory.id} asChild>
+                                  <Link 
+                                    to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
+                                    className="block select-none rounded-md p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground text-muted-foreground"
+                                  >
+                                    {subCategory.name}
+                                  </Link>
+                                </NavigationMenuLink>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
