@@ -4,13 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCategories } from '@/hooks/useCategories';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>({});
   const { user, profile, signOut, loading } = useAuth();
+  const { categories, loading: categoriesLoading } = useCategories();
   const navigate = useNavigate();
+
+  const toggleCategory = (categoryId: string) => {
+    setCategoryStates(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,8 +81,51 @@ const MobileNav = () => {
             <CollapsibleContent>
               <div className="pl-4 border-l ml-3 mt-1 space-y-1">
                 <NavLink to="/equipment">All Equipment</NavLink>
-                <NavLink to="/equipment?category=Baby Equipment">Baby Equipment</NavLink>
-                <NavLink to="/equipment?category=Beach Equipment">Beach Equipment</NavLink>
+                
+                {!categoriesLoading && categories.map((category) => (
+                  <div key={category.id} className="space-y-1">
+                    {category.sub_categories.length > 0 ? (
+                      <Collapsible 
+                        open={categoryStates[category.id] || false} 
+                        onOpenChange={() => toggleCategory(category.id)}
+                      >
+                        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1 text-sm text-gray-600 hover:text-blue-600">
+                          <span>{category.name}</span>
+                          {categoryStates[category.id] ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="pl-4 border-l ml-2 mt-1 space-y-1">
+                            <Link
+                              to={`/equipment?category=${encodeURIComponent(category.name)}`}
+                              onClick={() => setIsOpen(false)}
+                              className="block px-2 py-1 text-xs text-gray-500 hover:text-blue-600"
+                            >
+                              All {category.name}
+                            </Link>
+                            {category.sub_categories.map((subCategory) => (
+                              <Link
+                                key={subCategory.id}
+                                to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
+                                onClick={() => setIsOpen(false)}
+                                className="block px-2 py-1 text-xs text-gray-500 hover:text-blue-600"
+                              >
+                                {subCategory.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ) : (
+                      <Link
+                        to={`/equipment?category=${encodeURIComponent(category.name)}`}
+                        onClick={() => setIsOpen(false)}
+                        className="block px-2 py-1 text-sm text-gray-600 hover:text-blue-600"
+                      >
+                        {category.name}
+                      </Link>
+                    )}
+                  </div>
+                ))}
               </div>
             </CollapsibleContent>
           </Collapsible>
