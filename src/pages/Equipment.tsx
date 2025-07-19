@@ -13,6 +13,7 @@ import { useSearchParams } from 'react-router-dom';
 const Equipment = () => {
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const subcategoryParam = searchParams.get('subcategory');
   
   const [filters, setFilters] = useState<ActiveFiltersState>(() => ({
     search: '',
@@ -20,6 +21,10 @@ const Equipment = () => {
     priceRange: [0, 0] as [number, number],
     availability: [] as string[],
   }));
+  
+  const [subcategoryFilter, setSubcategoryFilter] = useState<string>(
+    subcategoryParam || ''
+  );
   
   // When URL parameters change, update the filters
   useEffect(() => {
@@ -29,7 +34,10 @@ const Equipment = () => {
         categories: [categoryParam]
       }));
     }
-  }, [categoryParam]);
+    if (subcategoryParam) {
+      setSubcategoryFilter(subcategoryParam);
+    }
+  }, [categoryParam, subcategoryParam]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['equipment-products'],
@@ -96,6 +104,9 @@ const Equipment = () => {
       if (filters.categories.length > 0 && !filters.categories.includes(item.category)) {
         return false;
       }
+      if (subcategoryFilter && item.sub_category !== subcategoryFilter) {
+        return false;
+      }
       if (item.price < filters.priceRange[0] || item.price > filters.priceRange[1]) {
         return false;
       }
@@ -104,7 +115,7 @@ const Equipment = () => {
       }
       return true;
     });
-  }, [filters, equipmentData]);
+  }, [filters, equipmentData, subcategoryFilter]);
 
   const groupedEquipment = useMemo(() => {
     const map: Record<string, { order: number; subs: Record<string, { order: number; items: any[] }> }> = {};
