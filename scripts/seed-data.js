@@ -15,10 +15,7 @@ async function seedSampleData() {
     // Sample equipment
     const { data: equipment, error: eqError } = await supabaseAdmin
         .from('equipment')
-        .insert([
-        { name: 'Ocean Kayak', type: 'kayak', daily_rate: 25, available: true },
-        { name: 'Pro Snorkel Set', type: 'snorkel', daily_rate: 15, available: true }
-    ])
+        .insert([])
         .select();
     if (eqError)
         throw eqError;
