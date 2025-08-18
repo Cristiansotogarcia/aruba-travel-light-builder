@@ -106,7 +106,7 @@ const EquipmentItem = () => {
           </div>
 
           {equipment.images.length > 0 ? (
-            <Carousel className="w-full mb-4">
+            <Carousel className="w-full max-w-sm mx-auto mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
                   <CarouselItem key={idx}>
@@ -124,7 +124,7 @@ const EquipmentItem = () => {
               <CarouselNext />
             </Carousel>
           ) : (
-            <div className="aspect-square w-full relative overflow-hidden mb-4">
+            <div className="w-full max-w-sm mx-auto aspect-square relative overflow-hidden mb-4">
               <img
                 src={equipment.image}
                 alt={equipment.name}
