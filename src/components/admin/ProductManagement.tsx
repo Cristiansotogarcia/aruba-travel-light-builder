@@ -6,7 +6,7 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import DOMPurify from 'dompurify';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Cloud } from 'lucide-react';
+import { Plus, Cloud, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -54,7 +54,7 @@ export const ProductManagement = () => {
     price_per_day: 0,
     availability_status: 'Available',
     stock_quantity: 0,
-    image_url: '',
+    images: [] as string[],
     featured: false,
     sort_order: 0,
 
@@ -73,7 +73,13 @@ export const ProductManagement = () => {
     try {
       const { data: productsData, error: productsError } = await supabase.from('equipment').select('*, equipment_category(name), equipment_sub_category(name)');
       if (productsError) throw productsError;
-      setProducts(productsData.map(p => ({...p, category: p.equipment_category?.name || 'Uncategorized', sub_category: p.equipment_sub_category?.name, availability_status: (p.availability_status || 'Available') as AvailabilityStatus })));
+      setProducts(productsData.map(p => ({
+        ...p,
+        images: p.images || [],
+        category: p.equipment_category?.name || 'Uncategorized',
+        sub_category: p.equipment_sub_category?.name,
+        availability_status: (p.availability_status || 'Available') as AvailabilityStatus
+      })));
 
       const { data: cats, error: catError } = await supabase.from('equipment_category').select('*');
       if (catError) throw catError;
@@ -92,8 +98,13 @@ export const ProductManagement = () => {
   };
 
   const handleImageUpload = (imageUrl: string) => {
-    setFormState({ ...formState, image_url: imageUrl });
+    setFormState({ ...formState, images: [...formState.images, imageUrl] });
     toast({ title: "Success", description: "Image uploaded successfully" });
+    setIsImageUploadDialogOpen(false);
+  };
+
+  const handleRemoveImage = (url: string) => {
+    setFormState({ ...formState, images: formState.images.filter((img: string) => img !== url) });
   };
 
   const handleSaveProduct = async () => {
@@ -101,10 +112,6 @@ export const ProductManagement = () => {
       toast({ title: "Error", description: "Please select a category.", variant: "destructive" });
       return;
     }
-    let imageUrl = formState.image_url;
-    
-    // Image URL is set from Cloudflare selection only
-
     const dataToSave = {
       name: formState.name,
       description: DOMPurify.sanitize(formState.description),
@@ -113,7 +120,7 @@ export const ProductManagement = () => {
       availability_status: formState.availability_status,
       featured: formState.featured,
       sort_order: formState.sort_order,
-      image_url: imageUrl,
+      images: formState.images,
       category_id: formState.category_id,
       sub_category_id: formState.sub_category_id || null,
       updated_at: new Date().toISOString(),
@@ -141,6 +148,7 @@ export const ProductManagement = () => {
     setEditingProduct(product);
     setFormState({
       ...product,
+      images: product.images || [],
       category_id: product.category_id || '',
       sub_category_id: product.sub_category_id || '',
     });
@@ -189,25 +197,38 @@ export const ProductManagement = () => {
           <Input type="number" placeholder="Sort Order" value={formState.sort_order} onChange={e => setFormState({ ...formState, sort_order: Number(e.target.value) })} />
         </div>
         <div>
-          <Label>Image</Label>
+          <Label>Images</Label>
           <div className="space-y-2">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setIsImageUploadDialogOpen(true)}
               className="w-full"
             >
               <Cloud className="h-4 w-4 mr-2" />
-              Upload Image to Cloudflare
+              Add Image from Cloudflare
             </Button>
-            {formState.image_url && (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">Selected image:</p>
-                <img 
-                  src={formState.image_url} 
-                  alt="Selected" 
-                  className="w-20 h-20 object-cover rounded border"
-                />
+            {formState.images.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formState.images.map((url: string, idx: number) => (
+                  <div key={idx} className="relative">
+                    <img
+                      src={url}
+                      alt={`Selected ${idx + 1}`}
+                      className="w-20 h-20 object-cover rounded border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5"
+                      onClick={() => handleRemoveImage(url)}
+                      aria-label="Remove image"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -226,7 +247,7 @@ export const ProductManagement = () => {
         <div className="flex gap-2">
           <Button onClick={() => { 
             setEditingProduct(null); 
-            setFormState({ name: '', description: '', category_id: '', sub_category_id: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, image_url: '', featured: false, sort_order: 0 }); 
+      setFormState({ name: '', description: '', category_id: '', sub_category_id: '', price_per_day: 0, availability_status: 'Available', stock_quantity: 0, images: [], featured: false, sort_order: 0 });
             setIsCreateDialogOpen(true); 
           }}>
             <Plus className="h-4 w-4 mr-2" /> Add Product
@@ -255,7 +276,6 @@ export const ProductManagement = () => {
         isOpen={isImageUploadDialogOpen}
         onClose={() => setIsImageUploadDialogOpen(false)}
         onImageSelect={handleImageUpload}
-        selectedImageUrl={formState.image_url}
       />
     </div>
   );

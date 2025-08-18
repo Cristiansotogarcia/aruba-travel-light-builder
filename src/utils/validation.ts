@@ -71,7 +71,7 @@ export const equipmentSchema = z.object({
   category: z.string().min(1, 'Category is required').max(50),
   price_per_day: z.number().min(0, 'Price must be positive'),
   availability_status: z.enum(['available', 'rented', 'maintenance']).default('available'),
-  image_url: z.string().url('Invalid image URL').optional()
+  images: z.array(z.string().url()).optional()
 });
 
 // Form validation schemas

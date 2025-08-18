@@ -203,7 +203,6 @@ export type Database = {
                     featured: boolean;
                     featured_sort_order: number | null; // <-- Add this line
                     id: string;
-                    image_url: string | null;
                     images: string[] | null;
                     name: string;
                     price_per_day: number;
@@ -222,7 +221,6 @@ export type Database = {
                     description?: string | null;
                     featured?: boolean;
                     id?: string;
-                    image_url?: string | null;
                     images?: string[] | null;
                     name: string;
                     price_per_day?: number;
@@ -241,7 +239,6 @@ export type Database = {
                     description?: string | null;
                     featured?: boolean;
                     id?: string;
-                    image_url?: string | null;
                     images?: string[] | null;
                     name?: string;
                     price_per_day?: number;

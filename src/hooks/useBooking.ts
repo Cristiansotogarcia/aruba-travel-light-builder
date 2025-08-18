@@ -78,7 +78,7 @@ const useBooking = () => {
             description: item.description || '',
             price_per_day: item.price_per_day,
             category: item.category,
-            image_url: item.images?.[0] || '', // Use first image or empty string
+            images: item.images || [],
             stock_quantity: stockQuantity,
             availability_status: availability_status, // Added availability_status to Product object
             created_at: item.created_at,

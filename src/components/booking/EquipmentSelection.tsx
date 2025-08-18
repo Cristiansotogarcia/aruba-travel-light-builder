@@ -101,8 +101,8 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
               return item.equipment_name && equipmentDetails ? ( // Ensure equipmentDetails is found
                 <div key={item.equipment_id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={equipmentDetails.image_url || undefined} // Use image_url from found product
+                    <img
+                      src={equipmentDetails.images?.[0] || undefined}
                       alt={item.equipment_name}
                       className="w-12 h-12 object-cover rounded"
                       onError={(e) => (e.currentTarget.style.display = 'none')}

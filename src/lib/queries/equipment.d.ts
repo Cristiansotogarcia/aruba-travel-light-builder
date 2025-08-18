@@ -8,7 +8,6 @@ export declare const getEquipment: (userId: string) => Promise<import("@supabase
     description: string | null;
     featured: boolean;
     id: string;
-    image_url: string | null;
     images: string[] | null;
     name: string;
     price_per_day: number;
@@ -27,7 +26,6 @@ export declare const addEquipment: (equipment: Omit<Equipment, "id">) => Promise
     description: string | null;
     featured: boolean;
     id: string;
-    image_url: string | null;
     images: string[] | null;
     name: string;
     price_per_day: number;

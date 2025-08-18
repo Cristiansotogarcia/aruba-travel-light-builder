@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 
 interface Equipment {
   id: string;
@@ -16,6 +17,7 @@ interface Equipment {
   category: string;
   price: number;
   image: string;
+
   images: string[];
   description: string;
   availability: 'available' | 'limited' | 'unavailable';
@@ -83,11 +85,13 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
       <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col justify-between">
         <Link to={`/equipment/${equipment.slug}`}>
           <div className="aspect-square relative overflow-hidden">
-            <img
-              src={equipment.image}
-              alt={equipment.name}
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-            />
+            {equipment.images[0] && (
+              <img
+                src={equipment.images[0]}
+                alt={equipment.name}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              />
+            )}
             <div className="absolute top-2 right-2">
               {equipment.availability !== 'unavailable' && (
                 <div
@@ -174,7 +178,10 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <DialogTitle>{equipment.name}</DialogTitle>
           </DialogHeader>
 
+          {equipment.images.length > 0 && (
+
           {equipment.images.length > 0 ? (
+
             <Carousel className="w-full mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
@@ -196,6 +203,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               alt={equipment.name}
               className="w-full h-64 object-cover rounded mb-4"
             />
+
           )}
 
           <div className="text-sm text-gray-700 whitespace-pre-line mb-2">
