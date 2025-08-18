@@ -46,7 +46,7 @@ export const FeaturedCategories = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {categories.map((category, index) => (
             <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-video relative overflow-hidden">
+              <div className="aspect-square relative overflow-hidden">
                 {category.image && (
                   <img
                     src={category.image}
