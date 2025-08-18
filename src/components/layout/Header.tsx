@@ -133,13 +133,7 @@ export const Header = () => {
                 )}
                 <Button variant="ghost" onClick={handleSignOut}>Logout</Button>
               </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="outline">Login</Button>
-                </Link>
-              </>
-            )}
+            ) : null}
           </div>
 
           <div className="md:hidden">
