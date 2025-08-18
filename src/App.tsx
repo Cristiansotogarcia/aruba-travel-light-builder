@@ -15,6 +15,7 @@ import { AppPrefetch } from "@/AppPrefetch"; //
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
 const Equipment = lazy(() => import("./pages/Equipment"));
+const EquipmentItem = lazy(() => import("./pages/EquipmentItem"));
 const About = lazy(() => import("./pages/About"));
 const Book = lazy(() => import("./pages/Book"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -60,6 +61,7 @@ const App = () => {
                     <Route path="/about-us" element={<About />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/equipment" element={<Equipment />} />
+                    <Route path="/equipment/:slug" element={<EquipmentItem />} />
                     <Route path="/login" element={<Login />} />
 
                     {/* Protected Routes */}

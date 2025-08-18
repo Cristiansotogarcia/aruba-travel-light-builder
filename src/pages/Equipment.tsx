@@ -5,6 +5,7 @@ import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
 import { FaqAccordion } from '@/components/common/FaqAccordion';
 import { getProducts } from '@/lib/queries/products';
+import { slugify } from '@/utils/slugify';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import type { ActiveFiltersState } from '@/components/equipment/EquipmentFilters';
@@ -50,6 +51,7 @@ const Equipment = () => {
       return {
         id: p.id,
         name: p.name,
+        slug: slugify(p.name),
         category: p.equipment_category?.name || 'Uncategorized',
         sub_category: p.equipment_sub_category?.name || 'General',
         price: p.price_per_day,
