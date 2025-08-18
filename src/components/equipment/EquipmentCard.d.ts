@@ -4,7 +4,9 @@ interface Equipment {
     slug: string;
     category: string;
     price: number;
+
     image: string;
+
     images: string[];
     description: string;
     availability: 'available' | 'limited' | 'unavailable';

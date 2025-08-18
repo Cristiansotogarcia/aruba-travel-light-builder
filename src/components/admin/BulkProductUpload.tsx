@@ -42,16 +42,16 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     setUploading(true);
     try {
 const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
-      const products = parsedRows.map(row => ({
-        name: row.name,
-        description: row.description || null,
-        price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
-        stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
-        availability_status: row.availability_status || 'Available',
-        image_url: row.image_url || null,
-        category_id: null,
-        category: null,
-      }));
+        const products = parsedRows.map(row => ({
+          name: row.name,
+          description: row.description || null,
+          price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
+          stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+          availability_status: row.availability_status || 'Available',
+          images: row.images ? row.images.split('|').map(s => s.trim()).filter(Boolean) : [],
+          category_id: null,
+          category: null,
+        }));
 
       if (products.length > 0) {
         const { error } = await supabase.from('equipment').insert(products as any);

@@ -257,7 +257,7 @@ export const ReportsDashboard: React.FC = () => {
         description: p.description,
         price_per_day: p.price_per_day,
         category: p.category,
-        image_url: p.image_url,
+        images: p.images || [],
         availability_status: p.availability_status,
         created_at: p.created_at,
         updated_at: p.updated_at,

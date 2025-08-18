@@ -200,7 +200,6 @@ export type Database = {
                     description: string | null;
                     id: string;
                     images: string[] | null;
-                    image_url: string | null;
                     name: string;
                     price_per_day: number;
                     featured: boolean;
@@ -215,7 +214,6 @@ export type Database = {
                     description?: string | null;
                     id?: string;
                     images?: string[] | null;
-                    image_url?: string | null;
                     name: string;
                     price_per_day?: number;
                     featured?: boolean;
@@ -230,7 +228,6 @@ export type Database = {
                     description?: string | null;
                     id?: string;
                     images?: string[] | null;
-                    image_url?: string | null;
                     name?: string;
                     price_per_day?: number;
                     featured?: boolean;

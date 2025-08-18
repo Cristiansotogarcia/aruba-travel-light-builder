@@ -25,8 +25,8 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }:
 
   return (
     <Card key={product.id} className="flex flex-col">
-      {product.image_url && (
-        <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover rounded-t-lg" />
+      {product.images?.[0] && (
+        <img src={product.images[0]} alt={product.name} className="w-full h-48 object-cover rounded-t-lg" />
       )}
       <CardHeader className="flex-grow-0">
         <div className="flex items-center justify-between">

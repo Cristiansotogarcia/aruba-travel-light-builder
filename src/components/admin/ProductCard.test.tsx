@@ -9,7 +9,7 @@ const product = {
   description: '<b>Test</b><script>alert("xss")</script>',
   price_per_day: 10,
   category: 'Camping',
-  image_url: '/img.jpg',
+  images: ['/img.jpg'],
   stock_quantity: 1,
   availability_status: 'Available' as const,
 };

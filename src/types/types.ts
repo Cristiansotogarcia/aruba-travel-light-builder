@@ -10,7 +10,7 @@ export interface Product {
   description: string | null | undefined;
   price_per_day: number;
   category: string;
-  image_url?: string | null | undefined;
+  images: string[];
   stock_quantity: number; // Made non-optional
   availability_status?: AvailabilityStatus; // Uncommented and made optional
   featured?: boolean;

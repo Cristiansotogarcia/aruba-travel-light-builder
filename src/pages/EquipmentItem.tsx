@@ -36,8 +36,12 @@ const EquipmentItem = () => {
           slug: slugify(p.name),
           category: p.equipment_category?.name || 'Uncategorized',
           price: p.price_per_day,
+
+          images: p.images || [],
+
           image: p.image_url || (p.images && p.images[0]) || '',
           images: p.images || (p.image_url ? [p.image_url] : []),
+
           description: p.description || '',
           availability,
           features: [],
@@ -102,7 +106,11 @@ const EquipmentItem = () => {
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
+
+          {equipment.images.length > 0 && (
+
           {equipment.images.length > 0 ? (
+
             <Carousel className="w-full mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
@@ -118,12 +126,14 @@ const EquipmentItem = () => {
               <CarouselPrevious />
               <CarouselNext />
             </Carousel>
+
           ) : (
             <img
               src={equipment.image}
               alt={equipment.name}
               className="w-full h-64 object-cover rounded mb-4"
             />
+
           )}
           <div className="text-sm text-gray-700 whitespace-pre-line mb-4">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />

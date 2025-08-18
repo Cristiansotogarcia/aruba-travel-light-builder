@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface Product {
   id: string;
   name: string;
-  image_url: string | null;
+  images: string[] | null;
   featured: boolean;
   sort_order?: number | null;
   featured_sort_order?: number | null;
@@ -28,7 +28,7 @@ export const HighlightProductsSettings = () => {
     const load = async () => {
       const { data, error } = await supabase
         .from('equipment')
-        .select('id,name,image_url,featured,featured_sort_order')
+        .select('id,name,images,featured,featured_sort_order')
         .order('featured_sort_order', { ascending: true })
         .order('name');
       if (!error && data) {
@@ -138,9 +138,9 @@ export const HighlightProductsSettings = () => {
               {orderedProducts.map((product, index) => (
                 <div key={product.id} className="flex items-center justify-between bg-blue-50 p-2 rounded">
                   <div className="flex items-center gap-2">
-                    {product.image_url && (
+                    {product.images?.[0] && (
                       <img
-                        src={product.image_url}
+                        src={product.images[0]}
                         alt={product.name}
                         className="w-10 h-10 object-cover rounded"
                       />
@@ -192,9 +192,9 @@ export const HighlightProductsSettings = () => {
                   checked={selected.includes(product.id)}
                   onCheckedChange={() => toggle(product.id)}
                 />
-                {product.image_url && (
+                {product.images?.[0] && (
                   <img
-                    src={product.image_url}
+                    src={product.images[0]}
                     alt={product.name}
                     className="w-12 h-12 object-cover rounded"
                   />

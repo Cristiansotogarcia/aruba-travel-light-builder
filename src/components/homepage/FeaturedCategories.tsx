@@ -22,7 +22,7 @@ export const FeaturedCategories = () => {
     return Object.entries(groups).map(([title, items]) => ({
       title,
       description: '',
-      image: items[0]?.image_url || '',
+      image: items[0]?.images?.[0] || '',
       items: items.slice(0, 4).map(i => i.name),
     }));
   }, [products]);
