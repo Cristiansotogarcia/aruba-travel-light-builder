@@ -37,8 +37,6 @@ const EquipmentItem = () => {
           category: p.equipment_category?.name || 'Uncategorized',
           price: p.price_per_day,
 
-          images: p.images || [],
-
           image: p.image_url || (p.images && p.images[0]) || '',
           images: p.images || (p.image_url ? [p.image_url] : []),
 
@@ -106,8 +104,6 @@ const EquipmentItem = () => {
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
-
-          {equipment.images.length > 0 && (
 
           {equipment.images.length > 0 ? (
 

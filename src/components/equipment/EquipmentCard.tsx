@@ -178,8 +178,6 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <DialogTitle>{equipment.name}</DialogTitle>
           </DialogHeader>
 
-          {equipment.images.length > 0 && (
-
           {equipment.images.length > 0 ? (
 
             <Carousel className="w-full mb-4">
