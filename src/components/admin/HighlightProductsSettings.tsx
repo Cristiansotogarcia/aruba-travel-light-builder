@@ -138,13 +138,13 @@ export const HighlightProductsSettings = () => {
               {orderedProducts.map((product, index) => (
                 <div key={product.id} className="flex items-center justify-between bg-blue-50 p-2 rounded">
                   <div className="flex items-center gap-2">
-                    {product.images?.[0] && (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-10 h-10 object-cover rounded"
-                      />
-                    )}
+                      {product.images?.[0] && (
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-10 h-auto max-h-10 object-contain rounded"
+                        />
+                      )}
                     <span className="font-medium">{product.name}</span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -192,13 +192,13 @@ export const HighlightProductsSettings = () => {
                   checked={selected.includes(product.id)}
                   onCheckedChange={() => toggle(product.id)}
                 />
-                {product.images?.[0] && (
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-12 h-12 object-cover rounded"
-                  />
-                )}
+                  {product.images?.[0] && (
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="w-12 h-auto max-h-12 object-contain rounded"
+                    />
+                  )}
                 <span className="font-medium">{product.name}</span>
               </label>
             ))}

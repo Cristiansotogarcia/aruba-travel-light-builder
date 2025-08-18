@@ -8,7 +8,6 @@ import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 
 interface Equipment {
   id: string;
@@ -81,18 +80,18 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
   };
 
   return (
-    <>
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col justify-between">
-        <Link to={`/equipment/${equipment.slug}`}>
-          <div className="aspect-square relative overflow-hidden">
-            {equipment.images[0] && (
-              <img
-                src={equipment.images[0]}
-                alt={equipment.name}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
-            )}
-            <div className="absolute top-2 right-2">
+      <>
+        <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col justify-between">
+          <Link to={`/equipment/${equipment.slug}`}>
+            <div className="relative overflow-hidden flex items-center justify-center">
+              {equipment.images[0] && (
+                <img
+                  src={equipment.images[0]}
+                  alt={equipment.name}
+                  className="w-full h-auto object-contain hover:scale-105 transition-transform duration-300"
+                />
+              )}
+              <div className="absolute top-2 right-2">
               {equipment.availability !== 'unavailable' && (
                 <div
                   className={clsx(
@@ -172,39 +171,35 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
       </Card>
 
       {/* 🔵 MODAL */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{equipment.name}</DialogTitle>
-          </DialogHeader>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-lg sm:max-w-xl">
+            <DialogHeader>
+              <DialogTitle>{equipment.name}</DialogTitle>
+            </DialogHeader>
 
-          {equipment.images.length > 0 && (
-
-          {equipment.images.length > 0 ? (
-
-            <Carousel className="w-full mb-4">
-              <CarouselContent>
-                {equipment.images.map((img, idx) => (
-                  <CarouselItem key={idx}>
-                    <img
-                      src={img}
-                      alt={`${equipment.name} image ${idx + 1}`}
-                      className="w-full h-64 object-cover rounded"
-                    />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          ) : (
-            <img
-              src={equipment.image}
-              alt={equipment.name}
-              className="w-full h-64 object-cover rounded mb-4"
-            />
-
-          )}
+            {equipment.images.length > 0 ? (
+              <Carousel className="w-full mb-4">
+                <CarouselContent>
+                  {equipment.images.map((img, idx) => (
+                    <CarouselItem key={idx}>
+                      <img
+                        src={img}
+                        alt={`${equipment.name} image ${idx + 1}`}
+                        className="w-full h-auto max-h-96 object-contain rounded"
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            ) : (
+              <img
+                src={equipment.image}
+                alt={equipment.name}
+                className="w-full h-auto max-h-96 object-contain rounded mb-4"
+              />
+            )}
 
           <div className="text-sm text-gray-700 whitespace-pre-line mb-2">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />

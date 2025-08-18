@@ -101,12 +101,12 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
               return item.equipment_name && equipmentDetails ? ( // Ensure equipmentDetails is found
                 <div key={item.equipment_id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={equipmentDetails.images?.[0] || undefined}
-                      alt={item.equipment_name}
-                      className="w-12 h-12 object-cover rounded"
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
+                      <img
+                        src={equipmentDetails.images?.[0] || undefined}
+                        alt={item.equipment_name}
+                        className="w-12 h-auto max-h-12 object-contain rounded"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
                     <div>
                       <p className="font-medium">{item.equipment_name}</p>
                       <p className="text-sm text-gray-600">

@@ -212,11 +212,11 @@ export const ProductManagement = () => {
               <div className="flex flex-wrap gap-2">
                 {formState.images.map((url: string, idx: number) => (
                   <div key={idx} className="relative">
-                    <img
-                      src={url}
-                      alt={`Selected ${idx + 1}`}
-                      className="w-20 h-20 object-cover rounded border"
-                    />
+                      <img
+                        src={url}
+                        alt={`Selected ${idx + 1}`}
+                        className="w-20 h-auto max-h-20 object-contain rounded border"
+                      />
                     <Button
                       type="button"
                       variant="destructive"

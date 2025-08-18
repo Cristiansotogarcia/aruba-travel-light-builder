@@ -151,11 +151,11 @@ export const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
           {selectedImageUrl && !previewUrl && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Current image:</p>
-              <img 
-                src={selectedImageUrl} 
-                alt="Current" 
-                className="w-20 h-20 object-cover rounded border"
-              />
+                <img
+                  src={selectedImageUrl}
+                  alt="Current"
+                  className="w-20 h-auto max-h-20 object-contain rounded border"
+                />
             </div>
           )}
 
@@ -173,11 +173,11 @@ export const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
           >
             {previewUrl ? (
               <div className="space-y-2">
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
-                  className="w-32 h-32 object-cover rounded mx-auto"
-                />
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-32 h-auto max-h-32 object-contain rounded mx-auto"
+                  />
                 <p className="text-sm text-gray-600">Preview</p>
               </div>
             ) : (
