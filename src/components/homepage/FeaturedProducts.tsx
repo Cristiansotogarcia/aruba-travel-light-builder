@@ -3,6 +3,7 @@ import { getFeaturedProducts } from '@/lib/queries/products';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
 export const FeaturedProducts = () => {
     const { data: products = [] } = useQuery({
@@ -56,9 +57,12 @@ export const FeaturedProducts = () => {
                             </CardHeader>
                             <CardContent>
                                 {product.description && (
-                                    <p className="text-gray-600 mb-2 line-clamp-3">
-                                        {product.description}
-                                    </p>
+                                    <div
+                                        className="text-gray-600 mb-2 line-clamp-3"
+                                        dangerouslySetInnerHTML={{
+                                            __html: DOMPurify.sanitize(product.description),
+                                        }}
+                                    />
                                 )}
                                 <div className="text-lg font-bold mb-4">
                                     ${Number(product.price_per_day).toFixed(2)}/day |
