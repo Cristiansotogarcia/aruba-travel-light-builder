@@ -160,7 +160,7 @@ export const ProductManagement = () => {
   };
 
   const renderProductForm = (submitHandler: () => void, title: string, buttonText: string) => (
-    <DialogContent>
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>Fill in the form to add or edit a product.</DialogDescription>
