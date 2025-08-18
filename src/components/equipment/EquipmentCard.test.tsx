@@ -6,6 +6,7 @@ import { EquipmentCard } from './EquipmentCard';
 const equipment = {
   id: '1',
   name: 'Tent',
+  slug: 'tent',
   category: 'Camping',
   price: 10,
   image: '/tent.jpg',
