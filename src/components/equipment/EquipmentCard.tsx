@@ -9,6 +9,7 @@ import DOMPurify from 'dompurify';
 interface Equipment {
   id: string;
   name: string;
+  slug: string;
   category: string;
   price: number;
   image: string;
@@ -58,28 +59,34 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
   return (
     <>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col justify-between">
-        <div className="aspect-square relative overflow-hidden">
-          <img
-            src={equipment.image}
-            alt={equipment.name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute top-2 right-2">
-            {equipment.availability !== 'unavailable' && (
-              <div
-                className={clsx(
-                  'text-xs font-medium px-2 py-1 rounded-full',
-                  getAvailabilityColor(equipment.availability)
-                )}
-              >
-                {getAvailabilityText(equipment.availability)}
-              </div>
-            )}
+        <Link to={`/equipment/${equipment.slug}`}>
+          <div className="aspect-square relative overflow-hidden">
+            <img
+              src={equipment.image}
+              alt={equipment.name}
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute top-2 right-2">
+              {equipment.availability !== 'unavailable' && (
+                <div
+                  className={clsx(
+                    'text-xs font-medium px-2 py-1 rounded-full',
+                    getAvailabilityColor(equipment.availability)
+                  )}
+                >
+                  {getAvailabilityText(equipment.availability)}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </Link>
 
         <CardHeader>
-          <CardTitle className="text-lg">{equipment.name}</CardTitle>
+          <CardTitle className="text-lg">
+            <Link to={`/equipment/${equipment.slug}`} className="hover:underline">
+              {equipment.name}
+            </Link>
+          </CardTitle>
           <div className="text-gray-600 text-sm line-clamp-2">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />
           </div>
