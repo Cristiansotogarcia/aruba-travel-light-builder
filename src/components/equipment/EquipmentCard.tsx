@@ -8,7 +8,6 @@ import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 
 interface Equipment {
   id: string;
@@ -179,7 +178,6 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
           </DialogHeader>
 
           {equipment.images.length > 0 ? (
-
             <Carousel className="w-full mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
@@ -201,7 +199,6 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               alt={equipment.name}
               className="w-full h-64 object-cover rounded mb-4"
             />
-
           )}
 
           <div className="text-sm text-gray-700 whitespace-pre-line mb-2">
