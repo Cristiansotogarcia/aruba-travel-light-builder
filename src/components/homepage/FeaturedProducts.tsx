@@ -44,9 +44,9 @@ export const FeaturedProducts = () => {
                             key={product.id}
                             className="overflow-hidden hover:shadow-lg transition-shadow"
                         >
-                            {product.image_url && (
+                            {product.images?.[0] && (
                                 <img
-                                    src={product.image_url}
+                                    src={product.images[0]}
                                     alt={product.name}
                                     className="w-full h-48 object-cover"
                                 />

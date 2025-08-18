@@ -79,7 +79,7 @@ export declare const equipmentSchema: z.ZodObject<{
     category: z.ZodString;
     price_per_day: z.ZodNumber;
     availability_status: z.ZodDefault<z.ZodEnum<["available", "rented", "maintenance"]>>;
-    image_url: z.ZodOptional<z.ZodString>;
+    images: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     availability_status: "available" | "rented" | "maintenance";
@@ -87,7 +87,7 @@ export declare const equipmentSchema: z.ZodObject<{
     price_per_day: number;
     id?: string | undefined;
     description?: string | undefined;
-    image_url?: string | undefined;
+    images?: string[] | undefined;
 }, {
     name: string;
     category: string;
@@ -95,7 +95,7 @@ export declare const equipmentSchema: z.ZodObject<{
     id?: string | undefined;
     description?: string | undefined;
     availability_status?: "available" | "rented" | "maintenance" | undefined;
-    image_url?: string | undefined;
+    images?: string[] | undefined;
 }>;
 export declare const loginSchema: z.ZodObject<{
     email: z.ZodString;
@@ -247,7 +247,7 @@ export declare const validateEquipment: (data: unknown) => z.SafeParseReturnType
     id?: string | undefined;
     description?: string | undefined;
     availability_status?: "available" | "rented" | "maintenance" | undefined;
-    image_url?: string | undefined;
+    images?: string[] | undefined;
 }, {
     name: string;
     availability_status: "available" | "rented" | "maintenance";
@@ -255,7 +255,7 @@ export declare const validateEquipment: (data: unknown) => z.SafeParseReturnType
     price_per_day: number;
     id?: string | undefined;
     description?: string | undefined;
-    image_url?: string | undefined;
+    images?: string[] | undefined;
 }>;
 export declare const validateLogin: (data: unknown) => z.SafeParseReturnType<{
     email: string;

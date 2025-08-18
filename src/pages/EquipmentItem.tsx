@@ -9,6 +9,7 @@ import { slugify } from '@/utils/slugify';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 
 const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -35,7 +36,7 @@ const EquipmentItem = () => {
           slug: slugify(p.name),
           category: p.equipment_category?.name || 'Uncategorized',
           price: p.price_per_day,
-          image: p.image_url || (p.images && p.images[0]) || '',
+          images: p.images || [],
           description: p.description || '',
           availability,
           features: [],
@@ -100,11 +101,23 @@ const EquipmentItem = () => {
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
-          <img
-            src={equipment.image}
-            alt={equipment.name}
-            className="w-full h-64 object-cover rounded mb-4"
-          />
+          {equipment.images.length > 0 && (
+            <Carousel className="w-full mb-4">
+              <CarouselContent>
+                {equipment.images.map((img, idx) => (
+                  <CarouselItem key={idx}>
+                    <img
+                      src={img}
+                      alt={`${equipment.name} image ${idx + 1}`}
+                      className="w-full h-64 object-cover rounded"
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          )}
           <div className="text-sm text-gray-700 whitespace-pre-line mb-4">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />
           </div>

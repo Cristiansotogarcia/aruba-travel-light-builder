@@ -55,12 +55,13 @@ const Equipment = () => {
         category: p.equipment_category?.name || 'Uncategorized',
         sub_category: p.equipment_sub_category?.name || 'General',
         price: p.price_per_day,
-        image: p.image_url || (p.images && p.images[0]) || '',
+        images: p.images || [],
         description: p.description || '',
         availability,
         features: [],
         category_sort_order: p.equipment_category?.sort_order ?? 0,
         sub_category_sort_order: p.equipment_sub_category?.sort_order ?? 0,
+        sort_order: (p as any).sort_order ?? 0,
       };
     });
   }, [products]);

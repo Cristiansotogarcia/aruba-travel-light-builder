@@ -16,7 +16,6 @@ const equipmentData = [
         price_per_day: 15,
         description: 'Large UV-protection umbrella perfect for family beach days',
         images: ['https://images.unsplash.com/photo-1500375592092-40eb2168fd21'],
-        image_url: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21',
         availability: true,
         availability_status: 'Available'
     },
@@ -26,7 +25,6 @@ const equipmentData = [
         price_per_day: 20,
         description: 'Comfortable reclining beach chairs for two people',
         images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
-        image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
         availability: true,
         availability_status: 'Available'
     },
@@ -36,7 +34,6 @@ const equipmentData = [
         price_per_day: 25,
         description: 'Large insulated cooler keeps drinks cold all day',
         images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96'],
-        image_url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96',
         availability: true,
         availability_status: 'Available'
     },
@@ -46,7 +43,6 @@ const equipmentData = [
         price_per_day: 18,
         description: 'Complete snorkeling set with mask, snorkel, and fins',
         images: ['https://images.unsplash.com/photo-1559827260-dc66d52bef19'],
-        image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
         availability: true,
         availability_status: 'Available'
     },
@@ -57,7 +53,6 @@ const equipmentData = [
         price_per_day: 35,
         description: 'Rugged stroller perfect for beach and city exploring',
         images: ['https://images.unsplash.com/photo-1721322800607-8c38375eef04'],
-        image_url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04',
         availability: true,
         availability_status: 'Available'
     },
@@ -67,7 +62,6 @@ const equipmentData = [
         price_per_day: 40,
         description: 'Safety-certified car seat for infants and toddlers',
         images: ['https://images.unsplash.com/photo-1586015555751-63bb77f4322a'],
-        image_url: 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a',
         availability: true,
         availability_status: 'Available'
     },
@@ -77,7 +71,6 @@ const equipmentData = [
         price_per_day: 30,
         description: 'Lightweight portable crib for safe baby sleep',
         images: ['https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0'],
-        image_url: 'https://images.unsplash.com/photo-1631914197223-b0ad8c0ec2a0',
         availability: true,
         availability_status: 'Available'
     },
@@ -87,7 +80,6 @@ const equipmentData = [
         price_per_day: 22,
         description: 'Adjustable high chair for mealtime comfort',
         images: ['https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e'],
-        image_url: 'https://images.unsplash.com/photo-1598736742398-e3c2c6b9d95e',
         availability: false,
         availability_status: 'Out of Stock'
     },

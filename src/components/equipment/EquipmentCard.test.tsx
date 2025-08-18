@@ -1,7 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { EquipmentCard } from './EquipmentCard';
+
+vi.mock('@/components/ui/carousel', () => ({
+  Carousel: ({ children }: any) => <div>{children}</div>,
+  CarouselContent: ({ children }: any) => <div>{children}</div>,
+  CarouselItem: ({ children }: any) => <div>{children}</div>,
+  CarouselPrevious: () => null,
+  CarouselNext: () => null,
+}));
 
 const equipment = {
   id: '1',
@@ -9,7 +17,7 @@ const equipment = {
   slug: 'tent',
   category: 'Camping',
   price: 10,
-  image: '/tent.jpg',
+  images: ['/tent.jpg'],
   description: '<b>Single</b><br><script>alert("xss")</script>',
   availability: 'available' as const,
   features: [] as string[],

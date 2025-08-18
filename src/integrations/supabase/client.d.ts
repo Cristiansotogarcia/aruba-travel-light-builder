@@ -198,7 +198,6 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 description: string | null;
                 featured: boolean;
                 id: string;
-                image_url: string | null;
                 images: string[] | null;
                 name: string;
                 price_per_day: number;
@@ -217,7 +216,6 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 description?: string | null;
                 featured?: boolean;
                 id?: string;
-                image_url?: string | null;
                 images?: string[] | null;
                 name: string;
                 price_per_day?: number;
@@ -236,7 +234,6 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 description?: string | null;
                 featured?: boolean;
                 id?: string;
-                image_url?: string | null;
                 images?: string[] | null;
                 name?: string;
                 price_per_day?: number;
