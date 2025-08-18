@@ -3,6 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
@@ -15,6 +16,7 @@ interface Equipment {
   category: string;
   price: number;
   image: string;
+  images: string[];
   description: string;
   availability: 'available' | 'limited' | 'unavailable';
   features: string[];
@@ -172,11 +174,29 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <DialogTitle>{equipment.name}</DialogTitle>
           </DialogHeader>
 
-          <img
-            src={equipment.image}
-            alt={equipment.name}
-            className="w-full h-64 object-cover rounded mb-4"
-          />
+          {equipment.images.length > 0 ? (
+            <Carousel className="w-full mb-4">
+              <CarouselContent>
+                {equipment.images.map((img, idx) => (
+                  <CarouselItem key={idx}>
+                    <img
+                      src={img}
+                      alt={`${equipment.name} image ${idx + 1}`}
+                      className="w-full h-64 object-cover rounded"
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          ) : (
+            <img
+              src={equipment.image}
+              alt={equipment.name}
+              className="w-full h-64 object-cover rounded mb-4"
+            />
+          )}
 
           <div className="text-sm text-gray-700 whitespace-pre-line mb-2">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />

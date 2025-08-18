@@ -56,6 +56,7 @@ const Equipment = () => {
         sub_category: p.equipment_sub_category?.name || 'General',
         price: p.price_per_day,
         image: p.image_url || (p.images && p.images[0]) || '',
+        images: p.images || (p.image_url ? [p.image_url] : []),
         description: p.description || '',
         availability,
         features: [],
