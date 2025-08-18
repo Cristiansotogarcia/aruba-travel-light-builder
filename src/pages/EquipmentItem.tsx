@@ -37,8 +37,6 @@ const EquipmentItem = () => {
           category: p.equipment_category?.name || 'Uncategorized',
           price: p.price_per_day,
 
-          images: p.images || [],
-
           image: p.image_url || (p.images && p.images[0]) || '',
           images: p.images || (p.image_url ? [p.image_url] : []),
 
@@ -107,10 +105,7 @@ const EquipmentItem = () => {
             </Button>
           </div>
 
-          {equipment.images.length > 0 && (
-
           {equipment.images.length > 0 ? (
-
             <Carousel className="w-full mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
@@ -128,7 +123,6 @@ const EquipmentItem = () => {
               <CarouselPrevious />
               <CarouselNext />
             </Carousel>
-
           ) : (
             <div className="aspect-square w-full relative overflow-hidden mb-4">
               <img
@@ -137,7 +131,6 @@ const EquipmentItem = () => {
                 className="absolute inset-0 w-full h-full object-cover rounded"
               />
             </div>
-
           )}
           <div className="text-sm text-gray-700 whitespace-pre-line mb-4">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />
