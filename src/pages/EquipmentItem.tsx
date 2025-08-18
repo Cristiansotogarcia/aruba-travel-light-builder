@@ -115,11 +115,13 @@ const EquipmentItem = () => {
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
                   <CarouselItem key={idx}>
-                    <img
-                      src={img}
-                      alt={`${equipment.name} image ${idx + 1}`}
-                      className="w-full h-64 object-cover rounded"
-                    />
+                    <div className="aspect-square w-full relative overflow-hidden">
+                      <img
+                        src={img}
+                        alt={`${equipment.name} image ${idx + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover rounded"
+                      />
+                    </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -128,11 +130,13 @@ const EquipmentItem = () => {
             </Carousel>
 
           ) : (
-            <img
-              src={equipment.image}
-              alt={equipment.name}
-              className="w-full h-64 object-cover rounded mb-4"
-            />
+            <div className="aspect-square w-full relative overflow-hidden mb-4">
+              <img
+                src={equipment.image}
+                alt={equipment.name}
+                className="absolute inset-0 w-full h-full object-cover rounded"
+              />
+            </div>
 
           )}
           <div className="text-sm text-gray-700 whitespace-pre-line mb-4">
