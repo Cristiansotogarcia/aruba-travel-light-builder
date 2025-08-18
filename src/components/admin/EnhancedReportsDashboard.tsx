@@ -484,7 +484,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${data?.business.totalRevenue.toLocaleString() || 0}</div>
+                <div className="text-2xl font-bold">${(data?.business.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <p className="text-xs text-muted-foreground">Last 30 days</p>
               </CardContent>
             </Card>
@@ -574,7 +574,9 @@ export const EnhancedReportsDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Total revenue: ${data?.business.totalRevenue.toLocaleString()}</CardDescription>
+              <CardDescription>Total revenue: ${(
+                data?.business.totalRevenue ?? 0
+              ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</CardDescription>
             </CardHeader>
             <CardContent>
               {data?.business.revenueTrends.length ? (
@@ -583,7 +585,12 @@ export const EnhancedReportsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value: any) => [`$${value?.toLocaleString() || 0}`, 'Revenue']} />
+                    <Tooltip
+                      formatter={(value: number) => [
+                        `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                        'Revenue',
+                      ]}
+                    />
                     <Bar dataKey="revenue" fill="#82ca9d" name="Monthly Revenue" />
                   </BarChart>
                 </ResponsiveContainer>
