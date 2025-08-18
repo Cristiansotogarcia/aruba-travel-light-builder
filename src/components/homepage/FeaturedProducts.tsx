@@ -44,13 +44,13 @@ export const FeaturedProducts = () => {
                             key={product.id}
                             className="overflow-hidden hover:shadow-lg transition-shadow"
                         >
-                            {product.images?.[0] && (
-                                <img
-                                    src={product.images[0]}
-                                    alt={product.name}
-                                    className="w-full h-48 object-cover"
-                                />
-                            )}
+                              {product.images?.[0] && (
+                                  <img
+                                      src={product.images[0]}
+                                      alt={product.name}
+                                      className="w-full h-auto max-h-48 object-contain"
+                                  />
+                              )}
                             <CardHeader>
                                 <CardTitle className="text-xl">{product.name}</CardTitle>
                             </CardHeader>

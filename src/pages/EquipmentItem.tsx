@@ -107,10 +107,7 @@ const EquipmentItem = () => {
             </Button>
           </div>
 
-          {equipment.images.length > 0 && (
-
           {equipment.images.length > 0 ? (
-
             <Carousel className="w-full mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
@@ -118,7 +115,7 @@ const EquipmentItem = () => {
                     <img
                       src={img}
                       alt={`${equipment.name} image ${idx + 1}`}
-                      className="w-full h-64 object-cover rounded"
+                      className="w-full h-auto max-h-96 object-contain rounded"
                     />
                   </CarouselItem>
                 ))}
@@ -126,14 +123,12 @@ const EquipmentItem = () => {
               <CarouselPrevious />
               <CarouselNext />
             </Carousel>
-
           ) : (
             <img
               src={equipment.image}
               alt={equipment.name}
-              className="w-full h-64 object-cover rounded mb-4"
+              className="w-full h-auto max-h-96 object-contain rounded mb-4"
             />
-
           )}
           <div className="text-sm text-gray-700 whitespace-pre-line mb-4">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />

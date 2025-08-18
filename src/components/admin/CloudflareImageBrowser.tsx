@@ -168,11 +168,11 @@ export const CloudflareImageBrowser: React.FC<CloudflareImageBrowserProps> = ({
                       )}
                       onClick={() => handleImageClick(image)}
                     >
-                      <img
-                        src={imageUrl}
-                        alt={image.filename}
-                        className="w-full h-full object-cover rounded-lg"
-                        onError={(e) => {
+                        <img
+                          src={imageUrl}
+                          alt={image.filename}
+                          className="w-full h-full object-contain rounded-lg"
+                          onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
                           target.nextElementSibling?.classList.remove('hidden');
