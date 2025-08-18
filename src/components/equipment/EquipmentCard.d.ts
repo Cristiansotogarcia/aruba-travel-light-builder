@@ -5,6 +5,7 @@ interface Equipment {
     category: string;
     price: number;
     image: string;
+    images: string[];
     description: string;
     availability: 'available' | 'limited' | 'unavailable';
     features: string[];
