@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
+import { Share2 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 interface Equipment {
   id: string;
@@ -56,6 +58,24 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
     }
   };
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/equipment/${equipment.slug}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: equipment.name, url });
+        return;
+      } catch {
+        // fall back to clipboard on share failure
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Link copied' });
+    } catch (err) {
+      console.error('Share failed', err);
+    }
+  };
+
   return (
     <>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col justify-between">
@@ -82,11 +102,21 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         </Link>
 
         <CardHeader>
-          <CardTitle className="text-lg">
-            <Link to={`/equipment/${equipment.slug}`} className="hover:underline">
-              {equipment.name}
-            </Link>
-          </CardTitle>
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-lg">
+              <Link to={`/equipment/${equipment.slug}`} className="hover:underline">
+                {equipment.name}
+              </Link>
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShare}
+              aria-label="Share"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="text-gray-600 text-sm line-clamp-2">
             <div dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />
           </div>

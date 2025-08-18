@@ -6,6 +6,9 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { getProducts } from '@/lib/queries/products';
 import { slugify } from '@/utils/slugify';
+import { Button } from '@/components/ui/button';
+import { Share2 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -46,6 +49,25 @@ const EquipmentItem = () => {
     [equipment?.description]
   );
 
+  const handleShare = async () => {
+    if (!equipment) return;
+    const url = `${window.location.origin}/equipment/${equipment.slug}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: equipment.name, url });
+        return;
+      } catch {
+        // fallback to clipboard on share failure
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Link copied' });
+    } catch (err) {
+      console.error('Share failed', err);
+    }
+  };
+
   if (isLoading) {
     return <div className="py-8 text-center">Loading equipment...</div>;
   }
@@ -67,7 +89,17 @@ const EquipmentItem = () => {
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-4">{equipment.name}</h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl font-bold">{equipment.name}</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShare}
+              aria-label="Share"
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+          </div>
           <img
             src={equipment.image}
             alt={equipment.name}
