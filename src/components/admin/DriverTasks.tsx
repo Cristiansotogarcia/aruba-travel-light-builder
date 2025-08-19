@@ -19,6 +19,7 @@ interface Task {
   status: string;
   total_amount: number;
   task_type: 'delivery' | 'pickup';
+  booking_items: any[]; // Add this line
 }
 
 export const DriverTasks = () => {
@@ -38,7 +39,7 @@ export const DriverTasks = () => {
       // Fetch bookings assigned to current driver
       const { data, error } = await supabase
         .from('bookings')
-        .select('*')
+        .select('*, booking_items(*)')
         .eq('assigned_to', driverId) // Use driverId here
         .order('start_date', { ascending: true });
 
@@ -50,11 +51,13 @@ export const DriverTasks = () => {
         // Delivery task
         allTasks.push({
           ...booking,
+          booking_items: booking.booking_items || [],
           task_type: 'delivery'
         });
         // Pickup task
         allTasks.push({
           ...booking,
+          booking_items: booking.booking_items || [],
           task_type: 'pickup'
         });
       });
