@@ -177,6 +177,41 @@ const useBooking = () => {
     }));
   };
 
+  const updateEquipmentQuantity = (equipmentId: string, newQuantity: number) => {
+    if (isNaN(newQuantity)) return;
+
+    setBookingData(prev => {
+      const equipment = products.find(eq => eq.id === equipmentId);
+      const existingItem = prev.items.find(item => item.equipment_id === equipmentId);
+
+      if (!equipment || !existingItem) return prev;
+
+      if (newQuantity <= 0) {
+        return {
+          ...prev,
+          items: prev.items.filter(item => item.equipment_id !== equipmentId)
+        };
+      }
+
+      if (newQuantity > equipment.stock_quantity) {
+        toast({
+          title: 'Insufficient Stock',
+          description: `Only ${equipment.stock_quantity} units of ${equipment.name} available.`,
+          variant: 'destructive',
+        });
+        return prev;
+      }
+
+      const updatedItems = prev.items.map(item =>
+        item.equipment_id === equipmentId
+          ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.equipment_price }
+          : item
+      );
+
+      return { ...prev, items: updatedItems };
+    });
+  };
+
   const updateCustomerInfo = (field: keyof CustomerInfo, value: string) => {
     setBookingData(prev => ({
       ...prev,
@@ -303,6 +338,7 @@ const useBooking = () => {
     isSubmitting,
     addEquipment,
     removeEquipment,
+    updateEquipmentQuantity,
     updateCustomerInfo,
     updateDates,
     calculateTotal,
