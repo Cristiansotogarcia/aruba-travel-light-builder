@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Mail } from 'lucide-react';
 
 interface CustomerInfo {
@@ -9,6 +10,7 @@ interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  comment: string;
 }
 
 interface CustomerInformationProps {
@@ -65,6 +67,14 @@ export const CustomerInformation = ({
             value={customerInfo.address}
             onChange={(e) => onCustomerInfoChange('address', e.target.value)}
             required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <Label htmlFor="comment">Comments</Label>
+          <Textarea
+            id="comment"
+            value={customerInfo.comment}
+            onChange={(e) => onCustomerInfoChange('comment', e.target.value)}
           />
         </div>
       </CardContent>

@@ -9,6 +9,7 @@ export interface Booking {
   customer_email: string;
   customer_phone: string;
   customer_address: string;
+  customer_comment: string | null;
   assigned_to: string | null;
   delivery_failure_reason: string | null;
   updated_at: string;

@@ -17,7 +17,8 @@ const initialBookingData: BookingFormData = {
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    comment: ''
   }
 };
 
@@ -238,13 +239,14 @@ const useBooking = () => {
         return;
       }
 
-      const bookingPayload: Omit<SupabaseBookingData, 'user_id' | 'created_at' | 'total_price' | 'customer_address'> & { customer_address: string } = {
+      const bookingPayload: Omit<SupabaseBookingData, 'user_id' | 'created_at' | 'total_price'> = {
         start_date: bookingData.startDate,
         end_date: bookingData.endDate,
         customer_name: bookingData.customerInfo.name,
         customer_email: bookingData.customerInfo.email,
         customer_phone: bookingData.customerInfo.phone,
-        customer_address: bookingData.customerInfo.address, // Ensured as string
+        customer_address: bookingData.customerInfo.address,
+        customer_comment: bookingData.customerInfo.comment || null,
         total_amount: calculateTotal(), // Corrected function call
         status: 'pending', // Default status
         // items will be handled by booking_items table
