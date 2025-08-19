@@ -98,16 +98,7 @@ const useBooking = () => {
     fetchProducts();
   }, [toast]);
 
-  const addEquipment = (equipment: Product, quantity: number, selectedDate: Date | undefined) => {
-    if (!selectedDate) {
-      toast({
-        title: 'Date Not Selected',
-        description: 'Please select a date before adding equipment.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const addEquipment = (equipment: Product, quantity: number, selectedDate?: Date) => {
     if (!equipment || !equipment.id) {
       toast({
         title: 'Equipment Not Selected',
@@ -115,6 +106,13 @@ const useBooking = () => {
         variant: 'destructive',
       });
       return;
+    }
+
+    if (!selectedDate) {
+      toast({
+        title: 'Dates Not Selected',
+        description: 'Equipment added. Select rental dates to see final pricing.'
+      });
     }
 
     // Stock check (assuming equipment.stock_quantity is available)
@@ -169,7 +167,7 @@ const useBooking = () => {
     });
 
     // Reset selection (optional, depends on UI flow)
-    // setSelectedEquipment(''); 
+    // setSelectedEquipment('');
     // setQuantity(1);
   };
 
@@ -237,10 +235,8 @@ const useBooking = () => {
   };
 
   const calculateTotal = () => {
-    if (!bookingData.startDate || !bookingData.endDate) return 0;
-    
-    const days = calculateDays();
-    
+    const days = bookingData.startDate && bookingData.endDate ? calculateDays() : 1;
+
     return bookingData.items.reduce((total, item) => {
       const equipment = products.find(eq => eq.id === item.equipment_id); // Changed from product_id
       return total + (equipment ? equipment.price_per_day * item.quantity * days : 0);

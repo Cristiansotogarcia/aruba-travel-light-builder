@@ -14,7 +14,7 @@ interface EquipmentSelectionProps {
   setSelectedEquipment: (id: string) => void;
   quantity: number;
   setQuantity: (quantity: number) => void;
-  addEquipment: (equipment: Product, quantity: number, selectedDate: Date | undefined) => void; // Updated signature
+  addEquipment: (equipment: Product, quantity: number, selectedDate?: Date) => void; // Updated signature
   bookingItems: BookingItem[];
   removeEquipment: (equipment_id: string) => void;
   updateEquipmentQuantity: (equipment_id: string, quantity: number) => void;
