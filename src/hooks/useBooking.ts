@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product, BookingFormData, BookingItem, CustomerInfo, AvailabilityStatus, SupabaseBookingData } from '../types/types';
 import { SupabaseBookingItemData } from '../types/booking'; // Import from the new file
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 // All interfaces like Product, BookingFormData, BookingItem, CustomerInfo, 
 // SupabaseBookingData, SupabaseBookingItemData are now imported from '../types/types'.
@@ -29,6 +30,7 @@ const useBooking = () => {
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -230,6 +232,11 @@ const useBooking = () => {
       setIsSubmitting(false);
       return;
     }
+    if (!user) {
+      toast({ title: 'Authentication Error', description: 'You must be logged in to create a booking.', variant: 'destructive' });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const days = calculateDays();
@@ -239,7 +246,9 @@ const useBooking = () => {
         return;
       }
 
-      const bookingPayload: Omit<SupabaseBookingData, 'user_id' | 'created_at' | 'total_price'> = {
+      const bookingPayload: Omit<SupabaseBookingData, 'created_at' | 'total_price' | 'customer_address'> & { customer_address: string } = {
+        user_id: user.id,
+
         start_date: bookingData.startDate,
         end_date: bookingData.endDate,
         customer_name: bookingData.customerInfo.name,
