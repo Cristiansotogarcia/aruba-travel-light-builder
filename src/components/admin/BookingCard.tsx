@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card'; // Removed CardFooter, CardHeader, CardTitle
 import { Booking } from './calendar/types'; // Removed BookingItem
-import { Eye, Edit, Mail, Phone, MapPin, CalendarDays } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
+import { Eye, Edit, Mail, Phone, MapPin, CalendarDays, MessageSquare } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
 import { getStatusColor } from './calendar/statusUtils'; // Added back getStatusColor import
 
 interface BookingCardProps {
@@ -161,6 +161,12 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
               <MapPin className="h-4 w-4" />
               <span>{booking.customer_address}</span>
             </div>
+            {booking.customer_comment && (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MessageSquare className="h-4 w-4 mt-1" />
+                <span className="whitespace-pre-wrap">{booking.customer_comment}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-600">
               <CalendarDays className="h-4 w-4" /> {/* Changed to CalendarDays */}
               <span>

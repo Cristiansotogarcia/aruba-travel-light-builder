@@ -6,6 +6,7 @@ export declare const getCustomer: (userId: string, bookingId: string) => Promise
     customer_email: string;
     customer_name: string;
     customer_phone: string;
+    customer_comment: string | null;
     delivery_failure_reason: string | null;
     end_date: string;
     id: string;
@@ -21,6 +22,7 @@ export declare const searchCustomers: (userId: string, searchTerm: string) => Pr
     customer_email: string;
     customer_name: string;
     customer_phone: string;
+    customer_comment: string | null;
     delivery_failure_reason: string | null;
     end_date: string;
     id: string;

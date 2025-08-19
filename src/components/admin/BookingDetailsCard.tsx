@@ -75,6 +75,12 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
             </div>
           </div>
         </div>
+        {booking.customer_comment && (
+          <div className="mt-4">
+            <h3 className="font-semibold mb-1">Customer Comments</h3>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{booking.customer_comment}</p>
+          </div>
+        )}
 
         {/* Equipment Items */}
         {booking.booking_items && booking.booking_items.length > 0 && (
