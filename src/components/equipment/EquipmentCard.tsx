@@ -180,7 +180,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
 
       {/* 🔵 MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg sm:max-w-xl">
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{equipment.name}</DialogTitle>
           </DialogHeader>
@@ -189,11 +189,11 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <Carousel className="w-full mb-4">
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
-                  <CarouselItem key={idx}>
+                  <CarouselItem key={idx} className="flex justify-center">
                     <img
                       src={img}
                       alt={`${equipment.name} image ${idx + 1}`}
-                      className="w-full h-64 object-cover rounded"
+                      className="max-w-full h-auto max-h-[60vh] object-contain rounded"
                     />
                   </CarouselItem>
                 ))}
@@ -205,7 +205,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <img
               src={equipment.image}
               alt={equipment.name}
-              className="w-full h-64 object-cover rounded mb-4"
+              className="max-w-full h-auto max-h-[60vh] object-contain rounded mb-4 mx-auto"
             />
           )}
 
