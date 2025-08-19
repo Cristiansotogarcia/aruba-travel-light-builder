@@ -159,7 +159,15 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         </CardContent>
 
         <CardFooter>
-          <Link to="/book" className="w-full hidden" hidden>
+          <Link
+            to="/book"
+            className="w-full"
+            onClick={(e) => {
+              if (equipment.availability === 'unavailable') {
+                e.preventDefault();
+              }
+            }}
+          >
             <Button
               className="w-full"
               disabled={equipment.availability === 'unavailable'}

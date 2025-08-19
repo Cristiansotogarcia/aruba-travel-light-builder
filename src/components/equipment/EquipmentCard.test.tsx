@@ -54,4 +54,27 @@ describe('EquipmentCard', () => {
     expect(imgs).toHaveLength(equipment.images.length);
     expect(imgs[0]).toHaveAttribute('src', equipment.images[0]);
   });
+
+  it('enables booking when equipment is available', () => {
+    render(
+      <BrowserRouter>
+        <EquipmentCard equipment={equipment} />
+      </BrowserRouter>
+    );
+    const button = screen.getByRole('button', { name: /book now/i });
+    expect(button).toBeEnabled();
+    const link = screen.getByRole('link', { name: /book now/i });
+    expect(link).toBeVisible();
+  });
+
+  it('disables booking when equipment is unavailable', () => {
+    const unavailableEquipment = { ...equipment, availability: 'unavailable' as const };
+    render(
+      <BrowserRouter>
+        <EquipmentCard equipment={unavailableEquipment} />
+      </BrowserRouter>
+    );
+    const button = screen.getByRole('button', { name: /book now/i });
+    expect(button).toBeDisabled();
+  });
 });
