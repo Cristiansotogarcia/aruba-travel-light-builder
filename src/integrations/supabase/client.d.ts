@@ -52,6 +52,7 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 delivery_failure_reason: string | null;
                 end_date: string;
                 id: string;
+                user_id: string | null;
                 start_date: string;
                 status: string;
                 total_amount: number;
@@ -67,6 +68,7 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 delivery_failure_reason?: string | null;
                 end_date: string;
                 id?: string;
+                user_id?: string | null;
                 start_date: string;
                 status?: string;
                 total_amount: number;
@@ -82,12 +84,21 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 delivery_failure_reason?: string | null;
                 end_date?: string;
                 id?: string;
+                user_id?: string | null;
                 start_date?: string;
                 status?: string;
                 total_amount?: number;
                 updated_at?: string;
             };
-            Relationships: [];
+            Relationships: [
+                {
+                    foreignKeyName: "bookings_user_id_fkey";
+                    columns: ["user_id"];
+                    isOneToOne: false;
+                    referencedRelation: "profiles";
+                    referencedColumns: ["id"];
+                }
+            ];
         };
         component_visibility: {
             Row: {
