@@ -52,6 +52,23 @@ export declare const updateBookingStatus: (bookingId: string, newStatus: Booking
         id: string;
         quantity: number;
         subtotal: number;
-        products: import("node_modules/@supabase/postgrest-js/dist/cjs/select-query-parser/utils").SelectQueryError<"could not find the relation between booking_items and products">;
+        equipment: {
+            availability: boolean;
+            availability_status: string | null;
+            category: string | null;
+            category_id: string | null;
+            created_at: string;
+            description: string | null;
+            featured: boolean;
+            id: string;
+            images: string[] | null;
+            name: string;
+            price_per_day: number;
+            sort_order: number | null;
+            stock_quantity: number;
+            sub_category: string | null;
+            sub_category_id: string | null;
+            updated_at: string;
+        } | null;
     }[];
 }>;
