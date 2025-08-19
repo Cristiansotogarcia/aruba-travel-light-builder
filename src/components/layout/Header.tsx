@@ -13,12 +13,15 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger
 } from '@/components/ui/navigation-menu';
+import { ShoppingCart } from 'lucide-react';
+import { useCart } from '@/hooks/useCart';
 
 export const Header = () => {
   const { user, profile, signOut, loading } = useAuth();
   const { assets } = useSiteAssets();
   const { categories, loading: categoriesLoading } = useCategories();
   const navigate = useNavigate();
+  const { items } = useCart();
 
   const handleSignOut = async () => {
     await signOut();
@@ -116,6 +119,14 @@ export const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
+            <Link to="/cart" className="relative">
+              <ShoppingCart className="h-6 w-6" />
+              {items.length > 0 && (
+                <span className="absolute -top-1 -right-1 text-xs bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center">
+                  {items.length}
+                </span>
+              )}
+            </Link>
             {loading ? (
               <p>Loading...</p>
             ) : user && profile ? (
