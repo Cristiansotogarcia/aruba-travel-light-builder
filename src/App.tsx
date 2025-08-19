@@ -11,6 +11,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
+import { CartProvider } from "@/hooks/useCart";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -29,6 +30,7 @@ const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
+const CartPage = lazy(() => import("./pages/Cart"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -53,6 +55,7 @@ const App = () => {
       <TooltipProvider>
         <AuthProvider>
           <SiteAssetsProvider>
+            <CartProvider>
             <Toaster />
             <Sonner />
             <ErrorBoundary>
@@ -106,6 +109,7 @@ const App = () => {
                     <Route path="/seo-test" element={<SeoTest />} />
                     <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/payment-error" element={<PaymentError />} />
+                    <Route path="/cart" element={<CartPage />} />
 
                     {/* Catch all */}
                     <Route path="*" element={<NotFound />} />
@@ -113,6 +117,7 @@ const App = () => {
                 </Suspense>
               </BrowserRouter>
             </ErrorBoundary>
+            </CartProvider>
           </SiteAssetsProvider>
         </AuthProvider>
       </TooltipProvider>

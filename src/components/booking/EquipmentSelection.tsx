@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
 import React from 'react';
-import { Product, BookingItem } from '@/types/types'; // Import Product and BookingItem from types.ts
+import { Product } from '@/types/types'; // Import Product from types.ts
 import Spinner from '@/components/common/Spinner'; // Added Spinner import
+import { useCart } from '@/hooks/useCart';
 
 interface EquipmentSelectionProps {
   products: Product[];
@@ -14,10 +15,6 @@ interface EquipmentSelectionProps {
   setSelectedEquipment: (id: string) => void;
   quantity: number;
   setQuantity: (quantity: number) => void;
-  addEquipment: (equipment: Product, quantity: number, selectedDate: Date | undefined) => void; // Updated signature
-  bookingItems: BookingItem[];
-  removeEquipment: (equipment_id: string) => void;
-  updateEquipmentQuantity: (equipment_id: string, quantity: number) => void;
   currentSelectedDate?: Date | undefined; // Added prop for selected date
 }
 
@@ -27,17 +24,14 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
   setSelectedEquipment,
   quantity,
   setQuantity,
-  addEquipment,
-  bookingItems,
-  removeEquipment,
-  updateEquipmentQuantity,
   currentSelectedDate // Destructure new prop
 }) => {
+  const { items: bookingItems, addItem, removeItem, updateItemQuantity } = useCart();
   const selectedProductDetails = products.find(p => p.id === selectedEquipment);
 
   const handleAddEquipment = () => {
     if (selectedProductDetails && quantity > 0) {
-      addEquipment(selectedProductDetails, quantity, currentSelectedDate); // Pass currentSelectedDate
+      addItem(selectedProductDetails, quantity, currentSelectedDate); // Pass currentSelectedDate
     }
   };
 
@@ -118,7 +112,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                           className="w-16"
                           value={item.quantity}
                           onChange={(e) =>
-                            updateEquipmentQuantity(item.equipment_id, parseInt(e.target.value))
+                            updateItemQuantity(item.equipment_id, parseInt(e.target.value))
                           }
                         />
                         <span>
@@ -131,7 +125,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeEquipment(item.equipment_id)}
+                    onClick={() => removeItem(item.equipment_id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
