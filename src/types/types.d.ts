@@ -60,4 +60,4 @@ export interface Profile {
     email: string | null;
     is_deactivated?: boolean | null;
 }
-export type UserRole = 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
+export type UserRole = 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
