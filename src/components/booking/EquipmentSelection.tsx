@@ -17,6 +17,7 @@ interface EquipmentSelectionProps {
   addEquipment: (equipment: Product, quantity: number, selectedDate: Date | undefined) => void; // Updated signature
   bookingItems: BookingItem[];
   removeEquipment: (equipment_id: string) => void;
+  updateEquipmentQuantity: (equipment_id: string, quantity: number) => void;
   currentSelectedDate?: Date | undefined; // Added prop for selected date
 }
 
@@ -29,6 +30,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
   addEquipment,
   bookingItems,
   removeEquipment,
+  updateEquipmentQuantity,
   currentSelectedDate // Destructure new prop
 }) => {
   const selectedProductDetails = products.find(p => p.id === selectedEquipment);
@@ -109,10 +111,20 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                     />
                     <div>
                       <p className="font-medium">{item.equipment_name}</p>
-                      <p className="text-sm text-gray-600">
-                          Quantity: {item.quantity} × ${item.equipment_price}/day |
-                          ${Number(item.equipment_price * 5).toFixed(2)}/week {/* Use equipment_price from BookingItem */}
-                        </p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Input
+                          type="number"
+                          min="1"
+                          className="w-16"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateEquipmentQuantity(item.equipment_id, parseInt(e.target.value))
+                          }
+                        />
+                        <span>
+                          × ${item.equipment_price}/day | ${Number(item.equipment_price * 5).toFixed(2)}/week {/* Use equipment_price from BookingItem */}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <Button

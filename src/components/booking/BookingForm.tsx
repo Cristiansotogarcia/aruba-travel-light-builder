@@ -17,6 +17,7 @@ export const BookingForm = () => {
     setQuantity,
     addEquipment,
     removeEquipment,
+    updateEquipmentQuantity,
     updateCustomerInfo,
     updateDates,
     calculateDays,
@@ -45,6 +46,7 @@ export const BookingForm = () => {
           setQuantity={setQuantity}
           addEquipment={addEquipment}
           removeEquipment={removeEquipment}
+          updateEquipmentQuantity={updateEquipmentQuantity}
           currentSelectedDate={bookingData.startDate ? new Date(bookingData.startDate) : undefined}
         />
 
