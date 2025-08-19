@@ -9,6 +9,7 @@ export declare const getBookings: (userId: string) => Promise<import("@supabase/
     delivery_failure_reason: string | null;
     end_date: string;
     id: string;
+    user_id: string | null;
     start_date: string;
     status: string;
     total_amount: number;
@@ -24,6 +25,7 @@ export declare const insertBooking: (booking: Omit<Booking, "id">) => Promise<im
     delivery_failure_reason: string | null;
     end_date: string;
     id: string;
+    user_id: string | null;
     start_date: string;
     status: string;
     total_amount: number;
@@ -39,6 +41,7 @@ export declare const updateBookingStatus: (bookingId: string, newStatus: Booking
     delivery_failure_reason: string | null;
     end_date: string;
     id: string;
+    user_id: string | null;
     start_date: string;
     status: string;
     total_amount: number;
