@@ -4,10 +4,12 @@ import { BrowserRouter } from 'react-router-dom';
 import { Header } from './Header';
 import { describe, it, expect, vi } from 'vitest';
 
+let mockProfileRole = 'Booker';
+
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: '1' },
-    profile: { role: 'Booker' },
+    profile: { role: mockProfileRole },
     signOut: vi.fn(),
     loading: false,
   }),
@@ -40,17 +42,25 @@ describe('Header Component', () => {
     expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
   });
 
-  it('renders CTA button for Login only (Book Now hidden)', () => {
+  it('shows Book Now button for Booker role', () => {
+    mockProfileRole = 'Booker';
     renderHeader();
-    // The buttons are within Link components, so we find the link by its role and name (from button text)
-    // Book Now should not be rendered while booking is disabled
-    expect(screen.queryByRole('link', { name: /book now/i })).not.toBeInTheDocument();
+    const bookNowLink = screen.getByRole('link', { name: /book now/i });
+    expect(bookNowLink).toBeInTheDocument();
 
     const logoutBtn = screen.getByRole('button', { name: /logout/i });
     expect(logoutBtn).toBeInTheDocument();
   });
 
+  it('shows Book Now button for Customer role', () => {
+    mockProfileRole = 'Customer';
+    renderHeader();
+    const bookNowLink = screen.getByRole('link', { name: /book now/i });
+    expect(bookNowLink).toBeInTheDocument();
+  });
+
   it('toggles the mobile menu on button click', () => {
+    mockProfileRole = 'Booker';
     renderHeader();
     const mobileMenuButton = screen.getByRole('button', { name: /menu/i }); // Initial state shows Menu icon
     expect(mobileMenuButton).toBeInTheDocument();
