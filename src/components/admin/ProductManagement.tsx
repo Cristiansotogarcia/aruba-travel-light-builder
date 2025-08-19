@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,8 @@ import { BulkProductUpload } from './BulkProductUpload';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ProductCard } from './ProductCard';
 import { CloudflareImageUpload } from './CloudflareImageUpload';
+import { AdminEquipmentFilters } from './AdminEquipmentFilters';
+import type { ActiveAdminFiltersState } from './AdminEquipmentFilters';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
 
 interface Product extends GlobalProduct {
@@ -44,6 +46,10 @@ export const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isImageUploadDialogOpen, setIsImageUploadDialogOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<ActiveAdminFiltersState>({
+    category: '',
+    subcategory: '',
+  });
 
 
   const [formState, setFormState] = useState<any>({
@@ -68,6 +74,19 @@ export const ProductManagement = () => {
       fetchData();
     }
   }, [hasPermission]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const { category, subcategory } = activeFilters;
+      if (category && product.category !== category) {
+        return false;
+      }
+      if (subcategory && product.sub_category !== subcategory) {
+        return false;
+      }
+      return true;
+    });
+  }, [products, activeFilters]);
 
   const fetchData = async () => {
     try {
@@ -258,8 +277,13 @@ export const ProductManagement = () => {
           </Dialog>
         </div>
       </div>
+      <AdminEquipmentFilters
+        activeFilters={activeFilters}
+        onFiltersChange={setActiveFilters}
+        onClearFilters={() => setActiveFilters({ category: '', subcategory: '' })}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(product => (
+        {filteredProducts.map(product => (
           <ProductCard key={product.id} product={product} onEdit={() => handleEditProduct(product)} onDelete={() => setProductToDelete(product)} onToggleAvailability={() => {}} />
         ))}
       </div>
