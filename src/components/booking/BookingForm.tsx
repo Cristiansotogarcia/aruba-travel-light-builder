@@ -1,11 +1,16 @@
 
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DateSelection } from './DateSelection';
 import EquipmentSelection from './EquipmentSelection';
 import { CustomerInformation } from './CustomerInformation';
 import { BookingSummary } from './BookingSummary';
 import useBooking from '@/hooks/useBooking';
+
+import { useSearchParams } from 'react-router-dom';
+
 import { useCart } from '@/hooks/useCart';
+
 
 export const BookingForm = () => {
   const {
@@ -24,7 +29,23 @@ export const BookingForm = () => {
   } = useBooking();
   const { items } = useCart();
 
+
+  const [searchParams] = useSearchParams();
+  const equipmentId = searchParams.get('equipmentId');
+
+  useEffect(() => {
+    if (equipmentId && products.length > 0) {
+      const match = products.find(p => p.id === equipmentId);
+      if (match) {
+        setSelectedEquipment(equipmentId);
+      }
+    }
+  }, [equipmentId, products, setSelectedEquipment]);
+
+  const showSummary = bookingData.items.length > 0 && bookingData.startDate && bookingData.endDate;
+
   const showSummary = items.length > 0 && bookingData.startDate && bookingData.endDate;
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
