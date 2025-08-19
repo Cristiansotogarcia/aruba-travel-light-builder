@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
 import { Header } from '@/components/layout/Header';
@@ -149,6 +149,22 @@ const EquipmentItem = () => {
               </ul>
             </div>
           )}
+          <Link
+            to="/book"
+            className="block mt-6"
+            onClick={(e) => {
+              if (equipment.availability === 'unavailable') {
+                e.preventDefault();
+              }
+            }}
+          >
+            <Button
+              className="w-full sm:w-auto"
+              disabled={equipment.availability === 'unavailable'}
+            >
+              Book Now
+            </Button>
+          </Link>
         </div>
       </main>
       <Footer />
