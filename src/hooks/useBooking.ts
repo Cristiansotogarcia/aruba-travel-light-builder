@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, BookingFormData, BookingItem, CustomerInfo, AvailabilityStatus, SupabaseBookingData } from '../types/types';
+import { Product, BookingFormData, CustomerInfo, AvailabilityStatus, SupabaseBookingData } from '../types/types';
 import { SupabaseBookingItemData } from '../types/booking'; // Import from the new file
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 
 // All interfaces like Product, BookingFormData, BookingItem, CustomerInfo, 
 // SupabaseBookingData, SupabaseBookingItemData are now imported from '../types/types'.
@@ -31,6 +32,11 @@ const useBooking = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { items: cartItems, clearCart } = useCart();
+
+  useEffect(() => {
+    setBookingData(prev => ({ ...prev, items: cartItems }));
+  }, [cartItems]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -97,123 +103,6 @@ const useBooking = () => {
 
     fetchProducts();
   }, [toast]);
-
-  const addEquipment = (equipment: Product, quantity: number, selectedDate: Date | undefined) => {
-    if (!selectedDate) {
-      toast({
-        title: 'Date Not Selected',
-        description: 'Please select a date before adding equipment.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!equipment || !equipment.id) {
-      toast({
-        title: 'Equipment Not Selected',
-        description: 'Please select valid equipment.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Stock check (assuming equipment.stock_quantity is available)
-    if (equipment.stock_quantity < quantity) {
-      toast({
-        title: 'Insufficient Stock',
-        description: `Only ${equipment.stock_quantity} units of ${equipment.name} available. You requested ${quantity}.`,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setBookingData(prev => {
-      const existingItemInCart = prev.items.find(item => item.equipment_id === equipment.id);
-      const price = equipment.price_per_day ?? 0;
-
-      if (existingItemInCart) {
-        // Check stock for additional quantity
-        if (equipment.stock_quantity < existingItemInCart.quantity + quantity) {
-          toast({
-            title: 'Insufficient Stock for Cart Update',
-            description: `Cannot add ${quantity} more unit(s) of ${equipment.name}. Available: ${equipment.stock_quantity}, In cart: ${existingItemInCart.quantity}.`,
-            variant: 'destructive',
-          });
-          return prev; // Return previous state if stock is insufficient
-        }
-        return {
-          ...prev,
-          items: prev.items.map(item =>
-            item.equipment_id === equipment.id
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + quantity, 
-                  subtotal: price * (item.quantity + quantity) 
-                }
-              : item
-          )
-        };
-      } else {
-        const newBookingItem: BookingItem = {
-          equipment_id: equipment.id,
-          quantity: quantity,
-          equipment_price: price, 
-          equipment_name: equipment.name,
-          subtotal: price * quantity
-        };
-        return {
-          ...prev,
-          items: [...prev.items, newBookingItem]
-        };
-      }
-    });
-
-    // Reset selection (optional, depends on UI flow)
-    // setSelectedEquipment(''); 
-    // setQuantity(1);
-  };
-
-  const removeEquipment = (equipmentId: string) => {
-    setBookingData(prev => ({
-      ...prev,
-      items: prev.items.filter(item => item.equipment_id !== equipmentId) // Changed from product_id
-    }));
-  };
-
-  const updateEquipmentQuantity = (equipmentId: string, newQuantity: number) => {
-    if (isNaN(newQuantity)) return;
-
-    setBookingData(prev => {
-      const equipment = products.find(eq => eq.id === equipmentId);
-      const existingItem = prev.items.find(item => item.equipment_id === equipmentId);
-
-      if (!equipment || !existingItem) return prev;
-
-      if (newQuantity <= 0) {
-        return {
-          ...prev,
-          items: prev.items.filter(item => item.equipment_id !== equipmentId)
-        };
-      }
-
-      if (newQuantity > equipment.stock_quantity) {
-        toast({
-          title: 'Insufficient Stock',
-          description: `Only ${equipment.stock_quantity} units of ${equipment.name} available.`,
-          variant: 'destructive',
-        });
-        return prev;
-      }
-
-      const updatedItems = prev.items.map(item =>
-        item.equipment_id === equipmentId
-          ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.equipment_price }
-          : item
-      );
-
-      return { ...prev, items: updatedItems };
-    });
-  };
 
   const updateCustomerInfo = (field: keyof CustomerInfo, value: string) => {
     setBookingData(prev => ({
@@ -352,6 +241,7 @@ const useBooking = () => {
       }
 
       setBookingData(initialBookingData);
+      clearCart();
       window.location.href = paymentData.paymentUrl;
       return;
     } catch (error) {
@@ -367,9 +257,6 @@ const useBooking = () => {
     selectedEquipment,
     quantity,
     isSubmitting,
-    addEquipment,
-    removeEquipment,
-    updateEquipmentQuantity,
     updateCustomerInfo,
     updateDates,
     calculateTotal,
