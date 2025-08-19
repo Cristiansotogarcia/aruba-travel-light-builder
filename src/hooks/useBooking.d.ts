@@ -7,6 +7,7 @@ declare const useBooking: () => {
     isSubmitting: boolean;
     addEquipment: (equipment: Product, quantity: number, selectedDate: Date | undefined) => void;
     removeEquipment: (equipmentId: string) => void;
+    updateEquipmentQuantity: (equipmentId: string, newQuantity: number) => void;
     updateCustomerInfo: (field: keyof CustomerInfo, value: string) => void;
     updateDates: (field: "startDate" | "endDate", value: string) => void;
     calculateTotal: () => number;
