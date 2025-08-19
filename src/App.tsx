@@ -27,6 +27,8 @@ const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
 const SeoDemo = lazy(() => import("./pages/SeoDemo"));
 const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentError = lazy(() => import("./pages/PaymentError"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -102,6 +104,8 @@ const App = () => {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/seo-demo" element={<SeoDemo />} />
                     <Route path="/seo-test" element={<SeoTest />} />
+                    <Route path="/payment-success" element={<PaymentSuccess />} />
+                    <Route path="/payment-error" element={<PaymentError />} />
 
                     {/* Catch all */}
                     <Route path="*" element={<NotFound />} />
