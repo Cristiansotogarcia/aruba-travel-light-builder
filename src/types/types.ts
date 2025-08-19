@@ -24,6 +24,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  comment: string;
 }
 
 // Represents the structure of the form data within the useBooking hook
@@ -41,6 +42,7 @@ export interface SupabaseBookingData {
   customer_email: string;
   customer_phone: string;
   customer_address?: string;
+  customer_comment?: string | null;
   start_date: string;
   end_date: string;
   total_price: number;

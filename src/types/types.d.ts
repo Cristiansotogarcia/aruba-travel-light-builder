@@ -18,6 +18,7 @@ export interface CustomerInfo {
     email: string;
     phone: string;
     address: string;
+    comment: string;
 }
 export interface BookingFormData {
     startDate: string;
@@ -31,6 +32,7 @@ export interface SupabaseBookingData {
     customer_email: string;
     customer_phone: string;
     customer_address?: string;
+    customer_comment?: string | null;
     start_date: string;
     end_date: string;
     total_price: number;

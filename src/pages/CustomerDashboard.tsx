@@ -19,6 +19,7 @@ interface CustomerBooking {
   total_amount: number;
   status: string; // Consider using a more specific type if available (e.g., from types.ts BookingStatus)
   booking_items: CustomerBookingItem[];
+  customer_comment: string | null;
 }
 
 const CustomerDashboard = () => {
@@ -37,6 +38,7 @@ const CustomerDashboard = () => {
           end_date,
           total_amount,
           status,
+          customer_comment,
           booking_items ( equipment_name, quantity )
         `)
         .eq('user_id', user.id) // Filter bookings for the current user
@@ -118,6 +120,12 @@ const CustomerDashboard = () => {
                       <p className="text-sm text-gray-600">No items in this booking.</p>
                     )}
                   </div>
+                  {booking.customer_comment && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Comments:</p>
+                      <p className="text-sm text-gray-600">{booking.customer_comment}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

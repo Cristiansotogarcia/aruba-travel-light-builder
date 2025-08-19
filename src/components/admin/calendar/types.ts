@@ -18,6 +18,8 @@ export interface Booking {
   customer_email: string;
   customer_phone: string;
   customer_address: string;
+
+  customer_comment: string | null;
   user_id: string;
   start_date: string;
   end_date: string;

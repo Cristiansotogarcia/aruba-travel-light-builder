@@ -21,6 +21,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  comment?: string;
 }
 
 // You can also re-export the canonical types if they are used directly
