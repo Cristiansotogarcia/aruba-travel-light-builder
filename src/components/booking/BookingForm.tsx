@@ -69,7 +69,7 @@ export const BookingForm = () => {
           size="lg"
           disabled={bookingData.items.length === 0 || !bookingData.startDate || !bookingData.endDate || isSubmitting}
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Booking Request'}
+          {isSubmitting ? 'Submitting...' : 'Proceed to Payment'}
         </Button>
       </form>
     </div>

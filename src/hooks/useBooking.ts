@@ -332,8 +332,28 @@ const useBooking = () => {
         return;
       }
 
-      toast({ title: 'Booking Successful', description: 'Your booking has been created.', variant: 'default' }); // Changed variant to 'default'
+      // Create payment session
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke<{ paymentUrl: string }>(
+        'create-payment-session',
+        {
+          body: {
+            bookingId: bookingInsertData.id,
+            amount: calculateTotal(),
+            successUrl: `${window.location.origin}/payment-success?booking_id=${bookingInsertData.id}`,
+            cancelUrl: `${window.location.origin}/payment-error?booking_id=${bookingInsertData.id}`,
+          },
+        },
+      );
+
+      if (paymentError || !paymentData?.paymentUrl) {
+        toast({ title: 'Payment Error', description: 'Could not initiate payment.', variant: 'destructive' });
+        setIsSubmitting(false);
+        return;
+      }
+
       setBookingData(initialBookingData);
+      window.location.href = paymentData.paymentUrl;
+      return;
     } catch (error) {
       toast({ title: 'Unexpected Error', description: 'An unexpected error occurred.', variant: 'destructive' });
     } finally {
