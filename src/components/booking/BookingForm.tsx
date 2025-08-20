@@ -6,7 +6,10 @@ import EquipmentSelection from './EquipmentSelection';
 import { CustomerInformation } from './CustomerInformation';
 import { BookingSummary } from './BookingSummary';
 import useBooking from '@/hooks/useBooking';
+
 import { useSearchParams } from 'react-router-dom';
+
+import { useCart } from '@/hooks/useCart';
 
 export const BookingForm = () => {
   const {
@@ -17,15 +20,14 @@ export const BookingForm = () => {
     isSubmitting,
     setSelectedEquipment,
     setQuantity,
-    addEquipment,
-    removeEquipment,
-    updateEquipmentQuantity,
     updateCustomerInfo,
     updateDates,
     calculateDays,
     calculateTotal,
     submitBooking
   } = useBooking();
+  const { items } = useCart();
+
 
   const [searchParams] = useSearchParams();
   const equipmentId = searchParams.get('equipmentId');
@@ -41,6 +43,7 @@ export const BookingForm = () => {
 
   const showSummary = bookingData.items.length > 0 && bookingData.startDate && bookingData.endDate;
 
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <form onSubmit={submitBooking} className="space-y-6">
@@ -55,12 +58,8 @@ export const BookingForm = () => {
           products={products} // Pass products to EquipmentSelection
           selectedEquipment={selectedEquipment}
           quantity={quantity}
-          bookingItems={bookingData.items}
           setSelectedEquipment={setSelectedEquipment}
           setQuantity={setQuantity}
-          addEquipment={addEquipment}
-          removeEquipment={removeEquipment}
-          updateEquipmentQuantity={updateEquipmentQuantity}
           currentSelectedDate={bookingData.startDate ? new Date(bookingData.startDate) : undefined}
         />
 
@@ -72,7 +71,7 @@ export const BookingForm = () => {
         {showSummary && (
           <BookingSummary
             days={calculateDays()}
-            itemsCount={bookingData.items.length}
+            itemsCount={items.length}
             total={calculateTotal()}
           />
         )}
@@ -81,7 +80,7 @@ export const BookingForm = () => {
           type="submit" 
           className="w-full" 
           size="lg"
-          disabled={bookingData.items.length === 0 || !bookingData.startDate || !bookingData.endDate || isSubmitting}
+          disabled={items.length === 0 || !bookingData.startDate || !bookingData.endDate || isSubmitting}
         >
           {isSubmitting ? 'Submitting...' : 'Proceed to Payment'}
         </Button>
