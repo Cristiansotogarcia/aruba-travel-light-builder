@@ -46,9 +46,9 @@ export const CustomersList = () => {
           *,
           booking_items (
             id,
-            product_id,
+            equipment_id,
             quantity,
-            price_per_day,
+            equipment_price,
             subtotal,
             equipment_name
           )
