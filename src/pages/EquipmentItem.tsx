@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
 import { Header } from '@/components/layout/Header';
@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
+import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
+import type { Product } from '@/types/types';
 
 const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -52,6 +55,31 @@ const EquipmentItem = () => {
     () => DOMPurify.sanitize(equipment?.description || ''),
     [equipment?.description]
   );
+
+  const { addItem } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBook = () => {
+    if (!equipment || equipment.availability === 'unavailable') return;
+    const destination = `/book?equipmentId=${equipment.id}`;
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(destination)}`);
+      return;
+    }
+
+    const product: Product = {
+      id: equipment.id,
+      name: equipment.name,
+      description: equipment.description,
+      price_per_day: equipment.price,
+      category: equipment.category,
+      images: equipment.images,
+      stock_quantity: 1,
+    };
+    addItem(product, 1, new Date());
+    navigate(destination);
+  };
 
   const handleShare = async () => {
     if (!equipment) return;
@@ -149,22 +177,13 @@ const EquipmentItem = () => {
               </ul>
             </div>
           )}
-          <Link
-            to="/book"
-            className="block mt-6"
-            onClick={(e) => {
-              if (equipment.availability === 'unavailable') {
-                e.preventDefault();
-              }
-            }}
+          <Button
+            className="w-full sm:w-auto mt-6"
+            disabled={equipment.availability === 'unavailable'}
+            onClick={handleBook}
           >
-            <Button
-              className="w-full sm:w-auto"
-              disabled={equipment.availability === 'unavailable'}
-            >
-              Book Now
-            </Button>
-          </Link>
+            Book Now
+          </Button>
         </div>
       </main>
       <Footer />
