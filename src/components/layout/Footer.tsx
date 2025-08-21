@@ -1,7 +1,9 @@
 
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export const Footer = () => {
+  const { user } = useAuth();
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -25,9 +27,13 @@ export const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-gray-400">
               <li><Link to="/equipment" className="hover:text-white transition-colors">Equipment</Link></li>
-              {/* Temporarily hide booking link until feature is available */}
-              <li hidden className="hidden">
-                <Link to="/book" className="hover:text-white transition-colors">Book Now</Link>
+              <li>
+                <Link
+                  to={user ? '/book' : '/login?redirect=/book'}
+                  className="hover:text-white transition-colors"
+                >
+                  Book Now
+                </Link>
               </li>
               <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>

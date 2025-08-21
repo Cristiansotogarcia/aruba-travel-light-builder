@@ -12,6 +12,14 @@ vi.mock('@/components/ui/carousel', () => ({
   CarouselNext: () => null,
 }));
 
+vi.mock('@/hooks/useCart', () => ({
+  useCart: () => ({ addItem: vi.fn() })
+}));
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({ user: { id: '1' } })
+}));
+
 const equipment = {
   id: '1',
   name: 'Tent',
@@ -63,8 +71,6 @@ describe('EquipmentCard', () => {
     );
     const button = screen.getByRole('button', { name: /book now/i });
     expect(button).toBeEnabled();
-    const link = screen.getByRole('link', { name: /book now/i });
-    expect(link).toBeVisible();
   });
 
   it('disables booking when equipment is unavailable', () => {

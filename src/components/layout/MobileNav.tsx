@@ -129,6 +129,7 @@ const MobileNav = () => {
               </div>
             </CollapsibleContent>
           </Collapsible>
+          <NavLink to={user ? '/book' : '/login?redirect=/book'}>Book Now</NavLink>
           <NavLink to="/about">About</NavLink>
           <NavLink to="/contact">Contact</NavLink>
           {(loading || (user && profile)) && (
@@ -137,12 +138,6 @@ const MobileNav = () => {
                 <p className="px-3 py-2 text-gray-700">Loading...</p>
               ) : (
                 <div className="space-y-2">
-                  {profile.role === 'Booker' && (
-                    // Hide Book Now option for now
-                    <Button asChild className="w-full hidden" hidden onClick={() => setIsOpen(false)}>
-                      <Link to="/book">Book Now</Link>
-                    </Button>
-                  )}
                   {dashboardLink && (
                     <Button asChild variant="outline" className="w-full" onClick={() => setIsOpen(false)}>
                       <Link to={dashboardLink.path}>{dashboardLink.label}</Link>
