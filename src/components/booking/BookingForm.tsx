@@ -76,13 +76,13 @@ export const BookingForm = () => {
           />
         )}
 
-        <Button 
-          type="submit" 
-          className="w-full" 
+        <Button
+          type="submit"
+          className="w-full"
           size="lg"
           disabled={items.length === 0 || !bookingData.startDate || !bookingData.endDate || isSubmitting}
         >
-          {isSubmitting ? 'Submitting...' : 'Proceed to Payment'}
+          {isSubmitting ? 'Submitting...' : 'Submit Booking'}
         </Button>
       </form>
     </div>

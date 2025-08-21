@@ -221,28 +221,16 @@ const useBooking = () => {
         return;
       }
 
-      // Create payment session
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke<{ paymentUrl: string }>(
-        'create-payment-session',
-        {
-          body: {
-            bookingId: bookingInsertData.id,
-            amount: calculateTotal(),
-            successUrl: `${window.location.origin}/payment-success?booking_id=${bookingInsertData.id}`,
-            cancelUrl: `${window.location.origin}/payment-error?booking_id=${bookingInsertData.id}`,
-          },
-        },
-      );
-
-      if (paymentError || !paymentData?.paymentUrl) {
-        toast({ title: 'Payment Error', description: 'Could not initiate payment.', variant: 'destructive' });
-        setIsSubmitting(false);
-        return;
-      }
-
+      // Booking and items inserted successfully; clear cart and reset form
       setBookingData(initialBookingData);
+      setSelectedEquipment('');
+      setQuantity(1);
       clearCart();
-      window.location.href = paymentData.paymentUrl;
+
+      toast({
+        title: 'Booking Submitted',
+        description: 'Your booking has been received. We will contact you to arrange payment.',
+      });
       return;
     } catch (error) {
       toast({ title: 'Unexpected Error', description: 'An unexpected error occurred.', variant: 'destructive' });
