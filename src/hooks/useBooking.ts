@@ -131,7 +131,7 @@ const useBooking = () => {
     const days = calculateDays();
     
     return bookingData.items.reduce((total, item) => {
-      const equipment = products.find(eq => eq.id === item.equipment_id); // Changed from product_id
+      const equipment = products.find(eq => eq.id === item.equipment_id);
       return total + (equipment ? equipment.price_per_day * item.quantity * days : 0);
     }, 0);
   };

@@ -42,12 +42,11 @@ export interface SupabaseBookingData {
 }
 export interface SupabaseBookingItemData {
     booking_id: string;
-    product_id: string;
-    quantity: number;
-    price_at_booking: number;
     equipment_id: string;
     equipment_name: string;
     equipment_price: number;
+    quantity: number;
+    price_at_booking: number;
     subtotal: number;
 }
 export type { Booking, BookingItem, BookingStatus };
