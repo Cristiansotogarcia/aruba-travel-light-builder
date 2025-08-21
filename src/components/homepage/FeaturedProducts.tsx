@@ -70,8 +70,8 @@ export const FeaturedProducts = () => {
                                 </div>
                                 <Link
                                     to={
-                                        product.category
-                                            ? `/equipment?category=${encodeURIComponent(product.category)}`
+                                        product.equipment_category?.name
+                                            ? `/equipment?category=${encodeURIComponent(product.equipment_category.name)}`
                                             : '/equipment'
                                     }
                                     className="block"
