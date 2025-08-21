@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
+import type { Product } from '@/types/types';
 
 interface Equipment {
   id: string;
@@ -77,6 +80,31 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
     } catch (err) {
       console.error('Share failed', err);
     }
+  };
+
+  const { addItem } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBook = () => {
+    if (equipment.availability === 'unavailable') return;
+    const destination = `/book?equipmentId=${equipment.id}`;
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(destination)}`);
+      return;
+    }
+
+    const product: Product = {
+      id: equipment.id,
+      name: equipment.name,
+      description: equipment.description,
+      price_per_day: equipment.price,
+      category: equipment.category,
+      images: equipment.images,
+      stock_quantity: 1,
+    };
+    addItem(product, 1, new Date());
+    navigate(destination);
   };
 
   return (
@@ -159,22 +187,13 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         </CardContent>
 
         <CardFooter>
-          <Link
-            to="/book"
+          <Button
             className="w-full"
-            onClick={(e) => {
-              if (equipment.availability === 'unavailable') {
-                e.preventDefault();
-              }
-            }}
+            disabled={equipment.availability === 'unavailable'}
+            onClick={handleBook}
           >
-            <Button
-              className="w-full"
-              disabled={equipment.availability === 'unavailable'}
-            >
-              Book Now
-            </Button>
-          </Link>
+            Book Now
+          </Button>
         </CardFooter>
       </Card>
 
