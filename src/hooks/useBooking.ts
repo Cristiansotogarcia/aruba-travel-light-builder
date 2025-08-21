@@ -48,14 +48,15 @@ const useBooking = () => {
         price_per_day: number;
         category: string;
         images: string[] | null;
-        availability: boolean;
+        stock_quantity: number | null;
+        availability_status?: AvailabilityStatus | null;
         created_at?: string;
         updated_at?: string;
       };
 
       const { data, error } = await supabase
         .from('equipment')
-        .select('id, name, description, price_per_day, category, images, availability, created_at, updated_at');
+        .select('id, name, description, price_per_day, category, images, stock_quantity, availability_status, created_at, updated_at');
 
       if (error) {
         console.error('Error fetching products:', error);
@@ -68,18 +69,19 @@ const useBooking = () => {
       } else {
         // Convert the raw data to Product type with proper handling of missing fields
         const productsWithStatus = (data as RawProductData[]).map(item => {
-          // Convert availability boolean to stock_quantity (simulate stock based on availability)
-          const stockQuantity = item.availability ? 10 : 0; // Default to 10 if available, 0 if not
-          
-          let availability_status: AvailabilityStatus; // Renamed status to availability_status for clarity and consistency with type
-          if (stockQuantity <= 0) {
+          const stockQuantity = item.stock_quantity ?? 0;
+
+          let availability_status: AvailabilityStatus;
+          if (item.availability_status) {
+            availability_status = item.availability_status;
+          } else if (stockQuantity <= 0) {
             availability_status = 'Out of Stock';
           } else if (stockQuantity <= 5) {
             availability_status = 'Low Stock';
           } else {
             availability_status = 'Available';
           }
-          
+
           // Create a properly typed Product object
           const product: Product = {
             id: item.id,
@@ -89,14 +91,14 @@ const useBooking = () => {
             category: item.category,
             images: item.images || [],
             stock_quantity: stockQuantity,
-            availability_status: availability_status, // Added availability_status to Product object
+            availability_status,
             created_at: item.created_at,
-            updated_at: item.updated_at
+            updated_at: item.updated_at,
           };
-          
+
           return product;
         });
-        
+
         setProducts(productsWithStatus);
       }
     };
@@ -219,6 +221,39 @@ const useBooking = () => {
         // Consider deleting the booking if items fail to insert, or have a status for partial bookings
         // await supabase.from('bookings').delete().match({ id: bookingInsertData.id });
         return;
+      }
+
+      // Decrement stock quantities for each booked equipment
+      for (const item of bookingData.items) {
+        const { data: currentStock, error: stockFetchError } = await supabase
+          .from('equipment')
+          .select('stock_quantity')
+          .eq('id', item.equipment_id)
+          .single();
+
+        if (stockFetchError || !currentStock) {
+          toast({
+            title: 'Stock Update Error',
+            description: `Failed to fetch stock for ${item.equipment_name}.`,
+            variant: 'destructive',
+          });
+          continue;
+        }
+
+        const newQuantity = Math.max(0, (currentStock.stock_quantity ?? 0) - item.quantity);
+
+        const { error: stockUpdateError } = await supabase
+          .from('equipment')
+          .update({ stock_quantity: newQuantity })
+          .eq('id', item.equipment_id);
+
+        if (stockUpdateError) {
+          toast({
+            title: 'Stock Update Error',
+            description: `Failed to update stock for ${item.equipment_name}.`,
+            variant: 'destructive',
+          });
+        }
       }
 
       // Create payment session
