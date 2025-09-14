@@ -93,7 +93,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               />
             )}
             <div className="absolute top-2 right-2">
-              {equipment.availability !== 'unavailable' && (
+              {equipment.availability !== 'unavailable' && equipment.availability_status !== 'Temporarily Not Available' && (
                 <div
                   className={clsx(
                     'text-xs font-medium px-2 py-1 rounded-full',
