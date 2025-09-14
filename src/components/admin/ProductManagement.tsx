@@ -20,6 +20,7 @@ import type { ActiveAdminFiltersState } from './AdminEquipmentFilters';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
 
 interface Product extends GlobalProduct {
+  sub_category?: string | null;
   sub_category_id?: string | null;
   sort_order?: number | null;
 }
@@ -214,6 +215,18 @@ export const ProductManagement = () => {
         <div>
           <Label>Sort Order</Label>
           <Input type="number" placeholder="Sort Order" value={formState.sort_order} onChange={e => setFormState({ ...formState, sort_order: Number(e.target.value) })} />
+        </div>
+        <div>
+          <Label>Availability Status</Label>
+          <Select value={formState.availability_status} onValueChange={value => setFormState({ ...formState, availability_status: value })}>
+            <SelectTrigger><SelectValue placeholder="Select availability status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Available">Available</SelectItem>
+              <SelectItem value="Low Stock">Low Stock</SelectItem>
+              <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+              <SelectItem value="Temporarily Not Available">Temporarily Not Available</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label>Images</Label>
