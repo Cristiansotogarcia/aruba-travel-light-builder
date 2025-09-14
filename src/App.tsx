@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
@@ -54,8 +55,9 @@ const App = () => {
             <Toaster />
             <Sonner />
             <ErrorBoundary>
-              <BrowserRouter>
-                <Suspense fallback={<PageLoader />}>
+              <HelmetProvider>
+                <BrowserRouter>
+                  <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/about-us" element={<About />} />
@@ -106,8 +108,9 @@ const App = () => {
                     {/* Catch all */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </Suspense>
-              </BrowserRouter>
+                  </Suspense>
+                </BrowserRouter>
+              </HelmetProvider>
             </ErrorBoundary>
           </SiteAssetsProvider>
         </AuthProvider>

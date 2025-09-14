@@ -10,9 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
+import { SEO } from '@/components/common/SEO';
+import { useSEO } from '@/hooks/useSEO';
 
 const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { generateProductSEO } = useSEO();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['equipment-products'],
@@ -37,8 +40,8 @@ const EquipmentItem = () => {
           category: p.equipment_category?.name || 'Uncategorized',
           price: p.price_per_day,
 
-          image: p.image_url || (p.images && p.images[0]) || '',
-          images: p.images || (p.image_url ? [p.image_url] : []),
+          image: (p.images && p.images[0]) || '',
+          images: p.images || [],
 
           description: p.description || '',
           availability,
@@ -52,6 +55,17 @@ const EquipmentItem = () => {
     () => DOMPurify.sanitize(equipment?.description || ''),
     [equipment?.description]
   );
+
+  // Generate SEO data for the current product
+  const seoData = equipment ? generateProductSEO({
+    id: equipment.id,
+    name: equipment.name,
+    description: equipment.description,
+    images: equipment.images,
+    price: equipment.price,
+    category: equipment.category,
+    slug: equipment.slug,
+  }) : null;
 
   const handleShare = async () => {
     if (!equipment) return;
@@ -90,6 +104,17 @@ const EquipmentItem = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Dynamic SEO Meta Tags */}
+      {seoData && (
+        <SEO
+          title={seoData.title}
+          description={seoData.description}
+          image={seoData.image}
+          url={seoData.url}
+          type={seoData.type}
+          productData={seoData.productData}
+        />
+      )}
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-3xl mx-auto">
