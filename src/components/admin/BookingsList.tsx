@@ -36,6 +36,44 @@ export const BookingsList = () => {
     filterBookings();
   }, [bookings, searchTerm, statusFilter]);
 
+  // Real-time subscription for bookings
+  useEffect(() => {
+    const bookingsChannel = supabase
+      .channel('public:bookings')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings'
+        },
+        () => {
+          fetchBookings();
+        }
+      )
+      .subscribe();
+
+    const bookingItemsChannel = supabase
+      .channel('public:booking_items')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booking_items'
+        },
+        () => {
+          fetchBookings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(bookingsChannel);
+      supabase.removeChannel(bookingItemsChannel);
+    };
+  }, []);
+
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase

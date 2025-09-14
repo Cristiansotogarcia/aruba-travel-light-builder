@@ -87,13 +87,26 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
   const navigate = useNavigate();
 
   const handleBook = () => {
-    if (equipment.availability === 'unavailable') return;
+    console.log('EquipmentCard handleBook clicked:', {
+      equipmentId: equipment.id,
+      equipmentName: equipment.name,
+      availability: equipment.availability,
+      user: !!user
+    });
+    
+    if (equipment.availability === 'unavailable') {
+      console.log('Book button disabled - equipment unavailable');
+      return;
+    }
+    
     const destination = `/book?equipmentId=${equipment.id}`;
     if (!user) {
+      console.log('Redirecting to login - user not authenticated');
       navigate(`/login?redirect=${encodeURIComponent(destination)}`);
       return;
     }
 
+    console.log('Adding to cart and navigating to booking');
     const product: Product = {
       id: equipment.id,
       name: equipment.name,
@@ -164,6 +177,12 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
 
         <CardContent>
           <div className="space-y-2">
+            {/* Debug Info */}
+            <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-600">
+              <div>Availability: {equipment.availability}</div>
+              <div>Button Enabled: {equipment.availability !== 'unavailable' ? 'Yes' : 'No'}</div>
+            </div>
+            
             <div className="flex gap-2 items-center">
               <span className="bg-[#00ADEF] text-white px-3 py-1 rounded-md text-sm font-semibold">
                 ${equipment.price.toFixed(2)}/day

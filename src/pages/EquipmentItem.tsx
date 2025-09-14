@@ -167,6 +167,16 @@ const EquipmentItem = () => {
             <span className="font-semibold">Price:</span>{' '}
             ${equipment.price.toFixed(2)}/day | ${Number(equipment.price * 5).toFixed(2)}/week
           </div>
+          
+          {/* Debug Info - Stock and Availability */}
+          <div className="bg-gray-100 p-3 rounded mb-4 text-sm">
+            <div className="font-semibold text-gray-700 mb-1">Debug Info:</div>
+            <div>Stock Quantity: {products.find(p => p.id === equipment.id)?.stock_quantity ?? 'N/A'}</div>
+            <div>Reserved Quantity: {products.find(p => p.id === equipment.id)?.reserved_quantity ?? 'N/A'}</div>
+            <div>Availability Status: {products.find(p => p.id === equipment.id)?.availability_status ?? 'N/A'}</div>
+            <div>Availability Boolean: {products.find(p => p.id === equipment.id)?.availability ? 'true' : 'false'}</div>
+            <div>Calculated Availability: {equipment.availability}</div>
+          </div>
           {equipment.features.length > 0 && (
             <div className="text-sm">
               <p className="font-medium">Features:</p>
