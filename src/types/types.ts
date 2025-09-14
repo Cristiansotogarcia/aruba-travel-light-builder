@@ -2,7 +2,7 @@
 import type { BookingItem as CalendarBookingItemType, Booking, BookingItem, BookingStatus } from '@/components/admin/calendar/types';
 
 // Defines the structure for a product available for rental
-export type AvailabilityStatus = 'Available' | 'Low Stock' | 'Out of Stock';
+export type AvailabilityStatus = 'Available' | 'Low Stock' | 'Out of Stock' | 'Temporarily Not Available';
 
 export interface Product {
   id: string; // UUID
