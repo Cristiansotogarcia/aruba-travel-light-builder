@@ -25,6 +25,34 @@ export const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Subscribe to real-time changes
+    const bookingsSubscription = supabase
+      .channel('admin-dashboard-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    const paymentSubscription = supabase
+      .channel('admin-dashboard-payments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_records' }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    const auditSubscription = supabase
+      .channel('admin-dashboard-audit')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_audit_log' }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(bookingsSubscription);
+      supabase.removeChannel(paymentSubscription);
+      supabase.removeChannel(auditSubscription);
+    };
   }, []);
 
   const fetchDashboardData = async () => {

@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail } from 'lucide-react';
+import { Mail, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CustomerInfo {
   name: string;
@@ -18,10 +20,106 @@ interface CustomerInformationProps {
   onCustomerInfoChange: (field: keyof CustomerInfo, value: string) => void;
 }
 
+interface ValidationError {
+  field: keyof CustomerInfo;
+  message: string;
+}
+
+interface FieldTouched {
+  name: boolean;
+  email: boolean;
+  phone: boolean;
+  address: boolean;
+  comment: boolean;
+}
+
 export const CustomerInformation = ({ 
   customerInfo, 
   onCustomerInfoChange 
 }: CustomerInformationProps) => {
+  const [errors, setErrors] = useState<ValidationError[]>([]);
+  const [touched, setTouched] = useState<FieldTouched>({
+    name: false,
+    email: false,
+    phone: false,
+    address: false,
+    comment: false
+  });
+
+  // Validation patterns
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phonePattern = /^[\+]?[1-9][\d\s\-\(\)]{7,15}$/;
+  const namePattern = /^[a-zA-Z\s]{2,50}$/;
+
+  const validateField = (field: keyof CustomerInfo, value: string): string | null => {
+    switch (field) {
+      case 'name':
+        if (!value.trim()) return 'Full name is required';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters';
+        if (value.trim().length > 50) return 'Name must be less than 50 characters';
+        if (!namePattern.test(value.trim())) return 'Name can only contain letters and spaces';
+        return null;
+        
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        if (!emailPattern.test(value.trim())) return 'Please enter a valid email address';
+        return null;
+        
+      case 'phone':
+        if (!value.trim()) return 'Phone number is required';
+        if (!phonePattern.test(value.trim())) return 'Please enter a valid phone number';
+        return null;
+        
+      case 'address':
+        if (!value.trim()) return 'Hotel/Address is required';
+        if (value.trim().length < 5) return 'Address must be at least 5 characters';
+        if (value.trim().length > 200) return 'Address must be less than 200 characters';
+        return null;
+        
+      case 'comment':
+        if (value.length > 500) return 'Comments must be less than 500 characters';
+        return null;
+        
+      default:
+        return null;
+    }
+  };
+
+  const validateAllFields = () => {
+    const newErrors: ValidationError[] = [];
+    
+    Object.keys(customerInfo).forEach((key) => {
+      const field = key as keyof CustomerInfo;
+      if (touched[field]) {
+        const error = validateField(field, customerInfo[field]);
+        if (error) {
+          newErrors.push({ field, message: error });
+        }
+      }
+    });
+    
+    setErrors(newErrors);
+  };
+
+  useEffect(() => {
+    validateAllFields();
+  }, [customerInfo, touched]);
+
+  const handleFieldChange = (field: keyof CustomerInfo, value: string) => {
+    onCustomerInfoChange(field, value);
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const handleFieldBlur = (field: keyof CustomerInfo) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const getFieldError = (field: keyof CustomerInfo) => {
+    return errors.find(error => error.field === field)?.message;
+  };
+
+  const hasErrors = errors.length > 0;
+
   return (
     <Card>
       <CardHeader>
@@ -30,52 +128,116 @@ export const CustomerInformation = ({
           Contact Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            value={customerInfo.name}
-            onChange={(e) => onCustomerInfoChange('name', e.target.value)}
-            required
-          />
+      <CardContent className="space-y-4">
+        {hasErrors && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Please correct the following errors:
+              <ul className="list-disc list-inside mt-2">
+                {errors.map((error, index) => (
+                  <li key={index}>{error.message}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="name" className={getFieldError('name') ? 'text-destructive' : ''}>
+              Full Name *
+            </Label>
+            <Input
+              id="name"
+              value={customerInfo.name}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              onBlur={() => handleFieldBlur('name')}
+              placeholder="Enter your full name"
+              required
+              className={getFieldError('name') ? 'border-destructive focus:border-destructive' : ''}
+            />
+            {getFieldError('name') && (
+              <p className="text-sm text-destructive mt-1">{getFieldError('name')}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="email" className={getFieldError('email') ? 'text-destructive' : ''}>
+              Email Address *
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={customerInfo.email}
+              onChange={(e) => handleFieldChange('email', e.target.value)}
+              onBlur={() => handleFieldBlur('email')}
+              placeholder="your.email@example.com"
+              required
+              className={getFieldError('email') ? 'border-destructive focus:border-destructive' : ''}
+            />
+            {getFieldError('email') && (
+              <p className="text-sm text-destructive mt-1">{getFieldError('email')}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="phone" className={getFieldError('phone') ? 'text-destructive' : ''}>
+              Phone Number *
+            </Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={customerInfo.phone}
+              onChange={(e) => handleFieldChange('phone', e.target.value)}
+              onBlur={() => handleFieldBlur('phone')}
+              placeholder="+1 (555) 123-4567"
+              required
+              className={getFieldError('phone') ? 'border-destructive focus:border-destructive' : ''}
+            />
+            {getFieldError('phone') && (
+              <p className="text-sm text-destructive mt-1">{getFieldError('phone')}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="address" className={getFieldError('address') ? 'text-destructive' : ''}>
+              Hotel/Address in Aruba *
+            </Label>
+            <Input
+              id="address"
+              value={customerInfo.address}
+              onChange={(e) => handleFieldChange('address', e.target.value)}
+              onBlur={() => handleFieldBlur('address')}
+              placeholder="Hotel name or address"
+              required
+              className={getFieldError('address') ? 'border-destructive focus:border-destructive' : ''}
+            />
+            {getFieldError('address') && (
+              <p className="text-sm text-destructive mt-1">{getFieldError('address')}</p>
+            )}
+          </div>
         </div>
+        
         <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={customerInfo.email}
-            onChange={(e) => onCustomerInfoChange('email', e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={customerInfo.phone}
-            onChange={(e) => onCustomerInfoChange('phone', e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="address">Hotel/Address in Aruba</Label>
-          <Input
-            id="address"
-            value={customerInfo.address}
-            onChange={(e) => onCustomerInfoChange('address', e.target.value)}
-            required
-          />
-        </div>
-        <div className="md:col-span-2">
-          <Label htmlFor="comment">Comments</Label>
+          <Label htmlFor="comment" className={getFieldError('comment') ? 'text-destructive' : ''}>
+            Special Requests or Comments
+          </Label>
           <Textarea
             id="comment"
             value={customerInfo.comment}
-            onChange={(e) => onCustomerInfoChange('comment', e.target.value)}
+            onChange={(e) => handleFieldChange('comment', e.target.value)}
+            onBlur={() => handleFieldBlur('comment')}
+            placeholder="Any special requests or additional information..."
+            rows={3}
+            className={getFieldError('comment') ? 'border-destructive focus:border-destructive' : ''}
           />
+          {getFieldError('comment') && (
+            <p className="text-sm text-destructive mt-1">{getFieldError('comment')}</p>
+          )}
+          <p className="text-sm text-muted-foreground mt-1">
+            {customerInfo.comment.length}/500 characters
+          </p>
         </div>
       </CardContent>
     </Card>

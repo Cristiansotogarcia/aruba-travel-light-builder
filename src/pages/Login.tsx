@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,8 @@ const Login = () => {
   const { assets } = useSiteAssets();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
 
   // useEffect to handle navigation after profile is loaded
   useEffect(() => {
@@ -33,13 +35,18 @@ const Login = () => {
 
     // Only attempt navigation if loading is complete and we have a user and profile
     if (!auth.loading && auth.user && auth.profile) {
-      console.log('[Login] Conditions met, navigating...');
+      console.log('[Login] Conditions met, navigating...', { redirectUrl });
       const userRole = auth.profile.role;
       toast({
         title: "Welcome back!",
         description: `Successfully signed in as ${userRole}.`,
       });
-      if (userRole === 'Admin' || userRole === 'SuperUser') {
+      
+      // If there's a redirect URL, use it; otherwise use role-based navigation
+      if (redirectUrl) {
+        console.log('[Login] Redirecting to:', redirectUrl);
+        navigate(decodeURIComponent(redirectUrl));
+      } else if (userRole === 'Admin' || userRole === 'SuperUser') {
         navigate('/admin');
       } else if (userRole === 'Driver') {
         navigate('/driver-dashboard');
