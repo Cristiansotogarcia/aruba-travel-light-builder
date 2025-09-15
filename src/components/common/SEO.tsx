@@ -88,17 +88,25 @@ export const SEO: React.FC<SEOProps> = ({
       finalDescription = productData.description
         ? `${productData.description.substring(0, 155)}...`
         : `Rent ${productData.name} in Aruba. Premium beach and baby equipment rentals with delivery service.`;
-      finalImage = productData.images && productData.images[0] ? productData.images[0] : DEFAULT_IMAGE;
       finalUrl = `${SITE_URL}/equipment/${productData.name.toLowerCase().replace(/\s+/g, '-')}`;
       type = 'product';
     }
 
-    // Override with database SEO data if available (for static pages)
+    // Set image with priority: product images > database SEO > default
+    if (productData && productData.images && productData.images[0]) {
+      finalImage = productData.images[0]; // Prioritize Cloudflare URLs from equipment
+    } else if (seoData?.og_image_url) {
+      finalImage = seoData.og_image_url; // Fallback to database SEO data
+    } else if (!finalImage || finalImage === DEFAULT_IMAGE) {
+      finalImage = image || DEFAULT_IMAGE; // Use provided image or default
+    }
+
+    // Override other fields with database SEO data if available (but keep product image priority)
     if (seoData) {
       if (seoData.meta_title) finalTitle = seoData.meta_title;
       if (seoData.meta_description) finalDescription = seoData.meta_description;
-      if (seoData.og_image_url) finalImage = seoData.og_image_url;
       if (seoData.canonical_url) finalUrl = seoData.canonical_url;
+      // Note: og_image_url is handled above with priority logic
     }
 
     return {
@@ -129,7 +137,7 @@ export const SEO: React.FC<SEOProps> = ({
       {/* Open Graph meta tags */}
       <meta property="og:title" content={seoData?.og_title || meta.title} />
       <meta property="og:description" content={seoData?.og_description || meta.description} />
-      <meta property="og:image" content={seoData?.og_image_url || meta.image} />
+      <meta property="og:image" content={meta.image} />
       <meta property="og:url" content={meta.url} />
       <meta property="og:type" content={type} />
       <meta property="og:site_name" content="Travel Light Aruba" />
@@ -139,7 +147,7 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:site" content="@travellightaruba" />
       <meta name="twitter:title" content={seoData?.twitter_title || meta.title} />
       <meta name="twitter:description" content={seoData?.og_description || meta.description} />
-      <meta name="twitter:image" content={seoData?.twitter_image_url || meta.image} />
+      <meta name="twitter:image" content={meta.image} />
 
       {/* Product-specific meta tags */}
       {productData && (
