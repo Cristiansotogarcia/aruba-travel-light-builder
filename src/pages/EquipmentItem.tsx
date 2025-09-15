@@ -105,16 +105,14 @@ const EquipmentItem = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Dynamic SEO Meta Tags */}
-      {seoData && (
-        <SEO
-          title={seoData.title}
-          description={seoData.description}
-          image={seoData.image}
-          url={seoData.url}
-          type={seoData.type}
-          productData={seoData.productData}
-        />
-      )}
+      <SEO
+        title={seoData?.title}
+        description={seoData?.description}
+        image={seoData?.image || undefined}
+        url={seoData?.url}
+        type={seoData?.type}
+        productData={seoData?.productData}
+      />
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-3xl mx-auto">

@@ -92,13 +92,15 @@ export const SEO: React.FC<SEOProps> = ({
       type = 'product';
     }
 
-    // Set image with priority: product images > database SEO > default
+    // Set image with priority: product images > provided image > database SEO > default
     if (productData && productData.images && productData.images[0]) {
-      finalImage = productData.images[0]; // Prioritize Cloudflare URLs from equipment
+      finalImage = productData.images[0]; // ✅ Prioritize Cloudflare URLs from equipment
+    } else if (image && image !== null) {
+      finalImage = image; // Use provided image (if not null)
     } else if (seoData?.og_image_url) {
       finalImage = seoData.og_image_url; // Fallback to database SEO data
-    } else if (!finalImage || finalImage === DEFAULT_IMAGE) {
-      finalImage = image || DEFAULT_IMAGE; // Use provided image or default
+    } else {
+      finalImage = DEFAULT_IMAGE; // Final fallback
     }
 
     // Override other fields with database SEO data if available (but keep product image priority)
