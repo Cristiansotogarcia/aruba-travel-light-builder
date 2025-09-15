@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/equipment/:slug*",
-      "destination": "/api/equipment-seo"
-    },
-    {
       "source": "/:path*",
       "destination": "/index.html"
     }
