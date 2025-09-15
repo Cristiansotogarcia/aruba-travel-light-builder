@@ -32,12 +32,14 @@ export const useSEO = (config: SEOConfig = {}) => {
   }, [config]);
 
   const generateProductSEO = (product: ProductSEOData) => {
+    const imageUrl = product.images && product.images[0] ? product.images[0] : null;
+
     return {
       title: `${product.name} - TLA Equipment Rentals`,
       description: product.description
         ? `${product.description.substring(0, 155)}...`
         : `Rent ${product.name} in Aruba. Premium beach and baby equipment rentals with delivery service.`,
-      image: product.images && product.images[0] ? product.images[0] : undefined,
+      image: imageUrl,
       url: `${typeof window !== 'undefined' ? window.location.origin : 'https://travellightaruba.com'}/equipment/${product.slug || product.name.toLowerCase().replace(/\s+/g, '-')}`,
       type: 'product' as const,
       productData: {
