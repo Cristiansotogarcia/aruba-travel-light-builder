@@ -24,7 +24,7 @@ Deno.serve(async (req: Request) => {
 
     if (!accountId || !apiToken) {
       return new Response(
-        JSON.stringify({ error: 'Missing Cloudflare credentials' }),
+        JSON.stringify({ error: 'Missing Cloudflare credentials', accountIdPresent: !!accountId, apiTokenPresent: !!apiToken }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
     // Prepare form data for Cloudflare
     const cloudflareFormData = new FormData();
     cloudflareFormData.append('file', file);
-    
+
     // Add metadata if provided
     if (metadata) {
       try {
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
 
     // Upload to Cloudflare Images
     const cloudflareUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`;
-    
+
     const response = await fetch(cloudflareUrl, {
       method: 'POST',
       headers: {
@@ -102,7 +102,13 @@ Deno.serve(async (req: Request) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Cloudflare upload error:', errorText);
+      console.error('Cloudflare upload error:', {
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get('content-type'),
+        contentLength: response.headers.get('content-length'),
+        body: errorText
+      });
       return new Response(
         JSON.stringify({ error: 'Failed to upload image to Cloudflare' }),
         {
@@ -112,8 +118,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Parse the successful response
     const data = await response.json();
-    
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

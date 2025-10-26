@@ -25,6 +25,9 @@ const EquipmentItem = () => {
   });
 
   const equipment = useMemo(() => {
+    console.log('EquipmentItem - Looking for slug:', slug);
+    console.log('EquipmentItem - Available products:', products.map(p => ({ name: p.name, slug: slugify(p.name) })));
+
     return products
       .map((p) => {
         const stock = p.stock_quantity ?? 0;
@@ -48,7 +51,10 @@ const EquipmentItem = () => {
           features: [],
         };
       })
-      .find((item) => item.slug === slug);
+      .find((item) => {
+        console.log('EquipmentItem - Checking item:', item.name, 'slug:', item.slug, 'matches:', item.slug === slug);
+        return item.slug === slug;
+      });
   }, [products, slug]);
 
   const sanitizedDescription = useMemo(
@@ -65,7 +71,14 @@ const EquipmentItem = () => {
     price: equipment.price,
     category: equipment.category,
     slug: equipment.slug,
-  }) : null;
+  }) : {
+    title: 'Equipment Not Found - TLA Equipment Rentals',
+    description: 'Browse our premium beach and baby equipment rentals in Aruba.',
+    image: undefined,
+    url: `${typeof window !== 'undefined' ? window.location.href : ''}`,
+    type: 'website' as const,
+    productData: undefined,
+  };
 
   const handleShare = async () => {
     if (!equipment) return;
