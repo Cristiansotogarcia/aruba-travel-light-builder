@@ -586,8 +586,8 @@ export const EnhancedReportsDashboard: React.FC = () => {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip
-                      formatter={(value: number) => [
-                        `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      formatter={(value) => [
+                        `$${(value as number).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                         'Revenue',
                       ]}
                     />

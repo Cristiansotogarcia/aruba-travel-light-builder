@@ -438,7 +438,7 @@ export const ReportsDashboard: React.FC = () => {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="month" />
                           <YAxis />
-                          <Tooltip formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Revenue']} />
+                          <Tooltip formatter={(value) => [`$${(value as number).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Revenue']} />
                           <Legend />
                           <Bar dataKey="revenue" fill="#82ca9d" name="Monthly Revenue" />
                         </BarChart>
@@ -468,7 +468,7 @@ export const ReportsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={150} interval={0} />
-                    <Tooltip formatter={(value: number) => [value, 'Times Booked']} />
+                    <Tooltip formatter={(value) => [(value as number), 'Times Booked']} />
                     <Legend />
                     <Bar dataKey="bookedQuantity" fill="#8884d8" name="Total Quantity Booked" />
                   </BarChart>
