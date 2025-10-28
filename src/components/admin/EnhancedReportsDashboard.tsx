@@ -13,7 +13,7 @@ import {
   BarChart,
   Bar
 } from '@/components/common/dynamic/DynamicChart';
-import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from 'date-fns';
+import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from '@/utils/dateUtils';
 import { DateRange } from 'react-day-picker';
 import {
   Table,

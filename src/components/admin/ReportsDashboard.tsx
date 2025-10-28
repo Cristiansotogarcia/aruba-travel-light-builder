@@ -15,7 +15,7 @@ import {
   Bar,
   DynamicChartWrapper
 } from '@/components/common/dynamic/DynamicChart';
-import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from 'date-fns'; // Added formatDistanceToNow
+import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from '@/utils/dateUtils';
 import { Product } from '@/types/types';
 import { DateRange } from 'react-day-picker'; // Re-adding based on error, assuming it's needed.
 import {
