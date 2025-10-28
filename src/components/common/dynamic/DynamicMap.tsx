@@ -5,13 +5,21 @@ const TileLayer = React.lazy(() => import('react-leaflet').then(module => ({ def
 const Marker = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Marker })) );
 const Popup = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Popup })) );
 
-const DynamicMap = ({ center, zoom, markers }) => {
+interface DynamicMapProps {
+  center: [number, number];
+  zoom: number;
+  markers?: Array<{
+    position: [number, number];
+    popup?: string;
+  }>;
+}
+
+const DynamicMap: React.FC<DynamicMapProps> = ({ markers }) => {
   return (
     <Suspense fallback={<div>Loading Map...</div>}>
-      <MapContainer center={center} zoom={zoom} style={{ height: '400px', width: '100%' }}>
+      <MapContainer style={{ height: '400px', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {markers && markers.map((marker, idx) => (
           <Marker key={idx} position={marker.position}>

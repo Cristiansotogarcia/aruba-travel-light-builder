@@ -137,7 +137,7 @@ const MobileNav = () => {
                 <p className="px-3 py-2 text-gray-700">Loading...</p>
               ) : (
                 <div className="space-y-2">
-                  {profile.role === 'Booker' && (
+                  {profile?.role === 'Booker' && (
                     // Hide Book Now option for now
                     <Button asChild className="w-full hidden" hidden onClick={() => setIsOpen(false)}>
                       <Link to="/book">Book Now</Link>
