@@ -10,6 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import type { ActiveFiltersState } from '@/components/equipment/EquipmentFilters';
 import { useSearchParams } from 'react-router-dom';
+import { SEO } from '@/components/common/SEO';
 
 const Equipment = () => {
   const [searchParams] = useSearchParams();
@@ -56,11 +57,12 @@ const Equipment = () => {
         sub_category: p.equipment_sub_category?.name || 'General',
         price: p.price_per_day,
 
-        image: p.image_url || (p.images && p.images[0]) || '',
-        images: p.images || (p.image_url ? [p.image_url] : []),
+        image: (p.images && p.images[0]) || '',
+        images: p.images || [],
 
         description: p.description || '',
         availability,
+        availability_status: p.availability_status || 'Available',
         features: [],
         category_sort_order: p.equipment_category?.sort_order ?? 0,
         sub_category_sort_order: p.equipment_sub_category?.sort_order ?? 0,
@@ -150,6 +152,11 @@ const Equipment = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <SEO
+        title="Beach & Baby Equipment Rentals - TLA Aruba"
+        description="Rent premium beach gear, baby equipment, and outdoor recreation items in Aruba. Beach chairs, umbrellas, strollers, car seats, and more with delivery service."
+        pageSlug="equipment"
+      />
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">

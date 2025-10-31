@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
@@ -26,12 +27,8 @@ const equipment = {
   slug: 'tent',
   category: 'Camping',
   price: 10,
-
-  images: ['/tent.jpg'],
-
   image: '/thumb.jpg',
   images: ['/tent1.jpg', '/tent2.jpg'],
-
   description: '<b>Single</b><br><script>alert("xss")</script>',
   availability: 'available' as const,
   features: [] as string[],

@@ -25,7 +25,10 @@ export const getProducts = async () => {
 export const getFeaturedProducts = async () => {
   const { data, error } = await supabase
     .from('equipment')
-    .select('*')
+    .select(`
+      *,
+      equipment_category (name)
+    `)
     .eq('featured', true)
     .order('featured_sort_order', { ascending: true })
     .order('created_at', { ascending: false });

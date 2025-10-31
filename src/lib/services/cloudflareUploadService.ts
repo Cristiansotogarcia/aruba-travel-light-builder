@@ -32,6 +32,8 @@ class CloudflareUploadService {
         }
       );
 
+      // console.log('Cloudflare upload service - raw response:', { data, error });
+
       if (error) {
         throw error;
       }

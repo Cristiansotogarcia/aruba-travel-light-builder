@@ -30,120 +30,116 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: (id) => {
           // React core
-          'react-vendor': ['react', 'react-dom'],
-          
-          // React Router
-          'react-router': ['react-router-dom'],
-          
-          // Radix UI components (split into smaller chunks)
-          'radix-core': [
-            '@radix-ui/react-slot',
-            '@radix-ui/react-primitive',
-            '@radix-ui/react-compose-refs',
-            '@radix-ui/react-context',
-            '@radix-ui/react-use-controllable-state',
-            '@radix-ui/react-use-previous',
-            '@radix-ui/react-use-callback-ref',
-            '@radix-ui/react-use-layout-effect',
-            '@radix-ui/react-use-escape-keydown',
-            '@radix-ui/react-use-size',
-            '@radix-ui/react-presence',
-            '@radix-ui/react-portal',
-            '@radix-ui/react-focus-scope',
-            '@radix-ui/react-focus-guards',
-            '@radix-ui/react-dismissable-layer',
-            '@radix-ui/react-popper',
-            '@radix-ui/react-arrow',
-            '@radix-ui/react-visually-hidden',
-            '@radix-ui/react-roving-focus',
-            '@radix-ui/react-collection',
-            '@radix-ui/react-direction'
-          ],
-          
-          'radix-components': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-context-menu'
-          ],
-          
-          'radix-form': [
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-label'
-          ],
-          
-          'radix-layout': [
-            '@radix-ui/react-separator',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group'
-          ],
-          
-          'radix-feedback': [
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-avatar'
-          ],
-          
-          // Icons
-          'lucide-react': ['lucide-react'],
-          
-          // Data management
-          'react-query': ['@tanstack/react-query'],
-          'supabase': ['@supabase/supabase-js'],
-          'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          
-          // Heavy libraries
-          'charts': ['recharts'],
-          'maps': ['leaflet', 'react-leaflet'],
-          'editor': ['react-quill'],
-          
-          // Date utilities
-          'date-utils': ['date-fns'],
-          
+          if (id.includes('react') && id.includes('react-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('react-router')) {
+            return 'react-router';
+          }
+
+          // Radix UI components - split into very small chunks to avoid large bundles
+          if (id.includes('@radix-ui')) {
+            if (id.includes('react-dialog') || id.includes('react-dropdown-menu') ||
+                id.includes('react-popover') || id.includes('react-tooltip')) {
+              return 'radix-overlays';
+            }
+            if (id.includes('react-select') || id.includes('react-accordion') ||
+                id.includes('react-tabs') || id.includes('react-navigation-menu')) {
+              return 'radix-navigation';
+            }
+            if (id.includes('react-checkbox') || id.includes('react-radio') ||
+                id.includes('react-switch') || id.includes('react-slider') ||
+                id.includes('react-progress')) {
+              return 'radix-form-controls';
+            }
+            if (id.includes('react-separator') || id.includes('react-scroll-area') ||
+                id.includes('react-aspect-ratio') || id.includes('react-collapsible')) {
+              return 'radix-layout';
+            }
+            if (id.includes('react-toast') || id.includes('react-alert-dialog') ||
+                id.includes('react-hover-card')) {
+              return 'radix-feedback';
+            }
+            // Core primitives - split smaller
+            return 'radix-core';
+          }
+
+          // Icons - split lucide icons into smaller chunks
+          if (id.includes('lucide-react')) {
+            return 'lucide-icons';
+          }
+
+          // Data management - split further
+          if (id.includes('@tanstack/react-query')) {
+            return 'react-query';
+          }
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase';
+          }
+
+          // Forms - split libraries
+          if (id.includes('react-hook-form') || id.includes('@hookform/resolvers')) {
+            return 'forms';
+          }
+          if (id.includes('zod')) {
+            return 'forms-validation';
+          }
+
+          // Heavy libraries - make these load on-demand wherever possible
+          // Note: recharts, leaflet, editor are already dynamically imported
+          if (id.includes('recharts')) {
+            return 'charts-lib';
+          }
+          if (id.includes('leaflet') || id.includes('react-leaflet')) {
+            return 'maps-lib';
+          }
+          if (id.includes('@uiw/react-md-editor')) {
+            return 'editor-lib';
+          }
+
+          // Date utilities - split date-fns more aggressively
+          // This will help with the locale issue
+          if (id.includes('date-fns')) {
+            if (id.includes('locale')) {
+              return 'date-locales';
+            }
+            return 'date-utils';
+          }
+
           // UI utilities
-          'ui-utils': [
-            'clsx',
-            'class-variance-authority',
-            'tailwind-merge',
-            'tailwindcss-animate'
-          ],
-          
-          // Other utilities
-          'utils': [
-            'dompurify',
-            'papaparse',
-            'next-themes',
-            'sonner',
-            'vaul',
-            'cmdk',
-            'input-otp',
-            'embla-carousel-react',
-            'react-day-picker',
-            'react-resizable-panels'
-          ]
+          if (id.includes('clsx') || id.includes('class-variance-authority') ||
+              id.includes('tailwind-merge') || id.includes('tailwindcss-animate')) {
+            return 'ui-utils';
+          }
+
+          // Other utilities - split smaller
+          if (id.includes('papaparse') || id.includes('dompurify')) {
+            return 'data-utils';
+          }
+          if (id.includes('next-themes') || id.includes('sonner') ||
+              id.includes('vaul') || id.includes('cmdk') || id.includes('input-otp')) {
+            return 'ui-enhancements';
+          }
+          if (id.includes('embla-carousel-react') || id.includes('react-day-picker') ||
+              id.includes('react-resizable-panels')) {
+            return 'interactive-components';
+          }
+
+          // Force admin components into separate chunks
+          if (id.includes('src/components/admin') || id.includes('src/pages/Admin')) {
+            if (id.includes('ReportsDashboard') || id.includes('EnhancedReportsDashboard')) {
+              return 'admin-reports';
+            }
+            return 'admin-core';
+          }
         }
       }
     },
-    // Set chunk size warning limit to 2000kb to eliminate the warning
-    // The actual main bundle is 1,204.96 kB, so this ensures no warnings
-    // The lazy loading and manual chunks will help with actual performance
-    chunkSizeWarningLimit: 2000,
+    // Increase chunk size warning limit to 1MB for this feature-rich application
+    // Modern web applications commonly have bundles this size with many features
+    chunkSizeWarningLimit: 1000,
   },
   test: {
     globals: true,
