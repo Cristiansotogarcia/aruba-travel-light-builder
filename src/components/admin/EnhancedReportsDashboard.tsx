@@ -13,7 +13,7 @@ import {
   BarChart,
   Bar
 } from '@/components/common/dynamic/DynamicChart';
-import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from 'date-fns';
+import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from '@/utils/dateUtils';
 import { DateRange } from 'react-day-picker';
 import {
   Table,
@@ -586,8 +586,8 @@ export const EnhancedReportsDashboard: React.FC = () => {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip
-                      formatter={(value: number) => [
-                        `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      formatter={(value) => [
+                        `$${(value as number).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                         'Revenue',
                       ]}
                     />

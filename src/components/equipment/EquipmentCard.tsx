@@ -19,10 +19,10 @@ interface Equipment {
   category: string;
   price: number;
   image: string;
-
   images: string[];
   description: string;
   availability: 'available' | 'limited' | 'unavailable';
+  availability_status?: string;
   features: string[];
 }
 
@@ -133,7 +133,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               />
             )}
             <div className="absolute top-2 right-2">
-              {equipment.availability !== 'unavailable' && (
+              {equipment.availability !== 'unavailable' && equipment.availability_status !== 'Temporarily Not Available' && (
                 <div
                   className={clsx(
                     'text-xs font-medium px-2 py-1 rounded-full',
@@ -177,20 +177,22 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
 
         <CardContent>
           <div className="space-y-2">
-            {/* Debug Info */}
-            <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-600">
-              <div>Availability: {equipment.availability}</div>
-              <div>Button Enabled: {equipment.availability !== 'unavailable' ? 'Yes' : 'No'}</div>
-            </div>
-            
-            <div className="flex gap-2 items-center">
-              <span className="bg-[#00ADEF] text-white px-3 py-1 rounded-md text-sm font-semibold">
-                ${equipment.price.toFixed(2)}/day
-              </span>
-              <span className="bg-[#F7931E] text-white px-3 py-1 rounded-md text-sm font-semibold">
-                ${Number(equipment.price * 5).toFixed(2)}/week
-              </span>
-            </div>
+            {equipment.availability_status === 'Temporarily Not Available' ? (
+              <div className="flex items-center">
+                <span className="bg-red-500 text-white px-3 py-1 rounded-md text-sm font-semibold">
+                  Temporarily Not Available
+                </span>
+              </div>
+            ) : (
+              <div className="flex gap-2 items-center">
+                <span className="bg-[#00ADEF] text-white px-3 py-1 rounded-md text-sm font-semibold">
+                  ${equipment.price.toFixed(2)}/day
+                </span>
+                <span className="bg-[#F7931E] text-white px-3 py-1 rounded-md text-sm font-semibold">
+                  ${Number(equipment.price * 5).toFixed(2)}/week
+                </span>
+              </div>
+            )}
 
             {equipment.features.length > 0 && (
               <div className="space-y-1 mt-2">
@@ -206,13 +208,17 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         </CardContent>
 
         <CardFooter>
-          <Button
-            className="w-full"
-            disabled={equipment.availability === 'unavailable'}
-            onClick={handleBook}
-          >
-            Book Now
-          </Button>
+          {equipment.availability_status === 'Temporarily Not Available' ? (
+            <div className="w-full"></div>
+          ) : (
+            <Button
+              className="w-full"
+              disabled={equipment.availability === 'unavailable'}
+              onClick={handleBook}
+            >
+              Book Now
+            </Button>
+          )}
         </CardFooter>
       </Card>
 
@@ -252,8 +258,16 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
           </div>
 
           <div className="text-sm mb-4">
-            <span className="font-semibold">Price:</span>{' '}
-            ${equipment.price.toFixed(2)}/day | ${Number(equipment.price * 5).toFixed(2)}/week
+            {equipment.availability_status === 'Temporarily Not Available' ? (
+              <span className="font-semibold">
+                Status: <span className="bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold ml-1">Temporarily Not Available</span>
+              </span>
+            ) : (
+              <>
+                <span className="font-semibold">Price:</span>{' '}
+                ${equipment.price.toFixed(2)}/day | ${Number(equipment.price * 5).toFixed(2)}/week
+              </>
+            )}
           </div>
 
           {equipment.features.length > 0 && (

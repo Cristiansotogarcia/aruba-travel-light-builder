@@ -68,7 +68,14 @@ export const FeaturedProducts = () => {
                                     ${Number(product.price_per_day).toFixed(2)}/day |
                                     ${Number(product.price_per_day * 5).toFixed(2)}/week
                                 </div>
-                                <Link to="/equipment" className="block">
+                                <Link
+                                    to={
+                                        product.equipment_category?.name
+                                            ? `/equipment?category=${encodeURIComponent(product.equipment_category.name)}`
+                                            : '/equipment'
+                                    }
+                                    className="block"
+                                >
                                     <Button className="w-full">View All</Button>
                                 </Link>
                             </CardContent>

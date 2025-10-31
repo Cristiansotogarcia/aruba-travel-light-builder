@@ -6,7 +6,7 @@ const Loading = () => <div className="flex items-center justify-center min-h-[30
 export const LineChart = React.lazy(() => import('recharts').then(module => ({ default: module.LineChart })));
 export const BarChart = React.lazy(() => import('recharts').then(module => ({ default: module.BarChart })));
 export const Line = React.lazy(() => import('recharts').then(module => ({ default: module.Line })));
-export const Bar = React.lazy(() => import('recharts').then(module => ({ default: module.Bar })));
+export const Bar = React.lazy(() => import('recharts').then(module => ({ default: module.Bar as unknown as React.ComponentType<any> })));
 export const XAxis = React.lazy(() => import('recharts').then(module => ({ default: module.XAxis })));
 export const YAxis = React.lazy(() => import('recharts').then(module => ({ default: module.YAxis })));
 export const CartesianGrid = React.lazy(() => import('recharts').then(module => ({ default: module.CartesianGrid })));
