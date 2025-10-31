@@ -39,10 +39,10 @@ CREATE TABLE IF NOT EXISTS public.payment_records (
 );
 
 -- Create indexes for payment records
-CREATE INDEX idx_payment_records_booking_id ON public.payment_records(booking_id);
-CREATE INDEX idx_payment_records_stripe_session ON public.payment_records(stripe_session_id);
-CREATE INDEX idx_payment_records_status ON public.payment_records(status);
-CREATE UNIQUE INDEX idx_payment_records_stripe_intent ON public.payment_records(stripe_payment_intent_id) WHERE stripe_payment_intent_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_payment_records_booking_id ON public.payment_records(booking_id);
+CREATE INDEX IF NOT EXISTS idx_payment_records_stripe_session ON public.payment_records(stripe_session_id);
+CREATE INDEX IF NOT EXISTS idx_payment_records_status ON public.payment_records(status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_records_stripe_intent ON public.payment_records(stripe_payment_intent_id) WHERE stripe_payment_intent_id IS NOT NULL;
 
 -- Create booking audit log table
 CREATE TABLE IF NOT EXISTS public.booking_audit_log (
@@ -60,10 +60,10 @@ CREATE TABLE IF NOT EXISTS public.booking_audit_log (
 );
 
 -- Create indexes for audit log
-CREATE INDEX idx_audit_log_booking_id ON public.booking_audit_log(booking_id);
-CREATE INDEX idx_audit_log_user_id ON public.booking_audit_log(user_id);
-CREATE INDEX idx_audit_log_created_at ON public.booking_audit_log(created_at DESC);
-CREATE INDEX idx_audit_log_action ON public.booking_audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_audit_log_booking_id ON public.booking_audit_log(booking_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON public.booking_audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON public.booking_audit_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON public.booking_audit_log(action);
 
 -- Create stock movements table
 CREATE TABLE IF NOT EXISTS public.stock_movements (
@@ -80,10 +80,10 @@ CREATE TABLE IF NOT EXISTS public.stock_movements (
 );
 
 -- Create indexes for stock movements
-CREATE INDEX idx_stock_movements_equipment_id ON public.stock_movements(equipment_id);
-CREATE INDEX idx_stock_movements_booking_id ON public.stock_movements(booking_id);
-CREATE INDEX idx_stock_movements_type ON public.stock_movements(movement_type);
-CREATE INDEX idx_stock_movements_created_at ON public.stock_movements(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_equipment_id ON public.stock_movements(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_booking_id ON public.stock_movements(booking_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_type ON public.stock_movements(movement_type);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_created_at ON public.stock_movements(created_at DESC);
 
 -- Enable Row Level Security
 ALTER TABLE public.payment_records ENABLE ROW LEVEL SECURITY;
