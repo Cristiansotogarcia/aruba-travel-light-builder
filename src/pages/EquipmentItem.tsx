@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
@@ -59,6 +59,7 @@ const EquipmentItem = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [quantity, setQuantity] = useState(1);
 
   const handleBook = () => {
     if (!equipment || equipment.availability === 'unavailable') return;
@@ -75,9 +76,9 @@ const EquipmentItem = () => {
       price_per_day: equipment.price,
       category: equipment.category,
       images: equipment.images,
-      stock_quantity: 1,
+      stock_quantity: 100, // Set high default to allow frontend quantity selection
     };
-    addItem(product, 1, new Date());
+    addItem(product, quantity, new Date());
     navigate(destination);
   };
 
@@ -169,7 +170,7 @@ const EquipmentItem = () => {
           </div>
           
           {equipment.features.length > 0 && (
-            <div className="text-sm">
+            <div className="text-sm mb-4">
               <p className="font-medium">Features:</p>
               <ul className="list-disc list-inside pl-1">
                 {equipment.features.map((feature, index) => (
@@ -178,13 +179,30 @@ const EquipmentItem = () => {
               </ul>
             </div>
           )}
-          <Button
-            className="w-full sm:w-auto mt-6"
-            disabled={equipment.availability === 'unavailable'}
-            onClick={handleBook}
-          >
-            Book Now
-          </Button>
+          
+          <div className="flex items-center gap-4 mt-6">
+            <div className="flex items-center gap-2">
+              <label htmlFor="quantity" className="text-sm font-medium">
+                Quantity:
+              </label>
+              <input
+                id="quantity"
+                type="number"
+                min="1"
+                max="10"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                className="w-20 px-3 py-2 border border-gray-300 rounded text-sm text-center"
+              />
+            </div>
+            <Button
+              className="flex-1 sm:flex-initial"
+              disabled={equipment.availability === 'unavailable'}
+              onClick={handleBook}
+            >
+              Book Now
+            </Button>
+          </div>
         </div>
       </main>
       <Footer />

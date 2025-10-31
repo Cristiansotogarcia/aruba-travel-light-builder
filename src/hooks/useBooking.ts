@@ -22,7 +22,8 @@ const initialBookingData: BookingFormData = {
     room_number: '',
     comment: ''
   },
-  deliverySlot: undefined
+  deliverySlot: undefined,
+  pickupSlot: undefined
 };
 
 const useBooking = () => {
@@ -123,6 +124,24 @@ const useBooking = () => {
     setBookingData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Helper function to check if a date is Sunday
+  const isSunday = (dateString: string): boolean => {
+    const date = new Date(dateString);
+    return date.getDay() === 0;
+  };
+
+  // Helper function to calculate delivery fee
+  const calculateDeliveryFee = (startDate: string, days: number): number => {
+    // Sunday bookings: $20 fee
+    if (isSunday(startDate)) return 20;
+    
+    // Rentals < 5 days: $10 fee (1-4 days get charged)
+    if (days < 5) return 10;
+    
+    // Weekly rentals (5-7 days) or longer: FREE
+    return 0;
+  };
+
   const calculateDays = () => {
     if (!bookingData.startDate || !bookingData.endDate) return 0;
     const start = new Date(bookingData.startDate);
@@ -133,15 +152,21 @@ const useBooking = () => {
   const calculateTotal = () => {
     if (!bookingData.startDate || !bookingData.endDate) return 0;
     
-    const days = calculateDays();
+    let days = calculateDays();
     
-    return bookingData.items.reduce((total, item) => {
+    // Time slot adjustment: Add 1 day if delivery is morning and pickup is afternoon
+    if (bookingData.deliverySlot === 'morning' && bookingData.pickupSlot === 'afternoon') {
+      days += 1;
+    }
+    
+    // Calculate equipment costs
+    const equipmentTotal = bookingData.items.reduce((total, item) => {
       const equipment = products.find(eq => eq.id === item.equipment_id);
       if (!equipment) return total;
       
       let itemTotal = 0;
       
-      // Weekly pricing logic (Option A: Multiple weeks)
+      // Weekly pricing logic
       // 1-4 days: daily rate
       // 5-7 days: weekly rate (flat)
       // 8+ days: calculate full weeks + remaining days
@@ -151,11 +176,11 @@ const useBooking = () => {
         itemTotal = equipment.price_per_day * item.quantity * days;
       } else if (days >= 5 && days <= 7) {
         // Weekly rate applies for 5-7 days
-        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 7);
+        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 5);
         itemTotal = weeklyRate * item.quantity;
       } else {
         // For 8+ days: calculate full weeks + remaining days
-        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 7);
+        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 5);
         const fullWeeks = Math.floor(days / 7);
         const remainingDays = days % 7;
         
@@ -177,6 +202,11 @@ const useBooking = () => {
       
       return total + itemTotal;
     }, 0);
+    
+    // Add delivery fee
+    const deliveryFee = calculateDeliveryFee(bookingData.startDate, days);
+    
+    return equipmentTotal + deliveryFee;
   };
 
   const validateBookingData = () => {
@@ -286,6 +316,7 @@ const useBooking = () => {
           room_number: bookingData.customerInfo.room_number?.trim() || null,
           customer_comment: bookingData.customerInfo.comment?.trim() || null,
           delivery_slot: bookingData.deliverySlot,
+          pickup_slot: bookingData.pickupSlot,
           payment_status: 'pending'
         };
 
