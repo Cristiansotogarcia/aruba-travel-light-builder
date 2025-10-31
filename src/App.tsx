@@ -14,6 +14,7 @@ import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
 import { CartProvider } from "@/hooks/useCart";
+import { PageSkeleton } from "@/components/common/SkeletonLoader";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -34,12 +35,8 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
 const CartPage = lazy(() => import("./pages/Cart"));
 
-// Loading fallback
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-  </div>
-);
+// Loading fallback with skeleton
+const PageLoader = () => <PageSkeleton />;
 
 // React Query client
 const queryClient = new QueryClient({
