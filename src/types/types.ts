@@ -36,6 +36,7 @@ export interface BookingFormData {
   items: CalendarBookingItemType[]; // Use the directly imported alias
   customerInfo: CustomerInfo;
   deliverySlot?: 'morning' | 'afternoon';
+  pickupSlot?: 'morning' | 'afternoon';
 }
 
 // Defines the structure for data submitted to Supabase 'bookings' table
@@ -52,6 +53,8 @@ export interface SupabaseBookingData {
   total_price: number;
   total_amount: number;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable'; // Updated to match BookingStatus
+  delivery_slot?: 'morning' | 'afternoon';
+  pickup_slot?: 'morning' | 'afternoon';
   created_at?: string;
 }
 

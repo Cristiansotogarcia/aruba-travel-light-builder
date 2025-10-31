@@ -33,10 +33,18 @@ export const DeliverySlotSelector = ({
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Check if selected date is Sunday
+  const isSunday = selectedDate && new Date(selectedDate).getDay() === 0;
 
   useEffect(() => {
     if (selectedDate) {
       checkSlotAvailability();
+      
+      // If it's Sunday and morning is selected, auto-switch to afternoon
+      if (isSunday && selectedSlot === 'morning') {
+        onSlotChange('afternoon');
+      }
     }
   }, [selectedDate]);
 
@@ -162,6 +170,15 @@ export const DeliverySlotSelector = ({
         </Alert>
       )}
 
+      {isSunday && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Sunday Delivery:</strong> Only afternoon deliveries (4:00 PM - 6:00 PM) are available on Sundays.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -171,50 +188,61 @@ export const DeliverySlotSelector = ({
         <RadioGroup
           value={selectedSlot}
           onValueChange={(value) => onSlotChange(value as 'morning' | 'afternoon')}
-          disabled={disabled}
+          disabled={disabled || false}
           className="space-y-3"
         >
-          {slots.map((slot) => (
-            <div
-              key={slot.slot}
-              className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-all ${
-                selectedSlot === slot.slot
-                  ? 'border-primary bg-primary/5 ring-2 ring-primary'
-                  : 'border-gray-200 hover:border-gray-300'
-              } ${
-                !slot.available || disabled
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'cursor-pointer'
-              }`}
-            >
-              <RadioGroupItem
-                value={slot.slot}
-                id={slot.slot}
-                disabled={!slot.available || disabled}
-                className="mt-1"
-              />
-              <Label
-                htmlFor={slot.slot}
-                className={`flex-1 cursor-pointer ${
-                  !slot.available || disabled ? 'cursor-not-allowed' : ''
+          {slots.map((slot) => {
+            // On Sunday, disable morning slot
+            const isSundayMorningSlot = isSunday && slot.slot === 'morning';
+            const isSlotDisabled = !slot.available || disabled || isSundayMorningSlot;
+            
+            return (
+              <div
+                key={slot.slot}
+                className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-all ${
+                  selectedSlot === slot.slot
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${
+                  isSlotDisabled
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'cursor-pointer'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-base">{slot.label}</span>
-                  {getAvailabilityBadge(slot)}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Clock className="h-4 w-4 mr-1.5" />
-                  {slot.time}
-                </div>
-                {!slot.available && (
-                  <p className="text-sm text-red-600 mt-2">
-                    This time slot is fully booked. Please select another slot or different date.
-                  </p>
-                )}
-              </Label>
-            </div>
-          ))}
+                <RadioGroupItem
+                  value={slot.slot}
+                  id={slot.slot}
+                  disabled={Boolean(isSlotDisabled)}
+                  className="mt-1"
+                />
+                <Label
+                  htmlFor={slot.slot}
+                  className={`flex-1 cursor-pointer ${
+                    isSlotDisabled ? 'cursor-not-allowed' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-base">{slot.label}</span>
+                    {getAvailabilityBadge(slot)}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Clock className="h-4 w-4 mr-1.5" />
+                    {slot.time}
+                  </div>
+                  {!slot.available && !isSundayMorningSlot && (
+                    <p className="text-sm text-red-600 mt-2">
+                      This time slot is fully booked. Please select another slot or different date.
+                    </p>
+                  )}
+                  {isSundayMorningSlot && (
+                    <p className="text-sm text-blue-600 mt-2">
+                      Not available on Sundays. Please select afternoon delivery.
+                    </p>
+                  )}
+                </Label>
+              </div>
+            );
+          })}
         </RadioGroup>
       )}
 

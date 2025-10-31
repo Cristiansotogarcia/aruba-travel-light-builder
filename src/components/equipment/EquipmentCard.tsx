@@ -31,6 +31,7 @@ interface EquipmentCardProps {
 
 export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
   const [open, setOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const sanitizedDescription = useMemo(
     () => DOMPurify.sanitize(equipment.description),
@@ -96,14 +97,14 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
       price_per_day: equipment.price,
       category: equipment.category,
       images: equipment.images,
-      stock_quantity: 1,
+      stock_quantity: 100, // Set high default to allow frontend quantity selection
     };
-    addItem(product, 1, new Date());
+    addItem(product, quantity, new Date());
     
     // Show success notification
     toast({
       title: 'Added to Cart',
-      description: `${equipment.name} has been added to your cart`,
+      description: `${quantity} x ${equipment.name} added to your cart`,
       variant: 'default',
     });
   };
@@ -195,17 +196,33 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="flex-col gap-2">
           {equipment.availability_status === 'Temporarily Not Available' ? (
             <div className="w-full"></div>
           ) : (
-            <Button
-              className="w-full"
-              disabled={equipment.availability === 'unavailable'}
-              onClick={handleAddToCart}
-            >
-              Add to Cart
-            </Button>
+            <>
+              <div className="w-full flex items-center gap-2">
+                <label htmlFor={`quantity-${equipment.id}`} className="text-sm font-medium whitespace-nowrap">
+                  Quantity:
+                </label>
+                <input
+                  id={`quantity-${equipment.id}`}
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                />
+              </div>
+              <Button
+                className="w-full"
+                disabled={equipment.availability === 'unavailable'}
+                onClick={handleAddToCart}
+              >
+                Add to Cart
+              </Button>
+            </>
           )}
         </CardFooter>
       </Card>

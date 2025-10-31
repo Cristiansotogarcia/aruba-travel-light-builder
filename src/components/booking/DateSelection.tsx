@@ -31,7 +31,7 @@ export const DateSelection = ({
   const today = new Date().toISOString().split('T')[0];
   const maxAdvanceBookingDays = 365; // 1 year in advance
   const maxRentalDays = 30; // Maximum rental period
-  const minRentalDays = 1; // Minimum rental period
+  const minRentalDays = 3; // Minimum rental period (3 days)
 
   // Calculate max booking date (1 year from today)
   const maxBookingDate = new Date();
@@ -77,7 +77,7 @@ export const DateSelection = ({
       
       // Check rental period limits
       if (diffDays < minRentalDays) {
-        newErrors.push({ field: 'general', message: `Minimum rental period is ${minRentalDays} day(s)` });
+        newErrors.push({ field: 'general', message: `Minimum rental period is ${minRentalDays} days` });
       }
       
       if (diffDays > maxRentalDays) {
@@ -95,6 +95,20 @@ export const DateSelection = ({
   const handleStartDateChange = (date: string) => {
     setTouched(prev => ({ ...prev, startDate: true }));
     onStartDateChange(date);
+    
+    // Auto-adjust end date to maintain 3-day minimum if needed
+    if (date && endDate) {
+      const start = new Date(date);
+      const end = new Date(endDate);
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < minRentalDays) {
+        // Automatically set end date to 3 days after start
+        const newEnd = new Date(start);
+        newEnd.setDate(newEnd.getDate() + minRentalDays);
+        onEndDateChange(newEnd.toISOString().split('T')[0]);
+      }
+    }
   };
 
   const handleEndDateChange = (date: string) => {
@@ -160,7 +174,11 @@ export const DateSelection = ({
               value={endDate}
               onChange={(e) => handleEndDateChange(e.target.value)}
               onBlur={() => setTouched(prev => ({ ...prev, endDate: true }))}
-              min={startDate || today}
+              min={startDate ? (() => {
+                const minEnd = new Date(startDate);
+                minEnd.setDate(minEnd.getDate() + minRentalDays);
+                return minEnd.toISOString().split('T')[0];
+              })() : today}
               max={maxBookingDateStr}
               required
               className={getFieldError('endDate') ? 'border-destructive focus:border-destructive' : ''}

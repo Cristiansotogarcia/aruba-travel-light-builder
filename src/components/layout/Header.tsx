@@ -146,7 +146,15 @@ export const Header = () => {
             ) : null}
           </div>
 
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <Link to="/cart" className="relative">
+              <ShoppingCart className="h-6 w-6" />
+              {items.length > 0 && (
+                <span className="absolute -top-1 -right-1 text-xs bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center">
+                  {items.length}
+                </span>
+              )}
+            </Link>
             <MobileNav />
           </div>
         </div>

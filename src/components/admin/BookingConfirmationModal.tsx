@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -60,6 +60,22 @@ export const BookingConfirmationModal = ({
     issues: string[];
   } | null>(null);
   const [checkingStock, setCheckingStock] = useState(false);
+
+  // Fetch payment link from settings on component mount
+  useEffect(() => {
+    const fetchPaymentLink = async () => {
+      const { data } = await supabase
+        .from('content_blocks')
+        .select('content')
+        .eq('block_key', 'payment_link')
+        .single();
+      
+      if (data?.content) {
+        setPaymentLink(data.content);
+      }
+    };
+    fetchPaymentLink();
+  }, []);
 
   const checkStockAvailability = async () => {
     setCheckingStock(true);
