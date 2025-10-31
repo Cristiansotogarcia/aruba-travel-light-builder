@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, AlertCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CustomerInfo {
@@ -12,6 +12,7 @@ interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  room_number: string;
   comment: string;
 }
 
@@ -30,19 +31,21 @@ interface FieldTouched {
   email: boolean;
   phone: boolean;
   address: boolean;
+  room_number: boolean;
   comment: boolean;
 }
 
 export const CustomerInformation = ({ 
   customerInfo, 
   onCustomerInfoChange 
-}: CustomerInformationProps) => {
+}: CustomerInformationProps): React.ReactElement => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [touched, setTouched] = useState<FieldTouched>({
     name: false,
     email: false,
     phone: false,
     address: false,
+    room_number: false,
     comment: false
   });
 
@@ -71,9 +74,13 @@ export const CustomerInformation = ({
         return null;
         
       case 'address':
-        if (!value.trim()) return 'Hotel/Address is required';
-        if (value.trim().length < 5) return 'Address must be at least 5 characters';
-        if (value.trim().length > 200) return 'Address must be less than 200 characters';
+        if (!value.trim()) return 'Accommodation name is required';
+        if (value.trim().length < 2) return 'Accommodation name must be at least 2 characters';
+        if (value.trim().length > 200) return 'Accommodation name must be less than 200 characters';
+        return null;
+        
+      case 'room_number':
+        if (value.trim() && value.trim().length > 50) return 'Room number must be less than 50 characters';
         return null;
         
       case 'comment':
@@ -202,19 +209,36 @@ export const CustomerInformation = ({
           
           <div>
             <Label htmlFor="address" className={getFieldError('address') ? 'text-destructive' : ''}>
-              Hotel/Address in Aruba *
+              Accommodation Name *
             </Label>
             <Input
               id="address"
               value={customerInfo.address}
               onChange={(e) => handleFieldChange('address', e.target.value)}
               onBlur={() => handleFieldBlur('address')}
-              placeholder="Hotel name or address"
+              placeholder="Hotel or accommodation name"
               required
               className={getFieldError('address') ? 'border-destructive focus:border-destructive' : ''}
             />
             {getFieldError('address') && (
               <p className="text-sm text-destructive mt-1">{getFieldError('address')}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="room_number" className={getFieldError('room_number') ? 'text-destructive' : ''}>
+              Room Number
+            </Label>
+            <Input
+              id="room_number"
+              value={customerInfo.room_number}
+              onChange={(e) => handleFieldChange('room_number', e.target.value)}
+              onBlur={() => handleFieldBlur('room_number')}
+              placeholder="e.g., 305, Bungalow 12"
+              className={getFieldError('room_number') ? 'border-destructive focus:border-destructive' : ''}
+            />
+            {getFieldError('room_number') && (
+              <p className="text-sm text-destructive mt-1">{getFieldError('room_number')}</p>
             )}
           </div>
         </div>

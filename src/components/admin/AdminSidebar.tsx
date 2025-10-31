@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search, Info } from 'lucide-react';
+import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search, Info, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
@@ -22,7 +22,8 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: null },
     { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SeoManager' },
-    { id: 'bookings', label: 'Bookings', icon: Calendar, permission: 'BookingManagement' },
+    { id: 'reservations', label: 'Pending Reservations', icon: Clock, permission: 'BookingManagement' },
+    { id: 'bookings', label: 'All Bookings', icon: Calendar, permission: 'BookingManagement' },
     { id: 'assignment', label: 'Assignments', icon: UserPlus, permission: 'BookingAssignment' },
     { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
     { id: 'equipment', label: 'Equipment', icon: Package, permission: 'ProductManagement' },

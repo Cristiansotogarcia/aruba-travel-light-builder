@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import clsx from 'clsx';
@@ -9,7 +9,6 @@ import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/hooks/useCart';
-import { useAuth } from '@/hooks/useAuth';
 import type { Product } from '@/types/types';
 
 interface Equipment {
@@ -83,30 +82,13 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
   };
 
   const { addItem } = useCart();
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
-  const handleBook = () => {
-    console.log('EquipmentCard handleBook clicked:', {
-      equipmentId: equipment.id,
-      equipmentName: equipment.name,
-      availability: equipment.availability,
-      user: !!user
-    });
-    
+  const handleAddToCart = () => {
     if (equipment.availability === 'unavailable') {
-      console.log('Book button disabled - equipment unavailable');
       return;
     }
     
-    const destination = `/book?equipmentId=${equipment.id}`;
-    if (!user) {
-      console.log('Redirecting to login - user not authenticated');
-      navigate(`/login?redirect=${encodeURIComponent(destination)}`);
-      return;
-    }
-
-    console.log('Adding to cart and navigating to booking');
+    // Add to cart without navigating
     const product: Product = {
       id: equipment.id,
       name: equipment.name,
@@ -117,7 +99,13 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
       stock_quantity: 1,
     };
     addItem(product, 1, new Date());
-    navigate(destination);
+    
+    // Show success notification
+    toast({
+      title: 'Added to Cart',
+      description: `${equipment.name} has been added to your cart`,
+      variant: 'default',
+    });
   };
 
   return (
@@ -214,9 +202,9 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <Button
               className="w-full"
               disabled={equipment.availability === 'unavailable'}
-              onClick={handleBook}
+              onClick={handleAddToCart}
             >
-              Book Now
+              Add to Cart
             </Button>
           )}
         </CardFooter>
