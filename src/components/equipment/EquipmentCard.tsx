@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
@@ -115,10 +116,17 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
         <Link to={`/equipment/${equipment.slug}`}>
           <div className="aspect-square relative overflow-hidden">
             {equipment.images[0] && (
-              <img
+              <OptimizedImage
                 src={equipment.images[0]}
                 alt={equipment.name}
+                width={400}
+                height={400}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                responsive={{
+                  mobile: '100vw',
+                  tablet: '50vw',
+                  desktop: '33vw'
+                }}
               />
             )}
             <div className="absolute top-2 right-2">
@@ -239,9 +247,10 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               <CarouselContent>
                 {equipment.images.map((img, idx) => (
                   <CarouselItem key={idx} className="flex justify-center">
-                    <img
+                    <OptimizedImage
                       src={img}
                       alt={`${equipment.name} image ${idx + 1}`}
+                      priority={idx === 0}
                       className="max-w-full h-auto max-h-[60vh] object-contain rounded"
                     />
                   </CarouselItem>
@@ -251,9 +260,10 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               <CarouselNext />
             </Carousel>
           ) : (
-            <img
+            <OptimizedImage
               src={equipment.image}
               alt={equipment.name}
+              priority={true}
               className="max-w-full h-auto max-h-[60vh] object-contain rounded mb-4 mx-auto"
             />
           )}

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
 import { FaqAccordion } from '@/components/common/FaqAccordion';
+import { EquipmentGridSkeleton } from '@/components/common/SkeletonLoader';
 import { getProducts } from '@/lib/queries/products';
 import { slugify } from '@/utils/slugify';
 import { Header } from '@/components/layout/Header';
@@ -147,7 +148,25 @@ const Equipment = () => {
   }, [filteredEquipment]);
 
   if (isLoading) {
-    return <div className="py-8 text-center">Loading equipment...</div>;
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
+            Our Equipment
+          </h1>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <div className="h-96 bg-gray-100 rounded-lg animate-pulse" />
+            </div>
+            <div className="lg:col-span-3">
+              <EquipmentGridSkeleton count={9} />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
