@@ -106,6 +106,7 @@
     "jsdom": "^26.1.0",
     "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",
+    "rollup-plugin-visualizer": "^6.0.5",
     "supabase": "^2.30.4",
     "tailwindcss": "^3.4.11",
     "ts-node": "^10.9.2",

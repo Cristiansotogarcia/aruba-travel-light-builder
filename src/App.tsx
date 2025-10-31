@@ -5,9 +5,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
+import { initPerformanceMonitoring } from "@/utils/performanceMonitoring";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
@@ -50,6 +51,11 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // Initialize performance monitoring on mount
+  useEffect(() => {
+    initPerformanceMonitoring();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppPrefetch /> {/* ✅ altijd prefetch de equipment producten */}
