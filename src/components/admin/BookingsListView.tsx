@@ -1,9 +1,8 @@
 
-// import React from 'react'; // Removed this line
 import { BookingSquareCard } from './BookingSquareCard';
-import { Booking, BookingStatus } from './calendar/types'; // Added BookingStatus
-import { Card, CardContent } from "@/components/ui/card"; // Added import
-import { Calendar } from "@/components/ui/calendar"; // Added import
+import { Booking, BookingStatus } from './calendar/types';
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar } from 'lucide-react';
 
 interface BookingsListViewProps {
   bookings: Booking[];

@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, BookingFormData, CustomerInfo, AvailabilityStatus, SupabaseBookingData } from '../types/types';
-import { SupabaseBookingItemData } from '../types/booking'; // Import from the new file
+import { Product, BookingFormData, CustomerInfo, AvailabilityStatus } from '../types/types';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -20,8 +19,10 @@ const initialBookingData: BookingFormData = {
     email: '',
     phone: '',
     address: '',
+    room_number: '',
     comment: ''
-  }
+  },
+  deliverySlot: undefined
 };
 
 const useBooking = () => {
@@ -46,6 +47,7 @@ const useBooking = () => {
         name: string;
         description: string | null;
         price_per_day: number;
+        price_per_week?: number | null;
         category: string;
         images: string[] | null;
         stock_quantity: number | null;
@@ -88,6 +90,7 @@ const useBooking = () => {
             name: item.name,
             description: item.description || '',
             price_per_day: item.price_per_day,
+            price_per_week: item.price_per_week ?? undefined,
             category: item.category,
             images: item.images || [],
             stock_quantity: stockQuantity,
@@ -134,7 +137,45 @@ const useBooking = () => {
     
     return bookingData.items.reduce((total, item) => {
       const equipment = products.find(eq => eq.id === item.equipment_id);
-      return total + (equipment ? equipment.price_per_day * item.quantity * days : 0);
+      if (!equipment) return total;
+      
+      let itemTotal = 0;
+      
+      // Weekly pricing logic (Option A: Multiple weeks)
+      // 1-4 days: daily rate
+      // 5-7 days: weekly rate (flat)
+      // 8+ days: calculate full weeks + remaining days
+      
+      if (days <= 4) {
+        // Simple daily rate for 1-4 days
+        itemTotal = equipment.price_per_day * item.quantity * days;
+      } else if (days >= 5 && days <= 7) {
+        // Weekly rate applies for 5-7 days
+        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 7);
+        itemTotal = weeklyRate * item.quantity;
+      } else {
+        // For 8+ days: calculate full weeks + remaining days
+        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 7);
+        const fullWeeks = Math.floor(days / 7);
+        const remainingDays = days % 7;
+        
+        // Calculate cost for full weeks
+        const weeksCost = fullWeeks * weeklyRate * item.quantity;
+        
+        // Calculate cost for remaining days
+        let remainingCost = 0;
+        if (remainingDays >= 1 && remainingDays <= 4) {
+          // Remaining days charged at daily rate
+          remainingCost = remainingDays * equipment.price_per_day * item.quantity;
+        } else if (remainingDays >= 5) {
+          // If remaining days are 5-7, charge weekly rate
+          remainingCost = weeklyRate * item.quantity;
+        }
+        
+        itemTotal = weeksCost + remainingCost;
+      }
+      
+      return total + itemTotal;
     }, 0);
   };
 
@@ -182,7 +223,10 @@ const useBooking = () => {
       errors.push('Please enter a valid email address.');
     }
     
-    if (phone && !/^[\+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+    // Phone is required
+    if (!phone?.trim()) {
+      errors.push('Phone number is required.');
+    } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
       errors.push('Please enter a valid phone number.');
     }
     
@@ -215,43 +259,34 @@ const useBooking = () => {
         return;
       }
 
-      if (!user) {
-        toast({ title: 'Authentication Error', description: 'You must be logged in to create a booking.', variant: 'destructive' });
+      // Validate delivery slot
+      if (!bookingData.deliverySlot) {
+        toast({ 
+          title: 'Validation Error', 
+          description: 'Please select a delivery time slot.', 
+          variant: 'destructive' 
+        });
         return;
       }
 
-      // Create booking with enhanced error handling and rollback
       let bookingId: string | null = null;
-      let reservedItems: Array<{ equipment_id: string; quantity: number }> = [];
       
       try {
-        // Step 1: Reserve equipment stock first using the database function
-        for (const item of bookingData.items) {
-          const { data, error } = await supabase.rpc('reserve_equipment_stock', {
-            p_equipment_id: item.equipment_id,
-            p_quantity: item.quantity,
-            p_booking_reference: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          });
-          
-          if (error || !data) {
-            throw new Error(`Failed to reserve stock for ${item.equipment_name}: ${error?.message || 'Unknown error'}`);
-          }
-          
-          reservedItems.push({ equipment_id: item.equipment_id, quantity: item.quantity });
-        }
-
-        // Step 2: Create booking record
+        // Step 1: Create guest booking record (no payment, no stock reservation yet)
         const bookingPayload = {
-          user_id: user.id,
+          user_id: user?.id || null, // Allow null for guest bookings
           start_date: bookingData.startDate,
           end_date: bookingData.endDate,
           total_amount: calculateTotal(),
-          status: 'pending',
+          status: 'pending_admin_review', // New status for guest bookings
           customer_name: bookingData.customerInfo.name.trim(),
           customer_email: bookingData.customerInfo.email.trim().toLowerCase(),
-          customer_phone: bookingData.customerInfo.phone?.trim() || null,
-          delivery_address: bookingData.customerInfo.address?.trim() || null,
-          special_requests: bookingData.customerInfo.specialRequests?.trim() || null
+          customer_phone: bookingData.customerInfo.phone?.trim() || '',
+          customer_address: bookingData.customerInfo.address?.trim() || '',
+          room_number: bookingData.customerInfo.room_number?.trim() || null,
+          customer_comment: bookingData.customerInfo.comment?.trim() || null,
+          delivery_slot: bookingData.deliverySlot,
+          payment_status: 'pending'
         };
 
         const { data: booking, error: bookingError } = await supabase
@@ -261,18 +296,19 @@ const useBooking = () => {
           .single();
 
         if (bookingError || !booking) {
-          throw new Error(`Failed to create booking: ${bookingError?.message || 'Unknown error'}`);
+          throw new Error(`Failed to create reservation: ${bookingError?.message || 'Unknown error'}`);
         }
         
         bookingId = booking.id;
 
-        // Step 3: Create booking items
+        // Step 2: Create booking items
         const bookingItems = bookingData.items.map(item => ({
           booking_id: booking.id,
           equipment_id: item.equipment_id,
+          equipment_name: item.equipment_name,
+          equipment_price: item.equipment_price,
           quantity: item.quantity,
-          unit_price: item.unit_price || item.equipment_price,
-          total_price: item.total_price || item.subtotal
+          subtotal: item.subtotal
         }));
 
         const { error: itemsError } = await supabase
@@ -283,71 +319,47 @@ const useBooking = () => {
           throw new Error(`Failed to create booking items: ${itemsError.message}`);
         }
 
-        // Step 4: Update stock reservations with actual booking ID
-        for (const item of reservedItems) {
-          const { error: updateError } = await supabase
-            .from('stock_movements')
-            .update({ booking_id: booking.id })
-            .eq('equipment_id', item.equipment_id)
-            .eq('movement_type', 'reservation')
-            .is('booking_id', null)
-            .order('created_at', { ascending: false })
-            .limit(1);
-            
-          if (updateError) {
-            console.warn(`Warning: Could not link stock movement to booking for equipment ${item.equipment_id}:`, updateError);
+        // Step 3: Send reservation confirmation email
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-reservation-email', {
+            body: {
+              booking_id: booking.id,
+              customer_name: bookingData.customerInfo.name.trim(),
+              customer_email: bookingData.customerInfo.email.trim().toLowerCase(),
+              start_date: bookingData.startDate,
+              end_date: bookingData.endDate,
+              delivery_slot: bookingData.deliverySlot,
+              total_amount: calculateTotal(),
+              items: bookingData.items
+            }
+          });
+
+          if (emailError) {
+            console.warn('Failed to send reservation email:', emailError);
+            // Don't fail the booking if email fails
           }
+        } catch (emailErr) {
+          console.warn('Error sending reservation email:', emailErr);
         }
 
-        // Step 5: Create payment session
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment-session', {
-          body: {
-            booking_id: booking.id,
-            amount: calculateTotal(),
-            currency: 'usd',
-            customer_email: bookingData.customerInfo.email.trim().toLowerCase(),
-            customer_name: bookingData.customerInfo.name.trim(),
-            success_url: `${window.location.origin}/payment-success?booking_id=${booking.id}`,
-            cancel_url: `${window.location.origin}/payment-error?booking_id=${booking.id}`
-          }
-        });
-
-        if (paymentError || !paymentData?.url) {
-          throw new Error(`Failed to create payment session: ${paymentError?.message || 'No payment URL returned'}`);
-        }
-
-        // Success: Reset booking data and redirect to payment
+        // Success: Reset booking data
         setBookingData(initialBookingData);
         clearCart();
         
         toast({ 
-          title: 'Booking Created', 
-          description: 'Redirecting to payment...', 
-          variant: 'default' 
+          title: 'Reservation Received!', 
+          description: 'Your reservation has been submitted. You will receive a confirmation email shortly. Our team will review your reservation and send you a payment link within 24 hours.', 
+          variant: 'default',
+          duration: 8000
         });
         
-        // Small delay to show success message
+        // Redirect to home page after short delay
         setTimeout(() => {
-          window.location.href = paymentData.url;
-        }, 1000);
+          window.location.href = '/';
+        }, 3000);
 
       } catch (error: any) {
-        console.error('Error during booking submission:', error);
-        
-        // Rollback: Release reserved stock
-        if (reservedItems.length > 0) {
-          for (const item of reservedItems) {
-            try {
-              await supabase.rpc('release_equipment_stock', {
-                p_equipment_id: item.equipment_id,
-                p_quantity: item.quantity,
-                p_booking_reference: bookingId || `temp_${Date.now()}`
-              });
-            } catch (releaseError) {
-              console.error(`Failed to release stock for equipment ${item.equipment_id}:`, releaseError);
-            }
-          }
-        }
+        console.error('Error during reservation submission:', error);
         
         // Rollback: Delete booking if created
         if (bookingId) {
@@ -364,13 +376,13 @@ const useBooking = () => {
         // Show user-friendly error message
         const errorMessage = error.message || 'An unexpected error occurred';
         toast({ 
-          title: 'Booking Failed', 
+          title: 'Reservation Failed', 
           description: errorMessage, 
           variant: 'destructive' 
         });
       }
     } catch (error: any) {
-      console.error('Unexpected error during booking submission:', error);
+      console.error('Unexpected error during reservation submission:', error);
       toast({ 
         title: 'Unexpected Error', 
         description: 'An unexpected error occurred. Please try again.', 

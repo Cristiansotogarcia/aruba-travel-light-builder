@@ -136,7 +136,16 @@ export const BookingsList = () => {
         .from('bookings')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', bookingId)
-        .select('*, booking_items(*, equipment(*))') // Select the updated booking details
+        .select(`
+          *,
+          booking_items (
+            equipment_name,
+            quantity,
+            equipment_price,
+            subtotal,
+            equipment_id
+          )
+        `)
         .single();
 
       if (error) {

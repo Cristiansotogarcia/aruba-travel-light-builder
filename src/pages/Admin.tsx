@@ -14,6 +14,7 @@ import { EnhancedReportsDashboard } from '@/components/admin/EnhancedReportsDash
 import { SiteSettings } from '@/components/admin/SiteSettings';
 import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
+import { PendingReservations } from '@/components/admin/PendingReservations';
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState(() => {
@@ -38,6 +39,8 @@ const Admin = () => {
         return <AdminDashboard />;
       case 'bookings':
         return <BookingsList />;
+      case 'reservations':
+        return <PendingReservations />;
       case 'customers':
         return <CustomersList />;
       case 'assignment':

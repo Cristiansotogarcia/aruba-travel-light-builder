@@ -26,7 +26,7 @@ export const BookingSummary = ({ days, itemsCount, total }: BookingSummaryProps)
           <div className="border-t pt-2">
             <div className="flex justify-between font-bold text-lg">
               <span>Total:</span>
-              <span>${total}</span>
+              <span>${total.toFixed(2)}</span>
             </div>
           </div>
         </div>

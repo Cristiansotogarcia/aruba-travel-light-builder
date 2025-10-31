@@ -69,10 +69,16 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
             <div>
               <span className="text-gray-500 flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                Address:
+                Accommodation:
               </span>
               <div className="font-medium">{booking.customer_address}</div>
             </div>
+            {booking.room_number && (
+              <div>
+                <span className="text-gray-500">Room Number:</span>
+                <div className="font-medium">{booking.room_number}</div>
+              </div>
+            )}
           </div>
         </div>
         {booking.customer_comment && (

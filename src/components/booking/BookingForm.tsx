@@ -1,18 +1,19 @@
-
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DateSelection } from './DateSelection';
-import EquipmentSelection from './EquipmentSelection';
+import { DeliverySlotSelector } from './DeliverySlotSelector';
 import { CustomerInformation } from './CustomerInformation';
 import { BookingSummary } from './BookingSummary';
 import useBooking from '@/hooks/useBooking';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
-import { AlertCircle, CreditCard, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, ShoppingCart } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface FormValidationErrors {
   dates?: string;
+  deliverySlot?: string;
   equipment?: string;
   customer?: string;
   general?: string;
@@ -22,33 +23,26 @@ export const BookingForm = () => {
   const {
     bookingData,
     products,
-    selectedEquipment,
-    quantity,
     isSubmitting,
-    setSelectedEquipment,
-    setQuantity,
     updateCustomerInfo,
     updateDates,
     calculateDays,
     calculateTotal,
-    submitBooking
+    submitBooking,
+    setBookingData
   } = useBooking();
-  const { items } = useCart();
   
+  const { items } = useCart();
+  const navigate = useNavigate();
   const [formErrors, setFormErrors] = useState<FormValidationErrors>({});
   const [isValidating, setIsValidating] = useState(false);
 
-  const [searchParams] = useSearchParams();
-  const equipmentId = searchParams.get('equipmentId');
-
+  // Redirect to cart if empty
   useEffect(() => {
-    if (equipmentId && products.length > 0) {
-      const match = products.find(p => p.id === equipmentId);
-      if (match) {
-        setSelectedEquipment(equipmentId);
-      }
+    if (items.length === 0) {
+      navigate('/cart');
     }
-  }, [equipmentId, products, setSelectedEquipment]);
+  }, [items.length, navigate]);
 
   // Validate form before submission
   const validateForm = (): FormValidationErrors => {
@@ -63,9 +57,14 @@ export const BookingForm = () => {
       errors.dates = 'Start date cannot be in the past';
     }
     
+    // Delivery slot validation
+    if (!bookingData.deliverySlot) {
+      errors.deliverySlot = 'Please select a delivery time slot';
+    }
+    
     // Equipment validation
     if (items.length === 0) {
-      errors.equipment = 'Please select at least one equipment item';
+      errors.equipment = 'Your cart is empty. Please add items before booking.';
     } else {
       // Check for stock availability
       const stockIssues = items.filter(item => {
@@ -123,6 +122,12 @@ export const BookingForm = () => {
   }, [bookingData.startDate, bookingData.endDate, formErrors.dates]);
   
   useEffect(() => {
+    if (formErrors.deliverySlot && bookingData.deliverySlot) {
+      setFormErrors(prev => ({ ...prev, deliverySlot: undefined }));
+    }
+  }, [bookingData.deliverySlot, formErrors.deliverySlot]);
+  
+  useEffect(() => {
     if (formErrors.equipment && items.length > 0) {
       setFormErrors(prev => ({ ...prev, equipment: undefined }));
     }
@@ -136,8 +141,11 @@ export const BookingForm = () => {
 
   const showSummary = items.length > 0 && bookingData.startDate && bookingData.endDate;
   const hasErrors = Object.values(formErrors).some(error => error);
-  const isFormDisabled = items.length === 0 || !bookingData.startDate || !bookingData.endDate || isSubmitting || isValidating;
+  const isFormDisabled = items.length === 0 || !bookingData.startDate || !bookingData.endDate || !bookingData.deliverySlot || isSubmitting || isValidating;
 
+  if (items.length === 0) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -149,6 +157,38 @@ export const BookingForm = () => {
             <AlertDescription>{formErrors.general}</AlertDescription>
           </Alert>
         )}
+
+        {/* Cart Items Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Your Cart ({items.length} {items.length === 1 ? 'item' : 'items'})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {items.map(item => (
+                <div key={item.equipment_id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{item.equipment_name}</p>
+                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                  </div>
+                  <p className="font-semibold text-primary">${item.equipment_price.toFixed(2)}/day</p>
+                </div>
+              ))}
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-2"
+                onClick={() => navigate('/cart')}
+              >
+                Edit Cart
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
         {/* Date Selection */}
         <div className="space-y-2">
@@ -166,23 +206,25 @@ export const BookingForm = () => {
           )}
         </div>
 
-        {/* Equipment Selection */}
-        <div className="space-y-2">
-          <EquipmentSelection
-            products={products}
-            selectedEquipment={selectedEquipment}
-            quantity={quantity}
-            setSelectedEquipment={setSelectedEquipment}
-            setQuantity={setQuantity}
-            currentSelectedDate={bookingData.startDate ? new Date(bookingData.startDate) : undefined}
-          />
-          {formErrors.equipment && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{formErrors.equipment}</AlertDescription>
-            </Alert>
-          )}
-        </div>
+        {/* Delivery Slot Selection */}
+        {bookingData.startDate && (
+          <div className="space-y-2">
+            <DeliverySlotSelector
+              selectedDate={bookingData.startDate}
+              selectedSlot={bookingData.deliverySlot}
+              onSlotChange={(slot) => {
+                setBookingData(prev => ({ ...prev, deliverySlot: slot }));
+              }}
+              disabled={isSubmitting || isValidating}
+            />
+            {formErrors.deliverySlot && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{formErrors.deliverySlot}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
 
         {/* Customer Information */}
         <div className="space-y-2">
@@ -212,7 +254,7 @@ export const BookingForm = () => {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Please fix the errors above before proceeding to payment.
+              Please fix the errors above before submitting your reservation.
             </AlertDescription>
           </Alert>
         )}
@@ -228,20 +270,19 @@ export const BookingForm = () => {
           {isSubmitting || isValidating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isValidating ? 'Validating...' : 'Processing...'}
+              {isValidating ? 'Validating...' : 'Submitting...'}
             </>
           ) : (
             <>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Proceed to Payment
+              Submit Reservation
             </>
           )}
         </Button>
         
         {/* Form Status Indicator */}
-        {!hasErrors && showSummary && (
+        {!hasErrors && showSummary && bookingData.deliverySlot && (
           <div className="text-center text-sm text-muted-foreground">
-            ✓ All information is valid. Ready to proceed with payment.
+            ✓ All information is valid. Ready to submit your reservation.
           </div>
         )}
       </form>

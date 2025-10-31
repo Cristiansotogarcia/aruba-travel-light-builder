@@ -143,7 +143,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
             <Badge className={getStatusColor(booking.status)}>
               {booking.status === 'undeliverable' ? 'Undeliverable' : booking.status}
             </Badge>
-            <span className="font-bold text-xl text-gray-900">${booking.total_amount}</span>
+            <span className="font-bold text-xl text-gray-900">${booking.total_amount.toFixed(2)}</span>
           </div>
         </div>
 
@@ -181,7 +181,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
               {booking.booking_items?.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
                   <span>{item.equipment_name} × {item.quantity}</span>
-                  <span>${item.subtotal}</span>
+                  <span>${item.subtotal.toFixed(2)}</span>
                 </div>
               ))}
             </div>

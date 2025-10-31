@@ -9,6 +9,7 @@ export interface Product {
   name: string;
   description: string | null | undefined;
   price_per_day: number;
+  price_per_week?: number; // Weekly rate (applies for 5-7 day bookings)
   category: string;
   images: string[];
   stock_quantity: number; // Made non-optional
@@ -24,6 +25,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  room_number: string;
   comment: string;
 }
 
@@ -33,6 +35,7 @@ export interface BookingFormData {
   endDate: string;
   items: CalendarBookingItemType[]; // Use the directly imported alias
   customerInfo: CustomerInfo;
+  deliverySlot?: 'morning' | 'afternoon';
 }
 
 // Defines the structure for data submitted to Supabase 'bookings' table
@@ -42,6 +45,7 @@ export interface SupabaseBookingData {
   customer_email: string;
   customer_phone: string;
   customer_address?: string;
+  room_number?: string | null;
   customer_comment?: string | null;
   start_date: string;
   end_date: string;

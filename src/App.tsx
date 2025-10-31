@@ -70,16 +70,11 @@ const App = () => {
                     <Route path="/equipment" element={<Equipment />} />
                     <Route path="/equipment/:slug" element={<EquipmentItem />} />
                     <Route path="/login" element={<Login />} />
+                    
+                    {/* Guest Booking - No Authentication Required */}
+                    <Route path="/book" element={<Book />} />
 
                     {/* Protected Routes */}
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["Customer", "Booker", "Admin", "SuperUser"]} />
-                      }
-                    >
-                      <Route path="/book" element={<Book />} />
-                    </Route>
-
                     <Route
                       element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
                     >
