@@ -40,8 +40,8 @@ const EquipmentItem = () => {
           category: p.equipment_category?.name || 'Uncategorized',
           price: p.price_per_day,
 
-          image: p.image_url || (p.images && p.images[0]) || '',
-          images: p.images || (p.image_url ? [p.image_url] : []),
+          image: (p.images && p.images[0]) || '',
+          images: p.images || [],
 
           description: p.description || '',
           availability,
@@ -168,15 +168,6 @@ const EquipmentItem = () => {
             ${equipment.price.toFixed(2)}/day | ${Number(equipment.price * 5).toFixed(2)}/week
           </div>
           
-          {/* Debug Info - Stock and Availability */}
-          <div className="bg-gray-100 p-3 rounded mb-4 text-sm">
-            <div className="font-semibold text-gray-700 mb-1">Debug Info:</div>
-            <div>Stock Quantity: {products.find(p => p.id === equipment.id)?.stock_quantity ?? 'N/A'}</div>
-            <div>Reserved Quantity: {products.find(p => p.id === equipment.id)?.reserved_quantity ?? 'N/A'}</div>
-            <div>Availability Status: {products.find(p => p.id === equipment.id)?.availability_status ?? 'N/A'}</div>
-            <div>Availability Boolean: {products.find(p => p.id === equipment.id)?.availability ? 'true' : 'false'}</div>
-            <div>Calculated Availability: {equipment.availability}</div>
-          </div>
           {equipment.features.length > 0 && (
             <div className="text-sm">
               <p className="font-medium">Features:</p>
