@@ -132,7 +132,7 @@ export const ProductManagement = () => {
       toast({ title: "Error", description: "Please select a category.", variant: "destructive" });
       return;
     }
-    const dataToSave = {
+    const dataToSave: Record<string, any> = {
       name: formState.name,
       description: DOMPurify.sanitize(formState.description),
       price_per_day: formState.price_per_day,
@@ -141,19 +141,40 @@ export const ProductManagement = () => {
       featured: formState.featured,
       sort_order: formState.sort_order,
       images: formState.images,
+      image_url: formState.images[0] || null,
       category_id: formState.category_id,
       sub_category_id: formState.sub_category_id || null,
       updated_at: new Date().toISOString(),
     };
 
-    let error;
-    if (editingProduct) {
-      ({ error } = await supabase.from('equipment').update(dataToSave).eq('id', editingProduct.id));
-    } else {
-      ({ error } = await supabase.from('equipment').insert([dataToSave]));
+    const saveProduct = async (payload: Record<string, any>) => {
+      if (editingProduct) {
+        return supabase.from('equipment').update(payload).eq('id', editingProduct.id);
+      }
+      return supabase.from('equipment').insert([payload]);
+    };
+
+    let { error } = await saveProduct(dataToSave);
+
+    // Fallbacks for different database schemas
+    if (error && error.message) {
+      // Handle legacy databases without images column
+      if (error.message.includes('column "images"')) {
+        const fallbackData = { ...dataToSave };
+        delete fallbackData.images;
+        ({ error } = await saveProduct(fallbackData));
+      }
+
+      // Handle databases without image_url column
+      if (error && error.message.includes('column "image_url"')) {
+        const fallbackData = { ...dataToSave };
+        delete fallbackData.image_url;
+        ({ error } = await saveProduct(fallbackData));
+      }
     }
 
     if (error) {
+      console.error('Error saving product:', error);
       toast({ title: "Error", description: "Failed to save product", variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Product saved" });
