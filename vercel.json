@@ -1,8 +1,20 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/equipment-seo.js": {
+      "runtime": "@vercel/node"
+    },
+    "api/sitemap.js": {
+      "runtime": "@vercel/node"
+    }
+  }
 }
