@@ -60,22 +60,22 @@ export const Header = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Equipment</NavigationMenuTrigger>
-                  <NavigationMenuContent>
+                  <NavigationMenuContent className="max-h-[60vh] overflow-y-auto">
                     <div className="grid gap-3 p-4 w-[500px]">
                       <NavigationMenuLink asChild>
-                        <Link 
-                          to="/equipment" 
+                        <Link
+                          to="/equipment"
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
                           <div className="text-sm font-medium leading-none">All Equipment</div>
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">Browse our complete equipment catalog</p>
                         </Link>
                       </NavigationMenuLink>
-                      
+
                       {!categoriesLoading && categories.map((category) => (
                         <div key={category.id} className="space-y-2">
                           <NavigationMenuLink asChild>
-                            <Link 
+                            <Link
                               to={`/equipment?category=${encodeURIComponent(category.name)}`}
                               className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                             >
@@ -85,12 +85,12 @@ export const Header = () => {
                               </p>
                             </Link>
                           </NavigationMenuLink>
-                          
+
                           {category.sub_categories.length > 0 && (
                             <div className="ml-4 space-y-1">
                               {category.sub_categories.map((subCategory) => (
                                 <NavigationMenuLink key={subCategory.id} asChild>
-                                  <Link 
+                                  <Link
                                     to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
                                     className="block select-none rounded-md p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground text-muted-foreground"
                                   >

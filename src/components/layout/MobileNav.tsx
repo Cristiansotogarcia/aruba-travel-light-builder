@@ -64,7 +64,7 @@ const MobileNav = () => {
           <span className="sr-only">Open menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left">
+      <SheetContent side="left" className="max-h-[100vh] overflow-y-auto">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-lg font-semibold">Menu</h2>
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
