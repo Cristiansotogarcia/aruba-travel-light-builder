@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { SEO } from '@/components/common/SEO';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
@@ -138,10 +139,16 @@ const About = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* SEO Meta Tags */}
+      <SEO
+        title={`${aboutContent?.title || 'About Us'} - Travel Light Aruba`}
+        description={aboutContent?.full_description?.substring(0, 155) || 'Learn about Travel Light Aruba - your trusted partner for premium beach and baby equipment rentals in Aruba with exceptional service.'}
+        pageSlug="about"
+      />
+      <Header />
+      <main className="flex-1">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center mb-8">
               <Skeleton className="h-12 w-64 mx-auto mb-4" />
