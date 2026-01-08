@@ -95,8 +95,22 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+  }
+
+  /* Ensure proper mobile scrolling */
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+
+  /* Fix for mobile viewport height issues */
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
   }
 }
 

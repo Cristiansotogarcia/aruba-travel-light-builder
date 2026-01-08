@@ -185,7 +185,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
 
       {/* 🔵 MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg sm:max-w-xl">
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto [&>button]:h-11 [&>button]:w-11 [&>button]:min-h-[44px] [&>button]:min-w-[44px]">
           <DialogHeader>
             <DialogTitle>{equipment.name}</DialogTitle>
           </DialogHeader>
@@ -241,6 +241,12 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               </ul>
             </div>
           )}
+
+          <div className="flex justify-end mt-6 pt-4 border-t">
+            <Button onClick={() => setOpen(false)} variant="outline" className="min-h-[44px]">
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
