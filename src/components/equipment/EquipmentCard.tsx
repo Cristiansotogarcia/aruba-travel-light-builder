@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
@@ -185,10 +185,24 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
 
       {/* 🔵 MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto [&>button]:h-11 [&>button]:w-11 [&>button]:min-h-[44px] [&>button]:min-w-[44px]">
-          <DialogHeader>
-            <DialogTitle>{equipment.name}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto [&>button]:h-11 [&>button]:w-11 [&>button]:min-h-[44px] [&>button]:min-w-[44px] [&>button]:top-2 [&>button]:right-2 [&>button]:z-10 w-[95vw] sm:w-auto h-[95vh] sm:h-auto">
+          {/* Fixed header with close button - always visible */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 -mx-6 -mt-6 px-6 py-4 z-30 flex items-center justify-between">
+            <DialogTitle className="text-base sm:text-lg font-semibold truncate pr-4">{equipment.name}</DialogTitle>
+            <button
+              onClick={() => setOpen(false)}
+              className="flex-shrink-0 bg-gray-100 hover:bg-gray-200 rounded-full p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+              aria-label="Close"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto pt-4">
 
           {equipment.images.length > 0 ? (
             <Carousel className="w-full mb-4">
@@ -246,6 +260,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             <Button onClick={() => setOpen(false)} variant="outline" className="min-h-[44px]">
               Close
             </Button>
+          </div>
           </div>
         </DialogContent>
       </Dialog>
