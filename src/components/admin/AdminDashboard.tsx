@@ -128,72 +128,72 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
                 <p className="text-2xl font-bold text-foreground">{stats.totalBookings}</p>
               </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="h-9 w-9 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Calendar className="h-4.5 w-4.5 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pending Reviews</p>
                 <p className="text-2xl font-bold text-foreground">{stats.pendingReviews}</p>
               </div>
-              <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Clock className="h-6 w-6 text-amber-600" />
+              <div className="h-9 w-9 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Clock className="h-4.5 w-4.5 text-amber-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
                 <p className="text-2xl font-bold text-foreground">{stats.pendingPayments}</p>
               </div>
-              <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Package className="h-6 w-6 text-orange-600" />
+              <div className="h-9 w-9 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Package className="h-4.5 w-4.5 text-orange-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold text-foreground">${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
-              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-600" />
+              <div className="h-9 w-9 bg-green-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-4.5 w-4.5 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Customers</p>
                 <p className="text-2xl font-bold text-foreground">{stats.uniqueCustomers}</p>
               </div>
-              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="h-6 w-6 text-purple-600" />
+              <div className="h-9 w-9 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Users className="h-4.5 w-4.5 text-purple-600" />
               </div>
             </div>
           </CardContent>
@@ -203,7 +203,7 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
       {/* Quick Navigation */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-5 space-y-3">
+          <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Bookings</p>
@@ -211,14 +211,18 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
               </div>
               <Calendar className="h-6 w-6 text-blue-600" />
             </div>
-            <Button onClick={() => handleNavigate('bookings')} className="w-full" variant="outline">
+            <Button
+              onClick={() => handleNavigate('bookings')}
+              className="w-full h-7 text-xs font-semibold"
+              variant="secondary"
+            >
               View Bookings
             </Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-5 space-y-3">
+          <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pending Reviews</p>
@@ -226,14 +230,18 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
               </div>
               <Clock className="h-6 w-6 text-amber-600" />
             </div>
-            <Button onClick={() => handleNavigate('pending-reservations')} className="w-full" variant="outline">
+            <Button
+              onClick={() => handleNavigate('pending-reservations')}
+              className="w-full h-7 text-xs font-semibold"
+              variant="secondary"
+            >
               Review Requests
             </Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-5 space-y-3">
+          <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Invoices</p>
@@ -241,14 +249,18 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
               </div>
               <FileText className="h-6 w-6 text-emerald-600" />
             </div>
-            <Button onClick={() => handleNavigate('invoices')} className="w-full" variant="outline">
+            <Button
+              onClick={() => handleNavigate('invoices')}
+              className="w-full h-7 text-xs font-semibold"
+              variant="secondary"
+            >
               Open Invoices
             </Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-5 space-y-3">
+          <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Analytics</p>
@@ -256,7 +268,11 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
               </div>
               <ArrowUpRight className="h-6 w-6 text-indigo-600" />
             </div>
-            <Button onClick={() => handleNavigate('reports')} className="w-full" variant="outline">
+            <Button
+              onClick={() => handleNavigate('reports')}
+              className="w-full h-7 text-xs font-semibold"
+              variant="secondary"
+            >
               View Reports
             </Button>
           </CardContent>
