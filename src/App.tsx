@@ -71,16 +71,47 @@ const ScrollLockGuard = () => {
         return;
       }
 
-      body.style.removeProperty("overflow");
-      body.style.removeProperty("padding-right");
-      html.style.removeProperty("overflow");
-      html.style.removeProperty("padding-right");
+      const cleanupStyle = (element: HTMLElement) => {
+        element.style.removeProperty("overflow");
+        element.style.removeProperty("padding-right");
+        element.style.removeProperty("position");
+        element.style.removeProperty("top");
+        element.style.removeProperty("left");
+        element.style.removeProperty("right");
+        element.style.removeProperty("width");
+        element.style.removeProperty("height");
+        element.style.removeProperty("touch-action");
+        element.style.removeProperty("transform");
+      };
+
+      cleanupStyle(body);
+      cleanupStyle(html);
       body.removeAttribute("data-scroll-locked");
       html.removeAttribute("data-scroll-locked");
     };
 
     const timeouts: number[] = [];
+    const isScrollLocked = () => {
+      const body = document.body;
+      const html = document.documentElement;
+      if (!body || !html) {
+        return false;
+      }
+
+      return (
+        body.hasAttribute("data-scroll-locked") ||
+        html.hasAttribute("data-scroll-locked") ||
+        body.style.overflow === "hidden" ||
+        html.style.overflow === "hidden" ||
+        body.style.position === "fixed"
+      );
+    };
+
     const scheduleRelease = () => {
+      if (!isScrollLocked()) {
+        return;
+      }
+
       releaseScrollLock();
       timeouts.push(window.setTimeout(releaseScrollLock, 150));
       timeouts.push(window.setTimeout(releaseScrollLock, 600));
@@ -89,10 +120,14 @@ const ScrollLockGuard = () => {
     scheduleRelease();
     window.addEventListener("resize", scheduleRelease);
     window.addEventListener("orientationchange", scheduleRelease);
+    const observer = new MutationObserver(scheduleRelease);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
 
     return () => {
       window.removeEventListener("resize", scheduleRelease);
       window.removeEventListener("orientationchange", scheduleRelease);
+      observer.disconnect();
       timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
     };
   }, [location.pathname]);

@@ -61,10 +61,22 @@ const MobileNav = () => {
 
   useEffect(() => {
     if (isOpen || typeof document === "undefined") return;
-    document.body.style.removeProperty("overflow");
-    document.body.style.removeProperty("padding-right");
+    const cleanupStyle = (element: HTMLElement) => {
+      element.style.removeProperty("overflow");
+      element.style.removeProperty("padding-right");
+      element.style.removeProperty("position");
+      element.style.removeProperty("top");
+      element.style.removeProperty("left");
+      element.style.removeProperty("right");
+      element.style.removeProperty("width");
+      element.style.removeProperty("height");
+      element.style.removeProperty("touch-action");
+      element.style.removeProperty("transform");
+    };
+
+    cleanupStyle(document.body);
+    cleanupStyle(document.documentElement);
     document.body.removeAttribute("data-scroll-locked");
-    document.documentElement.style.removeProperty("overflow");
     document.documentElement.removeAttribute("data-scroll-locked");
   }, [isOpen]);
 
