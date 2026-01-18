@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -48,6 +48,58 @@ const queryClient = new QueryClient({
   },
 });
 
+const ScrollLockGuard = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const releaseScrollLock = () => {
+      const hasOpenDialog = document.querySelector(
+        '[data-state="open"][data-radix-dialog-content], [data-state="open"][data-radix-dialog-overlay]'
+      );
+
+      if (hasOpenDialog) {
+        return;
+      }
+
+      const body = document.body;
+      const html = document.documentElement;
+      if (!body || !html) {
+        return;
+      }
+
+      body.style.removeProperty("overflow");
+      body.style.removeProperty("padding-right");
+      html.style.removeProperty("overflow");
+      html.style.removeProperty("padding-right");
+      body.removeAttribute("data-scroll-locked");
+      html.removeAttribute("data-scroll-locked");
+    };
+
+    const timeouts: number[] = [];
+    const scheduleRelease = () => {
+      releaseScrollLock();
+      timeouts.push(window.setTimeout(releaseScrollLock, 150));
+      timeouts.push(window.setTimeout(releaseScrollLock, 600));
+    };
+
+    scheduleRelease();
+    window.addEventListener("resize", scheduleRelease);
+    window.addEventListener("orientationchange", scheduleRelease);
+
+    return () => {
+      window.removeEventListener("resize", scheduleRelease);
+      window.removeEventListener("orientationchange", scheduleRelease);
+      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    };
+  }, [location.pathname]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -66,6 +118,7 @@ const App = () => {
                       v7_relativeSplatPath: true,
                     }}
                   >
+                    <ScrollLockGuard />
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
