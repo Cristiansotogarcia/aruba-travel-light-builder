@@ -9,7 +9,7 @@ export interface PerformanceMetric {
   value: number;
   unit: string;
   timestamp: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PerformanceMark {
@@ -17,7 +17,7 @@ export interface PerformanceMark {
   startTime: number;
   endTime?: number;
   duration?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PerformanceReport {
@@ -46,7 +46,7 @@ class PerformanceMonitor {
   /**
    * Start timing an operation
    */
-  startTiming(name: string, metadata?: Record<string, any>): void {
+  startTiming(name: string, metadata?: Record<string, unknown>): void {
     const mark: PerformanceMark = {
       name,
       startTime: performance.now(),
@@ -284,7 +284,7 @@ class PerformanceMonitor {
 /**
  * Performance decorator for functions
  */
-export function measurePerformance<T extends (...args: any[]) => any>(
+export function measurePerformance<T extends (...args: unknown[]) => unknown>(
   name: string,
   fn: T
 ): T {
@@ -313,7 +313,7 @@ export function measurePerformance<T extends (...args: any[]) => any>(
 /**
  * Performance decorator for async functions
  */
-export function measureAsyncPerformance<T extends (...args: any[]) => Promise<any>>(
+export function measureAsyncPerformance<T extends (...args: unknown[]) => Promise<unknown>>(
   name: string,
   fn: T
 ): T {
@@ -334,7 +334,7 @@ export function measureAsyncPerformance<T extends (...args: any[]) => Promise<an
 /**
  * Debounce function for performance optimization
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -349,7 +349,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle function for performance optimization
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -367,7 +367,7 @@ export function throttle<T extends (...args: any[]) => any>(
 /**
  * Batch function calls for performance optimization
  */
-export function batchCalls<T extends (...args: any[]) => any>(
+export function batchCalls<T extends (...args: unknown[]) => unknown>(
   fn: T,
   batchSize: number = 10,
   delay: number = 100
@@ -405,7 +405,10 @@ export const memoryMonitor = {
    */
   getUsage(): { used: number; total: number; percentage: number } | null {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory;
+      if (!memory) {
+        return null;
+      }
       return {
         used: memory.usedJSHeapSize,
         total: memory.totalJSHeapSize,
@@ -509,7 +512,7 @@ export const perf = {
   /**
    * Record a custom metric
    */
-  record: (name: string, value: number, unit: string = 'ms', metadata?: Record<string, any>) => {
+  record: (name: string, value: number, unit: string = 'ms', metadata?: Record<string, unknown>) => {
     performanceMonitor.recordMetric({
       name,
       value,

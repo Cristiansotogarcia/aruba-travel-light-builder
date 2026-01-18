@@ -174,7 +174,7 @@ export const CreateUserDialog = ({ onUserCreated, onRefreshProfiles }: CreateUse
             <Label htmlFor="role">Role</Label>
             <Select
               value={newUser.role}
-              onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}
+              onValueChange={(value) => setNewUser({ ...newUser, role: value as 'Driver' | 'Booker' | 'Admin' | 'SuperUser' })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />

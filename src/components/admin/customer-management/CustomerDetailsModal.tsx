@@ -215,7 +215,7 @@ export const CustomerDetailsModal = ({
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold">${booking.total_amount}</div>
+                        <div className="text-lg font-bold">${Number(booking.total_amount).toFixed(2)}</div>
                         <div className="text-xs text-gray-500">
                           #{booking.id.substring(0, 8)}
                         </div>
@@ -244,7 +244,7 @@ export const CustomerDetailsModal = ({
                       <div className="mb-3">
                         <div className="text-sm font-medium text-gray-700 mb-2">Equipment:</div>
                         <div className="space-y-1">
-                          {booking.booking_items.map((item: any, index: number) => (
+                          {booking.booking_items.map((item, index) => (
                             <div key={index} className="flex justify-between text-sm bg-gray-50 p-2 rounded">
                               <span>{item.equipment_name} × {item.quantity}</span>
                               <span>${item.subtotal}</span>

@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,15 +28,7 @@ export const BookingsList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient(); // Initialize queryClient
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  useEffect(() => {
-    filterBookings();
-  }, [bookings, searchTerm, statusFilter]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -56,12 +48,14 @@ export const BookingsList = () => {
       // Cast status to BookingStatus
       const typedBookings = data ? data.map(b => ({ ...b, status: b.status as BookingStatus })) : [];
       setBookings(typedBookings);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching bookings:', error);
-      let description = "Failed to fetch bookings.";
-      if (error && error.message && error.message.includes('permission denied')) {
+      let description = 'Failed to fetch bookings.';
+      const message = error instanceof Error ? error.message : '';
+      const code = typeof (error as { code?: unknown }).code === 'string' ? (error as { code?: string }).code : '';
+      if (message.includes('permission denied')) {
         description = "You do not have permission to view all bookings. Please contact an administrator if you believe this is an error.";
-      } else if (error && error.code === 'PGRST116') { // Example: Supabase RLS violation code
+      } else if (code === 'PGRST116') { // Example: Supabase RLS violation code
         description = "Access to some bookings is restricted due to security policies.";
       }
       toast({
@@ -72,9 +66,9 @@ export const BookingsList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterBookings = () => {
+  const filterBookings = useCallback(() => {
     let filtered = bookings;
 
     if (searchTerm) {
@@ -90,7 +84,26 @@ export const BookingsList = () => {
     }
 
     setFilteredBookings(filtered);
-  };
+  }, [bookings, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    filterBookings();
+  }, [filterBookings]);
+
+  useEffect(() => {
+    if (!bookings.length) return;
+    const openBookingId = sessionStorage.getItem('admin:openBookingId');
+    if (!openBookingId) return;
+    const bookingToOpen = bookings.find((booking) => booking.id === openBookingId);
+    if (bookingToOpen) {
+      setViewingBooking(bookingToOpen);
+      sessionStorage.removeItem('admin:openBookingId');
+    }
+  }, [bookings]);
 
   const updateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => { // Changed newStatus type
     try {
@@ -98,7 +111,7 @@ export const BookingsList = () => {
         .from('bookings')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', bookingId)
-        .select('*, booking_items(*, equipment(*))') // Select the updated booking details
+        .select('*, booking_items(equipment_name, quantity, equipment_price, subtotal, equipment_id)') // Select the updated booking details
         .single();
 
       if (error) {
@@ -155,6 +168,68 @@ export const BookingsList = () => {
         variant: "destructive"
       });
       console.error('Unexpected error in updateBookingStatus:', err);
+    }
+  };
+
+  const confirmPaymentReceived = async (booking: Booking) => {
+    try {
+      const processedAt = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_status: 'paid',
+          updated_at: processedAt
+        })
+        .eq('id', booking.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      const { error: paymentRecordError } = await supabase
+        .from('payment_records')
+        .insert({
+          booking_id: booking.id,
+          amount: booking.total_amount,
+          currency: 'USD',
+          status: 'paid',
+          processed_at: processedAt
+        });
+
+      if (paymentRecordError) {
+        console.error('Error creating payment record:', paymentRecordError);
+      }
+
+      try {
+        await supabase.functions.invoke('send-invoice-email', {
+          body: {
+            booking_id: booking.id,
+            customer_name: booking.customer_name,
+            customer_email: booking.customer_email,
+            total_amount: booking.total_amount,
+            processed_at: processedAt,
+            items: booking.booking_items || []
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send invoice email:', emailError);
+      }
+
+      toast({
+        title: "Payment Confirmed",
+        description: "Invoice sent to the customer.",
+      });
+
+      fetchBookings();
+    } catch (error: unknown) {
+      console.error('Error confirming payment:', error);
+      const message = error instanceof Error ? error.message : 'Failed to confirm payment.';
+      toast({
+        title: "Payment Confirmation Failed",
+        description: message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -250,6 +325,7 @@ export const BookingsList = () => {
           onClose={handleCloseView}
           onStatusUpdate={updateBookingStatus}
           onEdit={handleEditBooking}
+          onPaymentReceived={confirmPaymentReceived}
           onBookingDeleted={fetchBookings}
           open={!!viewingBooking}
         />

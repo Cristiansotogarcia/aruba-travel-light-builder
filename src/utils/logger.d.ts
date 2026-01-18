@@ -10,9 +10,9 @@ declare enum LogLevel {
 interface LogEntry {
     level: LogLevel;
     message: string;
-    data?: any;
+    data?: unknown;
     timestamp: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     userId?: string;
     sessionId?: string;
 }
@@ -40,10 +40,10 @@ declare class Logger {
     private logToConsole;
     private logToStorage;
     private logToRemote;
-    debug(message: string, data?: any, context?: Record<string, any>): void;
-    info(message: string, data?: any, context?: Record<string, any>): void;
-    warn(message: string, data?: any, context?: Record<string, any>): void;
-    error(message: string, data?: any, context?: Record<string, any>): void;
+    debug(message: string, data?: unknown, context?: Record<string, unknown>): void;
+    info(message: string, data?: unknown, context?: Record<string, unknown>): void;
+    warn(message: string, data?: unknown, context?: Record<string, unknown>): void;
+    error(message: string, data?: unknown, context?: Record<string, unknown>): void;
     time(label: string): void;
     timeEnd(label: string): void;
     group(label: string): void;

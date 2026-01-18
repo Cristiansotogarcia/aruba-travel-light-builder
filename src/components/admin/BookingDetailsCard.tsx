@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Calendar, User, Phone, MapPin, Package, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { getStatusColor } from './calendar/statusUtils';
+import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import { Booking } from './calendar/types';
 
 interface BookingDetailsCardProps {
@@ -19,7 +19,7 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
         <div className="flex justify-between items-start">
           <div>
             <Badge className={getStatusColor(booking.status)}>
-              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1).replace('_', ' ')}
+              {getStatusLabel(booking.status)}
             </Badge>
             <div className="flex items-center gap-2 mt-3 text-gray-600">
               <Calendar className="h-4 w-4" />
@@ -29,8 +29,12 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">${booking.total_amount}</div>
+            <div className="text-2xl font-bold">${Number(booking.total_amount).toFixed(2)}</div>
             <div className="text-sm text-gray-500">Total Amount</div>
+            <div className="mt-2 text-xs text-gray-500 uppercase tracking-wide">Payment Status</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+            </div>
           </div>
         </div>
 

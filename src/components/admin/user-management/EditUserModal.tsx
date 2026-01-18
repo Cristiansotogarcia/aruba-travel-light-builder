@@ -94,7 +94,7 @@ export const EditUserModal = ({ open, onClose, user, onUserUpdated }: EditUserMo
           
           <div>
             <Label htmlFor="edit-role">Role</Label>
-            <Select value={role} onValueChange={(value: any) => setRole(value)}>
+            <Select value={role} onValueChange={(value) => setRole(value as 'SuperUser' | 'Admin' | 'Booker' | 'Driver')}>
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>

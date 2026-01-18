@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Users, Eye, TrendingUp, ExternalLink } from 'lucide-react';
 import { umamiService } from '@/lib/services/umamiService';
+import type { Database } from '@/types/supabase';
 
 // Enhanced interfaces
 interface BookingTrendData {
@@ -95,6 +96,222 @@ interface EnhancedAnalyticsData {
   };
 }
 
+type ProductRow = Database['public']['Tables']['equipment']['Row'];
+type BookingRow = Database['public']['Tables']['bookings']['Row'] & {
+  booking_items?: Array<{
+    equipment_id: string;
+    equipment_name: string;
+    quantity: number;
+  }> | null;
+};
+
+const processBookingDataForTrends = (bookings: BookingRow[]): BookingTrendData[] => {
+  if (!bookings || bookings.length === 0) return [];
+  const endDate = new Date();
+  const startDate = subDays(endDate, 29);
+  const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
+  const bookingsByDay: { [key: string]: number } = {};
+  
+  dateRange.forEach(day => {
+    bookingsByDay[format(day, 'yyyy-MM-dd')] = 0;
+  });
+  
+  bookings.forEach(booking => {
+    try {
+      const bookingStartDate = parseISO(booking.start_date);
+      const formattedStartDate = format(bookingStartDate, 'yyyy-MM-dd');
+      if (Object.prototype.hasOwnProperty.call(bookingsByDay, formattedStartDate)) {
+        bookingsByDay[formattedStartDate]++;
+      }
+    } catch (e) {
+      console.error('Error parsing booking start_date:', booking.start_date, e);
+    }
+  });
+  
+  return Object.entries(bookingsByDay)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)));
+};
+
+const processBookingDataForRevenue = (bookings: BookingRow[]): RevenueTrendData[] => {
+  if (!bookings || bookings.length === 0) return [];
+
+  const monthlyRevenue: { [key: string]: number } = {};
+  const today = new Date();
+  for (let i = 0; i < 12; i++) {
+    const monthDate = subMonths(today, i);
+    const monthKey = format(startOfMonth(monthDate), 'yyyy-MM');
+    monthlyRevenue[monthKey] = 0;
+  }
+
+  bookings.forEach(booking => {
+    try {
+      const bookingDate = parseISO(booking.start_date);
+      const monthKey = format(startOfMonth(bookingDate), 'yyyy-MM');
+      if (Object.prototype.hasOwnProperty.call(monthlyRevenue, monthKey)) {
+        monthlyRevenue[monthKey] += booking.total_amount || 0;
+      }
+    } catch (e) {
+      console.error('Error parsing booking start_date:', booking.start_date, e);
+    }
+  });
+
+  return Object.entries(monthlyRevenue)
+    .map(([month, revenue]) => ({
+      month: format(parseISO(month + '-01'), 'MMM yyyy'),
+      revenue,
+    }))
+    .sort((a, b) => compareAsc(parseISO(a.month), parseISO(b.month)));
+};
+
+const processDataForEquipmentUtilization = (bookings: BookingRow[], products: ProductRow[]): EquipmentUtilizationData[] => {
+  if (!bookings || bookings.length === 0 || !products || products.length === 0) return [];
+
+  const utilizationMap: { [productName: string]: number } = {};
+  products.forEach(product => {
+    utilizationMap[product.name] = 0;
+  });
+
+  bookings.forEach(booking => {
+    booking.booking_items?.forEach((item: { equipment_name: string; quantity: number }) => {
+      if (item.equipment_name && Object.prototype.hasOwnProperty.call(utilizationMap, item.equipment_name)) {
+        utilizationMap[item.equipment_name] += item.quantity || 0;
+      }
+    });
+  });
+
+  return Object.entries(utilizationMap)
+    .map(([name, bookedQuantity]) => ({ name, bookedQuantity }))
+    .sort((a, b) => b.bookedQuantity - a.bookedQuantity);
+};
+
+const processBookingsForActivityLog = (bookings: BookingRow[]): ActivityLogEntry[] => {
+  if (!bookings || bookings.length === 0) return [];
+
+  const logEntries: ActivityLogEntry[] = [];
+
+  bookings.forEach(booking => {
+    logEntries.push({
+      id: `${booking.id}_created`,
+      timestamp: booking.created_at,
+      displayTimestamp: formatDistanceToNow(parseISO(booking.created_at), { addSuffix: true }),
+      customerName: booking.customer_name || 'N/A',
+      action: 'New Booking Created',
+      bookingId: booking.id,
+    });
+
+    const significantStatuses = ['confirmed', 'cancelled', 'completed'];
+    if (significantStatuses.includes(booking.status) && booking.updated_at && booking.updated_at !== booking.created_at) {
+      logEntries.push({
+        id: `${booking.id}_status_${booking.status}`,
+        timestamp: booking.updated_at,
+        displayTimestamp: formatDistanceToNow(parseISO(booking.updated_at), { addSuffix: true }),
+        customerName: booking.customer_name || 'N/A',
+        action: `Booking ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}`,
+        bookingId: booking.id,
+      });
+    }
+  });
+
+  return logEntries.sort((a, b) => compareAsc(parseISO(b.timestamp), parseISO(a.timestamp)));
+};
+
+const fetchBusinessAnalytics = async (filters: { dateRange?: DateRange; productId?: string; customerName?: string }) => {
+  try {
+    let bookingsQuery = supabase
+      .from('bookings')
+      .select('id, start_date, end_date, status, total_amount, customer_name, created_at, updated_at, booking_items(equipment_name, quantity, equipment_id)')
+      .order('created_at', { ascending: false });
+
+    if (filters.dateRange?.from) {
+      bookingsQuery = bookingsQuery.gte('start_date', format(filters.dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (filters.dateRange?.to) {
+      bookingsQuery = bookingsQuery.lte('start_date', format(filters.dateRange.to, 'yyyy-MM-dd'));
+    }
+    if (filters.customerName) {
+      bookingsQuery = bookingsQuery.ilike('customer_name', `%${filters.customerName}%`);
+    }
+
+    const { data: bookingsData, error: bookingsError } = await bookingsQuery;
+    if (bookingsError) throw bookingsError;
+
+    let filteredBookings = bookingsData || [];
+    if (filters.productId) {
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.booking_items?.some(item => item.equipment_id === filters.productId)
+      );
+    }
+
+    const { data: productsData, error: productsError } = await supabase
+      .from('equipment')
+      .select('*');
+    if (productsError) throw productsError;
+
+    return {
+      bookingTrends: processBookingDataForTrends(filteredBookings),
+      totalRevenue: filteredBookings.reduce((sum, booking) => sum + (booking.total_amount || 0), 0),
+      revenueTrends: processBookingDataForRevenue(filteredBookings),
+      equipmentUtilization: processDataForEquipmentUtilization(filteredBookings, productsData || []),
+      activityLog: processBookingsForActivityLog(filteredBookings),
+    };
+  } catch (error) {
+    console.error('Error fetching business analytics:', error);
+    throw error;
+  }
+};
+
+const fetchWebAnalytics = async (startDate?: Date, endDate?: Date) => {
+  try {
+    const [
+      stats,
+      countries,
+      devices,
+      browsers,
+      referrers,
+      topPages,
+      realTime
+    ] = await Promise.all([
+      umamiService.getWebsiteStats(startDate, endDate),
+      umamiService.getCountries(startDate, endDate, 10),
+      umamiService.getDevices(startDate, endDate, 10),
+      umamiService.getBrowsers(startDate, endDate, 10),
+      umamiService.getReferrers(startDate, endDate, 10),
+      umamiService.getTopPages(startDate, endDate, 10),
+      umamiService.getRealTimeVisitors()
+    ]);
+
+    return {
+      pageviews: stats.pageviews,
+      visitors: stats.visitors,
+      visits: stats.visits,
+      bounceRate: stats.bounceRate,
+      avgSessionDuration: stats.avgSessionDuration,
+      realTimeVisitors: realTime,
+      countries,
+      devices,
+      browsers,
+      referrers,
+      topPages
+    };
+  } catch (error) {
+    console.error('Error fetching web analytics:', error);
+    return {
+      pageviews: 0,
+      visitors: 0,
+      visits: 0,
+      bounceRate: 0,
+      avgSessionDuration: 0,
+      realTimeVisitors: 0,
+      countries: [],
+      devices: [],
+      browsers: [],
+      referrers: [],
+      topPages: []
+    };
+  }
+};
+
 export const EnhancedReportsDashboard: React.FC = () => {
   const [data, setData] = useState<EnhancedAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,7 +319,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Filter states
-  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<ProductRow[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
@@ -110,217 +327,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
   const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>("");
 
-  // Fetch business analytics
-  const fetchBusinessAnalytics = async (filters: { dateRange?: DateRange, productId?: string, customerName?: string }) => {
-    try {
-      let bookingsQuery = supabase
-        .from('bookings')
-        .select('id, start_date, end_date, status, total_amount, customer_name, created_at, updated_at, booking_items(equipment_name, quantity, equipment_id)')
-        .order('created_at', { ascending: false });
-
-      if (filters.dateRange?.from) {
-        bookingsQuery = bookingsQuery.gte('start_date', format(filters.dateRange.from, 'yyyy-MM-dd'));
-      }
-      if (filters.dateRange?.to) {
-        bookingsQuery = bookingsQuery.lte('start_date', format(filters.dateRange.to, 'yyyy-MM-dd'));
-      }
-      if (filters.customerName) {
-        bookingsQuery = bookingsQuery.ilike('customer_name', `%${filters.customerName}%`);
-      }
-
-      const { data: bookingsData, error: bookingsError } = await bookingsQuery;
-      if (bookingsError) throw bookingsError;
-
-      let filteredBookings = bookingsData || [];
-      if (filters.productId) {
-        filteredBookings = filteredBookings.filter(booking => 
-          booking.booking_items?.some(item => item.equipment_id === filters.productId)
-        );
-      }
-
-      const { data: productsData, error: productsError } = await supabase
-        .from('equipment')
-        .select('*');
-      if (productsError) throw productsError;
-
-      return {
-        bookingTrends: processBookingDataForTrends(filteredBookings),
-        totalRevenue: filteredBookings.reduce((sum, booking) => sum + (booking.total_amount || 0), 0),
-        revenueTrends: processBookingDataForRevenue(filteredBookings),
-        equipmentUtilization: processDataForEquipmentUtilization(filteredBookings, productsData || []),
-        activityLog: processBookingsForActivityLog(filteredBookings),
-      };
-    } catch (error) {
-      console.error('Error fetching business analytics:', error);
-      throw error;
-    }
-  };
-
-  // Fetch web analytics from Umami
-  const fetchWebAnalytics = async (startDate?: Date, endDate?: Date) => {
-    try {
-      const [
-        stats,
-        countries,
-        devices,
-        browsers,
-        referrers,
-        topPages,
-        realTime
-      ] = await Promise.all([
-        umamiService.getWebsiteStats(startDate, endDate),
-        umamiService.getCountries(startDate, endDate, 10),
-        umamiService.getDevices(startDate, endDate, 10),
-        umamiService.getBrowsers(startDate, endDate, 10),
-        umamiService.getReferrers(startDate, endDate, 10),
-        umamiService.getTopPages(startDate, endDate, 10),
-        umamiService.getRealTimeVisitors()
-      ]);
-
-      return {
-        pageviews: stats.pageviews,
-        visitors: stats.visitors,
-        visits: stats.visits,
-        bounceRate: stats.bounceRate,
-        avgSessionDuration: stats.avgSessionDuration,
-        realTimeVisitors: realTime,
-        countries,
-        devices,
-        browsers,
-        referrers,
-        topPages
-      };
-    } catch (error) {
-      console.error('Error fetching web analytics:', error);
-      return {
-        pageviews: 0,
-        visitors: 0,
-        visits: 0,
-        bounceRate: 0,
-        avgSessionDuration: 0,
-        realTimeVisitors: 0,
-        countries: [],
-        devices: [],
-        browsers: [],
-        referrers: [],
-        topPages: []
-      };
-    }
-  };
-
-  // Data processing functions
-  const processBookingDataForTrends = (bookings: any[]): BookingTrendData[] => {
-    if (!bookings || bookings.length === 0) return [];
-    const endDate = new Date();
-    const startDate = subDays(endDate, 29);
-    const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
-    const bookingsByDay: { [key: string]: number } = {};
-    
-    dateRange.forEach(day => {
-      bookingsByDay[format(day, 'yyyy-MM-dd')] = 0;
-    });
-    
-    bookings.forEach(booking => {
-      try {
-        const bookingStartDate = parseISO(booking.start_date);
-        const formattedStartDate = format(bookingStartDate, 'yyyy-MM-dd');
-        if (bookingsByDay.hasOwnProperty(formattedStartDate)) {
-          bookingsByDay[formattedStartDate]++;
-        }
-      } catch (e) {
-        console.error('Error parsing booking start_date:', booking.start_date, e);
-      }
-    });
-    
-    return Object.entries(bookingsByDay)
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)));
-  };
-
-  const processBookingDataForRevenue = (bookings: any[]): RevenueTrendData[] => {
-    if (!bookings || bookings.length === 0) return [];
-
-    const monthlyRevenue: { [key: string]: number } = {};
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const monthDate = subMonths(today, i);
-      const monthKey = format(startOfMonth(monthDate), 'yyyy-MM');
-      monthlyRevenue[monthKey] = 0;
-    }
-
-    bookings.forEach(booking => {
-      try {
-        const bookingDate = parseISO(booking.start_date);
-        const monthKey = format(startOfMonth(bookingDate), 'yyyy-MM');
-        if (monthlyRevenue.hasOwnProperty(monthKey)) {
-          monthlyRevenue[monthKey] += booking.total_amount || 0;
-        }
-      } catch (e) {
-        console.error('Error parsing booking start_date:', booking.start_date, e);
-      }
-    });
-
-    return Object.entries(monthlyRevenue)
-      .map(([month, revenue]) => ({
-        month: format(parseISO(month + '-01'), 'MMM yyyy'),
-        revenue,
-      }))
-      .sort((a, b) => compareAsc(parseISO(a.month), parseISO(b.month)));
-  };
-
-  const processDataForEquipmentUtilization = (bookings: any[], products: any[]): EquipmentUtilizationData[] => {
-    if (!bookings || bookings.length === 0 || !products || products.length === 0) return [];
-
-    const utilizationMap: { [productName: string]: number } = {};
-    products.forEach(product => {
-      utilizationMap[product.name] = 0;
-    });
-
-    bookings.forEach(booking => {
-      booking.booking_items?.forEach((item: { equipment_name: string; quantity: number }) => {
-        if (item.equipment_name && utilizationMap.hasOwnProperty(item.equipment_name)) {
-          utilizationMap[item.equipment_name] += item.quantity || 0;
-        }
-      });
-    });
-
-    return Object.entries(utilizationMap)
-      .map(([name, bookedQuantity]) => ({ name, bookedQuantity }))
-      .sort((a, b) => b.bookedQuantity - a.bookedQuantity);
-  };
-
-  const processBookingsForActivityLog = (bookings: any[]): ActivityLogEntry[] => {
-    if (!bookings || bookings.length === 0) return [];
-
-    const logEntries: ActivityLogEntry[] = [];
-
-    bookings.forEach(booking => {
-      logEntries.push({
-        id: `${booking.id}_created`,
-        timestamp: booking.created_at,
-        displayTimestamp: formatDistanceToNow(parseISO(booking.created_at), { addSuffix: true }),
-        customerName: booking.customer_name || 'N/A',
-        action: 'New Booking Created',
-        bookingId: booking.id,
-      });
-
-      const significantStatuses = ['confirmed', 'cancelled', 'completed'];
-      if (significantStatuses.includes(booking.status) && booking.updated_at && booking.updated_at !== booking.created_at) {
-        logEntries.push({
-          id: `${booking.id}_status_${booking.status}`,
-          timestamp: booking.updated_at,
-          displayTimestamp: formatDistanceToNow(parseISO(booking.updated_at), { addSuffix: true }),
-          customerName: booking.customer_name || 'N/A',
-          action: `Booking ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}`,
-          bookingId: booking.id,
-        });
-      }
-    });
-
-    return logEntries.sort((a, b) => compareAsc(parseISO(b.timestamp), parseISO(a.timestamp)));
-  };
-
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -337,13 +344,14 @@ export const EnhancedReportsDashboard: React.FC = () => {
         web: webData
       });
       setAllProducts(productsData.data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching enhanced analytics:", err);
-      setError(err.message || 'Failed to fetch analytics data.');
+      const message = err instanceof Error ? err.message : 'Failed to fetch analytics data.';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCustomerName, selectedDateRange, selectedProductId]);
 
   useEffect(() => {
     fetchAllData();
@@ -359,7 +367,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
     return () => {
       supabase.removeChannel(bookingsSubscription);
     };
-  }, [selectedDateRange, selectedProductId, selectedCustomerName]);
+  }, [fetchAllData]);
 
   if (loading) return (
     <div className="p-6">
@@ -440,12 +448,15 @@ export const EnhancedReportsDashboard: React.FC = () => {
           </div>
           <div>
             <Label htmlFor="product-filter">Product</Label>
-            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+            <Select
+              value={selectedProductId ?? 'all'}
+              onValueChange={(value) => setSelectedProductId(value === 'all' ? undefined : value)}
+            >
               <SelectTrigger className="w-[200px]" id="product-filter">
                 <SelectValue placeholder="All Products" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={undefined as any}>All Products</SelectItem>
+                <SelectItem value="all">All Products</SelectItem>
                 {allProducts.map((product) => (
                   <SelectItem key={product.id} value={product.id.toString()}>
                     {product.name}
@@ -610,7 +621,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={150} interval={0} />
-                    <Tooltip formatter={(value: any) => [value || 0, 'Times Booked']} />
+                    <Tooltip formatter={(value: number | string) => [value || 0, 'Times Booked']} />
                     <Bar dataKey="bookedQuantity" fill="#8884d8" name="Total Quantity Booked" />
                   </BarChart>
                 </ResponsiveContainer>

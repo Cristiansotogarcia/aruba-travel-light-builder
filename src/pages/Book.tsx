@@ -8,12 +8,12 @@ const Book = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header Section */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Book Your Equipment</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-4xl font-semibold text-foreground mb-4">Book Your Equipment</h1>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Select your rental dates, choose your equipment, and we'll deliver everything to your location in Aruba
             </p>
           </div>

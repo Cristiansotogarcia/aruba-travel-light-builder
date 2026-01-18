@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,19 @@ interface SubCategory {
   category_id: string;
 }
 
+interface ProductFormState {
+  name: string;
+  description: string;
+  category_id: string;
+  sub_category_id: string;
+  price_per_day: number;
+  availability_status: AvailabilityStatus;
+  stock_quantity: number;
+  images: string[];
+  featured: boolean;
+  sort_order: number;
+}
+
 export const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -53,7 +66,7 @@ export const ProductManagement = () => {
   });
 
 
-  const [formState, setFormState] = useState<any>({
+  const [formState, setFormState] = useState<ProductFormState>({
     name: '',
     description: '',
     category_id: '',
@@ -70,12 +83,6 @@ export const ProductManagement = () => {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('ProductManagement')) {
-      fetchData();
-    }
-  }, [hasPermission]);
-
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const { category, subcategory } = activeFilters;
@@ -89,7 +96,7 @@ export const ProductManagement = () => {
     });
   }, [products, activeFilters]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data: productsData, error: productsError } = await supabase.from('equipment').select('*, equipment_category(name), equipment_sub_category(name)');
       if (productsError) throw productsError;
@@ -115,7 +122,13 @@ export const ProductManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('ProductManagement')) {
+      fetchData();
+    }
+  }, [fetchData, hasPermission]);
 
   const handleImageUpload = (imageUrl: string) => {
     setFormState({ ...formState, images: [...formState.images, imageUrl] });
@@ -124,7 +137,7 @@ export const ProductManagement = () => {
   };
 
   const handleRemoveImage = (url: string) => {
-    setFormState({ ...formState, images: formState.images.filter((img: string) => img !== url) });
+    setFormState({ ...formState, images: formState.images.filter((img) => img !== url) });
   };
 
   const handleSaveProduct = async () => {
@@ -164,7 +177,7 @@ export const ProductManagement = () => {
     }
   };
   
-  const handleEditProduct = (product: any) => {
+  const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setFormState({
       ...product,

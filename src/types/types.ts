@@ -9,6 +9,7 @@ export interface Product {
   name: string;
   description: string | null | undefined;
   price_per_day: number;
+  price_per_week?: number;
   category: string;
   images: string[];
   stock_quantity: number; // Made non-optional
@@ -24,6 +25,8 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   address: string;
+  room_number: string;
+  comment: string;
 }
 
 // Represents the structure of the form data within the useBooking hook
@@ -32,6 +35,8 @@ export interface BookingFormData {
   endDate: string;
   items: CalendarBookingItemType[]; // Use the directly imported alias
   customerInfo: CustomerInfo;
+  deliverySlot?: 'morning' | 'afternoon';
+  pickupSlot?: 'morning' | 'afternoon';
 }
 
 // Defines the structure for data submitted to Supabase 'bookings' table
@@ -41,18 +46,21 @@ export interface SupabaseBookingData {
   customer_email: string;
   customer_phone: string;
   customer_address?: string;
+  room_number?: string | null;
+  customer_comment?: string | null;
   start_date: string;
   end_date: string;
   total_price: number;
   total_amount: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable'; // Updated to match BookingStatus
+  status: 'pending' | 'pending_admin_review' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable' | 'rejected';
+  delivery_slot?: 'morning' | 'afternoon';
+  pickup_slot?: 'morning' | 'afternoon';
   created_at?: string;
 }
 
 // Defines the structure for data submitted to Supabase 'booking_items' table
 export interface SupabaseBookingItemData {
   booking_id: string;
-  product_id: string;
   quantity: number;
   price_at_booking: number;
   equipment_id: string;
@@ -76,6 +84,6 @@ export interface Profile {
 }
 
 // Define UserRole based on the roles in Profile
-export type UserRole = 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
+export type UserRole = 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
 
 // You can add other shared types here as your project grows.

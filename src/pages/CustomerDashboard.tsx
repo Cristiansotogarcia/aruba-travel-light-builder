@@ -18,6 +18,7 @@ interface CustomerBooking {
   end_date: string;
   total_amount: number;
   status: string; // Consider using a more specific type if available (e.g., from types.ts BookingStatus)
+  payment_status: string | null;
   booking_items: CustomerBookingItem[];
 }
 
@@ -37,6 +38,7 @@ const CustomerDashboard = () => {
           end_date,
           total_amount,
           status,
+          payment_status,
           booking_items ( equipment_name, quantity )
         `)
         .eq('user_id', user.id) // Filter bookings for the current user
@@ -66,22 +68,22 @@ const CustomerDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p>Loading your bookings...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading your bookings...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Header /> 
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+        <h1 className="text-3xl font-semibold mb-8">My Bookings</h1>
         
         {bookings.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center text-gray-600">
+            <CardContent className="p-6 text-center text-muted-foreground">
               You have no bookings yet.
             </CardContent>
           </Card>
@@ -94,31 +96,44 @@ const CustomerDashboard = () => {
                   <Badge variant={getStatusBadgeVariant(booking.status)} className="w-fit capitalize">
                     {booking.status || 'Unknown'}
                   </Badge>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Payment {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Dates:</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm font-medium text-foreground">Dates:</p>
+                    <p className="text-sm text-muted-foreground">
                       {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Total Amount:</p>
-                    <p className="text-sm text-gray-600">${booking.total_amount?.toFixed(2) || 'N/A'}</p>
+                    <p className="text-sm font-medium text-foreground">Total Amount:</p>
+                    <p className="text-sm text-muted-foreground">${booking.total_amount?.toFixed(2) || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Items:</p>
+                    <p className="text-sm font-medium text-foreground">Items:</p>
                     {booking.booking_items && booking.booking_items.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm text-gray-600">
+                      <ul className="list-disc list-inside text-sm text-muted-foreground">
                         {booking.booking_items.map((item: CustomerBookingItem, index: number) => (
                           <li key={index}>{item.equipment_name} (x{item.quantity})</li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-sm text-gray-600">No items in this booking.</p>
+                      <p className="text-sm text-muted-foreground">No items in this booking.</p>
                     )}
                   </div>
                 </CardContent>
+                {booking.payment_status === 'paid' && (
+                  <div className="px-6 pb-6">
+                    <Link
+                      to={`/invoice/${booking.id}`}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      View Invoice
+                    </Link>
+                  </div>
+                )}
               </Card>
             ))}
           </div>

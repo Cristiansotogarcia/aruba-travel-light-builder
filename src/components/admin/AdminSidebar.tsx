@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search, Info } from 'lucide-react';
+import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search, Info, Clock, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
@@ -23,6 +23,8 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: null },
     { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SeoManager' },
     { id: 'bookings', label: 'Bookings', icon: Calendar, permission: 'BookingManagement' },
+    { id: 'pending-reservations', label: 'Pending Reservations', icon: Clock, permission: 'BookingManagement' },
+    { id: 'invoices', label: 'Invoices', icon: FileText, permission: 'BookingManagement' },
     { id: 'assignment', label: 'Assignments', icon: UserPlus, permission: 'BookingAssignment' },
     { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
     { id: 'equipment', label: 'Equipment', icon: Package, permission: 'ProductManagement' },
@@ -41,17 +43,18 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
   );
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
+    <div className="w-64 bg-background/80 border-r border-border/60 flex flex-col h-screen backdrop-blur">
       <div className="p-6">
         <div className="flex items-center mb-4">
           <img
             src={assets.logo || '/placeholder.svg'}
             alt="Travel Light Aruba"
             className="h-8 w-auto mr-3"
+            style={{ transform: 'scale(3)', transformOrigin: 'left center' }}
           />
-          <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
+          <h2 className="text-xl font-semibold text-foreground">Admin Panel</h2>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {profile?.name} ({profile?.role})
         </p>
       </div>
@@ -62,10 +65,10 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
             <button
               key={item.id}
               onClick={() => handleSectionChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 currentSection === item.id
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-accent/60 text-foreground border border-border/60'
+                  : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground'
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -74,7 +77,7 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
           );
         })}
       </nav>
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border/60">
         <Button 
           onClick={signOut} 
           variant="outline" 

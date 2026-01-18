@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -33,13 +33,7 @@ export const VisibilitySettings = () => {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('VisibilitySettings')) {
-      fetchVisibilitySettings();
-    }
-  }, [hasPermission]);
-
-  const fetchVisibilitySettings = async () => {
+  const fetchVisibilitySettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('component_visibility')
@@ -58,7 +52,13 @@ export const VisibilitySettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('VisibilitySettings')) {
+      fetchVisibilitySettings();
+    }
+  }, [fetchVisibilitySettings, hasPermission]);
 
   const handleVisibilityChange = (componentName: string, role: string, isVisible: boolean) => {
     setVisibilitySettings(prev => 

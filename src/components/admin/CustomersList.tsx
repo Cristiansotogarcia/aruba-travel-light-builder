@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Users, Phone, Calendar, Search } from 'lucide-react';
 import { CustomerDetailsModal } from './customer-management/CustomerDetailsModal';
 
 import { Booking } from './calendar/types';
+import type { Database } from '@/types/supabase';
 
 interface Customer {
   id: string;
@@ -21,6 +22,17 @@ interface Customer {
   last_booking: string;
 }
 
+type BookingRow = Database['public']['Tables']['bookings']['Row'] & {
+  booking_items: Array<{
+    id: string;
+    product_id?: string | null;
+    quantity: number;
+    price_per_day?: number | null;
+    subtotal: number;
+    equipment_name: string;
+  }>;
+};
+
 export const CustomersList = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
@@ -30,15 +42,7 @@ export const CustomersList = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  useEffect(() => {
-    filterCustomers();
-  }, [customers, searchTerm]);
-
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -59,7 +63,7 @@ export const CustomersList = () => {
       // Group bookings by customer email
       const customerMap = new Map<string, Customer>();
 
-      data?.forEach((booking: any) => {
+      data?.forEach((booking: BookingRow) => {
         const email = booking.customer_email;
         
         if (!customerMap.has(email)) {
@@ -99,9 +103,9 @@ export const CustomersList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterCustomers = () => {
+  const filterCustomers = useCallback(() => {
     if (!searchTerm) {
       setFilteredCustomers(customers);
       return;
@@ -114,7 +118,15 @@ export const CustomersList = () => {
     );
 
     setFilteredCustomers(filtered);
-  };
+  }, [customers, searchTerm]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  useEffect(() => {
+    filterCustomers();
+  }, [filterCustomers]);
 
   const handleCustomerClick = (customer: Customer) => {
     setSelectedCustomer(customer);

@@ -17,6 +17,10 @@ vi.mock('@/hooks/useSiteAssets', () => ({
   useSiteAssets: () => ({ assets: {}, refresh: vi.fn() }),
 }));
 
+vi.mock('@/hooks/useCart', () => ({
+  useCart: () => ({ items: [] }),
+}));
+
 describe('Header Component', () => {
   const renderHeader = () => {
     render(
@@ -40,11 +44,10 @@ describe('Header Component', () => {
     expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
   });
 
-  it('renders CTA button for Login only (Book Now hidden)', () => {
+  it('renders booking and cart CTAs alongside auth controls', () => {
     renderHeader();
-    // The buttons are within Link components, so we find the link by its role and name (from button text)
-    // Book Now should not be rendered while booking is disabled
-    expect(screen.queryByRole('link', { name: /book now/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /book now/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /cart/i })).toBeInTheDocument();
 
     const logoutBtn = screen.getByRole('button', { name: /logout/i });
     expect(logoutBtn).toBeInTheDocument();
