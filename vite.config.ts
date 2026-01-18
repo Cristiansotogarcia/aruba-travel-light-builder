@@ -28,38 +28,53 @@ export default defineConfig(({ mode }) => ({
     'globalThis.Buffer': Buffer,
   },
   build: {
+    modulePreload: {
+      resolveDependencies: (url, deps, { hostType }) => {
+        if (hostType === "html") {
+          return deps.filter(
+            (dep) =>
+              !/admin-(core|reports)/.test(dep) &&
+              !/editor-lib/.test(dep) &&
+              !/charts-lib/.test(dep) &&
+              !/maps-lib/.test(dep)
+          );
+        }
+        return deps;
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
+          const normalizedId = id.replace(/\\/g, "/");
           // React core
-          if (id.includes('react') && id.includes('react-dom')) {
+          if (normalizedId.includes('react') && normalizedId.includes('react-dom')) {
             return 'react-vendor';
           }
-          if (id.includes('react-router')) {
+          if (normalizedId.includes('react-router')) {
             return 'react-router';
           }
 
           // Radix UI components - split into very small chunks to avoid large bundles
-          if (id.includes('@radix-ui')) {
-            if (id.includes('react-dialog') || id.includes('react-dropdown-menu') ||
-                id.includes('react-popover') || id.includes('react-tooltip')) {
+          if (normalizedId.includes('@radix-ui')) {
+            if (normalizedId.includes('react-dialog') || normalizedId.includes('react-dropdown-menu') ||
+                normalizedId.includes('react-popover') || normalizedId.includes('react-tooltip')) {
               return 'radix-overlays';
             }
-            if (id.includes('react-select') || id.includes('react-accordion') ||
-                id.includes('react-tabs') || id.includes('react-navigation-menu')) {
+            if (normalizedId.includes('react-select') || normalizedId.includes('react-accordion') ||
+                normalizedId.includes('react-tabs') || normalizedId.includes('react-navigation-menu')) {
               return 'radix-navigation';
             }
-            if (id.includes('react-checkbox') || id.includes('react-radio') ||
-                id.includes('react-switch') || id.includes('react-slider') ||
-                id.includes('react-progress')) {
+            if (normalizedId.includes('react-checkbox') || normalizedId.includes('react-radio') ||
+                normalizedId.includes('react-switch') || normalizedId.includes('react-slider') ||
+                normalizedId.includes('react-progress')) {
               return 'radix-form-controls';
             }
-            if (id.includes('react-separator') || id.includes('react-scroll-area') ||
-                id.includes('react-aspect-ratio') || id.includes('react-collapsible')) {
+            if (normalizedId.includes('react-separator') || normalizedId.includes('react-scroll-area') ||
+                normalizedId.includes('react-aspect-ratio') || normalizedId.includes('react-collapsible')) {
               return 'radix-layout';
             }
-            if (id.includes('react-toast') || id.includes('react-alert-dialog') ||
-                id.includes('react-hover-card')) {
+            if (normalizedId.includes('react-toast') || normalizedId.includes('react-alert-dialog') ||
+                normalizedId.includes('react-hover-card')) {
               return 'radix-feedback';
             }
             // Core primitives - split smaller
@@ -67,69 +82,69 @@ export default defineConfig(({ mode }) => ({
           }
 
           // Icons - split lucide icons into smaller chunks
-          if (id.includes('lucide-react')) {
+          if (normalizedId.includes('lucide-react')) {
             return 'lucide-icons';
           }
 
           // Data management - split further
-          if (id.includes('@tanstack/react-query')) {
+          if (normalizedId.includes('@tanstack/react-query')) {
             return 'react-query';
           }
-          if (id.includes('@supabase/supabase-js')) {
+          if (normalizedId.includes('@supabase/supabase-js')) {
             return 'supabase';
           }
 
           // Forms - split libraries
-          if (id.includes('react-hook-form') || id.includes('@hookform/resolvers')) {
+          if (normalizedId.includes('react-hook-form') || normalizedId.includes('@hookform/resolvers')) {
             return 'forms';
           }
-          if (id.includes('zod')) {
+          if (normalizedId.includes('zod')) {
             return 'forms-validation';
           }
 
           // Heavy libraries - make these load on-demand wherever possible
           // Note: recharts, leaflet, editor are already dynamically imported
-          if (id.includes('recharts')) {
+          if (normalizedId.includes('recharts')) {
             return 'charts-lib';
           }
-          if (id.includes('leaflet') || id.includes('react-leaflet')) {
+          if (normalizedId.includes('leaflet') || normalizedId.includes('react-leaflet')) {
             return 'maps-lib';
           }
-          if (id.includes('@uiw/react-md-editor')) {
+          if (normalizedId.includes('@uiw/react-md-editor')) {
             return 'editor-lib';
           }
 
           // Date utilities - split date-fns more aggressively
           // This will help with the locale issue
-          if (id.includes('date-fns')) {
-            if (id.includes('locale')) {
+          if (normalizedId.includes('date-fns')) {
+            if (normalizedId.includes('locale')) {
               return 'date-locales';
             }
             return 'date-utils';
           }
 
           // UI utilities
-          if (id.includes('clsx') || id.includes('class-variance-authority') ||
-              id.includes('tailwind-merge') || id.includes('tailwindcss-animate')) {
+          if (normalizedId.includes('clsx') || normalizedId.includes('class-variance-authority') ||
+              normalizedId.includes('tailwind-merge') || normalizedId.includes('tailwindcss-animate')) {
             return 'ui-utils';
           }
 
           // Other utilities - split smaller
-          if (id.includes('papaparse') || id.includes('dompurify')) {
+          if (normalizedId.includes('papaparse') || normalizedId.includes('dompurify')) {
             return 'data-utils';
           }
-          if (id.includes('next-themes') || id.includes('sonner') ||
-              id.includes('vaul') || id.includes('cmdk') || id.includes('input-otp')) {
+          if (normalizedId.includes('next-themes') || normalizedId.includes('sonner') ||
+              normalizedId.includes('vaul') || normalizedId.includes('cmdk') || normalizedId.includes('input-otp')) {
             return 'ui-enhancements';
           }
-          if (id.includes('embla-carousel-react') || id.includes('react-day-picker') ||
-              id.includes('react-resizable-panels')) {
+          if (normalizedId.includes('embla-carousel-react') || normalizedId.includes('react-day-picker') ||
+              normalizedId.includes('react-resizable-panels')) {
             return 'interactive-components';
           }
 
           // Force admin components into separate chunks
-          if (id.includes('src/components/admin') || id.includes('src/pages/Admin')) {
-            if (id.includes('ReportsDashboard') || id.includes('EnhancedReportsDashboard')) {
+          if (normalizedId.includes('src/components/admin') || normalizedId.includes('src/pages/Admin')) {
+            if (normalizedId.includes('ReportsDashboard') || normalizedId.includes('EnhancedReportsDashboard')) {
               return 'admin-reports';
             }
             return 'admin-core';

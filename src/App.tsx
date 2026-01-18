@@ -13,7 +13,6 @@ import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import { CartProvider } from "@/hooks/useCart";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
-import Book from "./pages/Book";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -22,6 +21,7 @@ const EquipmentItem = lazy(() => import("./pages/EquipmentItem"));
 const About = lazy(() => import("./pages/About"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Book = lazy(() => import("./pages/Book"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
