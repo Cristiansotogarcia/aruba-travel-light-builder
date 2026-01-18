@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -58,6 +58,15 @@ const MobileNav = () => {
 
   const dashboardLink = getDashboardLink();
   const cartLabel = items.length > 0 ? `Cart (${items.length})` : 'Cart';
+
+  useEffect(() => {
+    if (isOpen || typeof document === "undefined") return;
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
+    document.body.removeAttribute("data-scroll-locked");
+    document.documentElement.style.removeProperty("overflow");
+    document.documentElement.removeAttribute("data-scroll-locked");
+  }, [isOpen]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
