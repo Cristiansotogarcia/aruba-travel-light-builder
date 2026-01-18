@@ -82,15 +82,15 @@ const DriverDashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Header /> {/* Changed Navigation to Header */}
       
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-8">Today's Deliveries</h1>
+        <h1 className="text-3xl font-semibold mb-8">Today's Deliveries</h1>
         
         {deliveries && deliveries.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center text-gray-600">
+            <CardContent className="p-6 text-center text-muted-foreground">
               No deliveries scheduled for today.
             </CardContent>
           </Card>
@@ -126,20 +126,20 @@ const DriverDashboard = () => {
                     
                     <div className="space-y-2">
                       <div className="flex items-start space-x-2">
-                        <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-600">{delivery.customer_address}</p>
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-muted-foreground">{delivery.customer_address}</p>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
-                        <p className="text-sm text-gray-600">{delivery.start_date}</p>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">{delivery.start_date}</p>
                       </div>
                     </div>
                     
                     {delivery.notes && (
-                      <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="bg-muted/40 p-3 rounded-lg">
                         <p className="text-sm font-medium mb-1">Notes:</p>
-                        <p className="text-sm text-gray-600">{delivery.notes}</p>
+                        <p className="text-sm text-muted-foreground">{delivery.notes}</p>
                       </div>
                     )}
                   </div>

@@ -16,7 +16,7 @@ interface CloudflareUploadResponse {
 }
 
 class CloudflareUploadService {
-  async uploadImage(file: File, metadata?: any): Promise<CloudflareUploadResponse> {
+  async uploadImage(file: File, metadata?: Record<string, unknown>): Promise<CloudflareUploadResponse> {
     try {
       const formData = new FormData();
       formData.append('file', file);

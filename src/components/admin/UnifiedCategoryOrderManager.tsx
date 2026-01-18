@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -66,13 +66,7 @@ export const UnifiedCategoryOrderManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (hasPermission('CategoryManagement')) {
-      fetchData();
-    }
-  }, [hasPermission]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -131,7 +125,13 @@ export const UnifiedCategoryOrderManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('CategoryManagement')) {
+      fetchData();
+    }
+  }, [fetchData, hasPermission]);
 
   const handleSaveAll = async () => {
     setSaving(true);
@@ -225,13 +225,9 @@ export const UnifiedCategoryOrderManager = () => {
 
   const handleSaveCategory = async () => {
     const dataToSave = { ...categoryForm, sort_order: categoryForm.sort_order || 0 };
-    let error: any;
-    
-    if (editingCategory) {
-      ({ error } = await supabase.from('equipment_category').update(dataToSave).eq('id', editingCategory.id));
-    } else {
-      ({ error } = await supabase.from('equipment_category').insert([dataToSave]));
-    }
+    const { error } = editingCategory
+      ? await supabase.from('equipment_category').update(dataToSave).eq('id', editingCategory.id)
+      : await supabase.from('equipment_category').insert([dataToSave]);
 
     if (error) {
       toast({ title: "Error", description: "Failed to save category", variant: "destructive" });
@@ -273,13 +269,9 @@ export const UnifiedCategoryOrderManager = () => {
       category_id: parentCategory.id, 
       sort_order: subCategoryForm.sort_order || 0 
     };
-    
-    let error: any;
-    if (editingSubCategory) {
-      ({ error } = await supabase.from('equipment_sub_category').update(dataToSave).eq('id', editingSubCategory.id));
-    } else {
-      ({ error } = await supabase.from('equipment_sub_category').insert([dataToSave]));
-    }
+    const { error } = editingSubCategory
+      ? await supabase.from('equipment_sub_category').update(dataToSave).eq('id', editingSubCategory.id)
+      : await supabase.from('equipment_sub_category').insert([dataToSave]);
 
     if (error) {
       toast({ title: "Error", description: "Failed to save sub-category", variant: "destructive" });
@@ -321,13 +313,9 @@ export const UnifiedCategoryOrderManager = () => {
       sub_category_id: parentSubCategory.id, 
       sort_order: productForm.sort_order || 0 
     };
-    
-    let error: any;
-    if (editingProduct) {
-      ({ error } = await supabase.from('equipment').update(dataToSave).eq('id', editingProduct.id));
-    } else {
-      ({ error } = await supabase.from('equipment').insert([{ ...dataToSave, price_per_day: 0, stock_quantity: 1, availability_status: 'Available' }]));
-    }
+    const { error } = editingProduct
+      ? await supabase.from('equipment').update(dataToSave).eq('id', editingProduct.id)
+      : await supabase.from('equipment').insert([{ ...dataToSave, price_per_day: 0, stock_quantity: 1, availability_status: 'Available' }]);
 
     if (error) {
       toast({ title: "Error", description: "Failed to save product", variant: "destructive" });

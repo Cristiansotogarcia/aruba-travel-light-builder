@@ -28,13 +28,13 @@ export const emailSchema = z.string()
   .min(1, 'Email is required');
 
 export const phoneSchema = z.string()
-  .regex(/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number')
+  .regex(/^[+]?[1-9]\d{0,15}$/, 'Please enter a valid phone number')
   .min(1, 'Phone number is required');
 
 export const nameSchema = z.string()
   .min(1, 'Name is required')
   .max(100, 'Name must be less than 100 characters')
-  .regex(/^[a-zA-Z\s\-\']+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes');
+  .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes');
 
 export const passwordSchema = z.string()
   .min(8, 'Password must be at least 8 characters')
@@ -191,7 +191,7 @@ export const sanitizeEmail = (email: string): string => {
 };
 
 export const sanitizePhone = (phone: string): string => {
-  return phone.replace(/[^\d\+\-\(\)\s]/g, '').trim();
+  return phone.replace(/[^\d+()\s-]/g, '').trim();
 };
 
 // Validation error formatter

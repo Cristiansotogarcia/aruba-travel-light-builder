@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -67,13 +67,7 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
   const [showImageBrowser, setShowImageBrowser] = useState(false);
   const [currentImageField, setCurrentImageField] = useState<'og_image_url' | 'twitter_image_url' | null>(null);
 
-  useEffect(() => {
-    if (selectedSlug) {
-      fetchSeoData(selectedSlug);
-    }
-  }, [selectedSlug]);
-
-  const fetchSeoData = async (slug: string) => {
+  const fetchSeoData = useCallback(async (slug: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -124,7 +118,13 @@ export const SeoManager: React.FC<SeoManagerProps> = ({ slug = 'home' }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (selectedSlug) {
+      fetchSeoData(selectedSlug);
+    }
+  }, [fetchSeoData, selectedSlug]);
 
   const handleInputChange = (field: keyof SeoData, value: string) => {
     setFormData(prev => ({

@@ -13,6 +13,7 @@ interface BookingViewModalProps {
   booking: Booking;
   onClose: () => void;
   onStatusUpdate: (bookingId: string, newStatus: BookingStatus) => void; // Changed to BookingStatus
+  onPaymentReceived?: (booking: Booking) => void;
   onEdit: (booking: Booking) => void;
   onBookingDeleted?: () => void;
   open: boolean;
@@ -22,6 +23,7 @@ export const BookingViewModal = ({
   booking, 
   onClose, 
   onStatusUpdate, 
+  onPaymentReceived,
   onEdit, 
   onBookingDeleted, 
   open 
@@ -87,6 +89,7 @@ export const BookingViewModal = ({
               booking={booking}
               onStatusUpdate={onStatusUpdate}
               onEdit={onEdit}
+              onPaymentReceived={onPaymentReceived}
               onShowDeleteModal={() => setShowDeleteModal(true)}
               onShowUndeliverableModal={() => setShowUndeliverableModal(true)}
               onClose={onClose}

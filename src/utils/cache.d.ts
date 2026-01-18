@@ -99,20 +99,20 @@ declare class SimpleCache<T> {
 /**
  * Memoization decorator for functions
  */
-export declare function memoize<T extends (...args: any[]) => any>(fn: T, options?: {
+export declare function memoize<T extends (...args: unknown[]) => unknown>(fn: T, options?: {
     ttl?: number;
     maxSize?: number;
 }): T;
 /**
  * Async memoization for promises
  */
-export declare function memoizeAsync<T extends (...args: any[]) => Promise<any>>(fn: T, options?: {
+export declare function memoizeAsync<T extends (...args: unknown[]) => Promise<unknown>>(fn: T, options?: {
     ttl?: number;
     maxSize?: number;
 }): T;
 export declare const imageCache: SimpleCache<string>;
-export declare const dataCache: AdvancedCache<any>;
-export declare const apiCache: AdvancedCache<any>;
+export declare const dataCache: AdvancedCache<unknown>;
+export declare const apiCache: AdvancedCache<unknown>;
 export { AdvancedCache, SimpleCache };
 export declare const cacheManager: {
     /**

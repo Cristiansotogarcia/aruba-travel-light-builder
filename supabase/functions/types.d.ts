@@ -8,8 +8,8 @@ declare module "https://esm.sh/@supabase/supabase-js@2" {
   export interface SupabaseClient {
     auth: {
       getUser(jwt: string): Promise<{
-        data: { user: any | null };
-        error: any | null;
+        data: { user: unknown | null };
+        error: unknown | null;
       }>;
     };
   }
@@ -17,7 +17,7 @@ declare module "https://esm.sh/@supabase/supabase-js@2" {
   export function createClient(
     supabaseUrl: string,
     supabaseKey: string,
-    options?: any
+    options?: Record<string, unknown>
   ): SupabaseClient;
 }
 

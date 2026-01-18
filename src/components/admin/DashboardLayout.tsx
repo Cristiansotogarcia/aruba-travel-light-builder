@@ -21,7 +21,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -34,18 +34,18 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-600 mb-4">
+          <div className="text-destructive mb-4">
             <svg className="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.963-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Profile Not Found</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-medium text-foreground mb-2">Profile Not Found</h3>
+          <p className="text-muted-foreground mb-4">
             Your user profile could not be loaded. This may be because your account hasn't been properly set up yet.
           </p>
           <button 
             onClick={() => navigate('/login')}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-full hover:bg-primary/90"
           >
             Back to Login
           </button>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/types/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -10,7 +11,7 @@ function parseCsv(file: File): Promise<Record<string, string>[]> {
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: Papa.ParseResult<any>) => {
+      complete: (results: Papa.ParseResult<Record<string, string>>) => {
         resolve(results.data as Record<string, string>[]);
       },
       error: (err: Error) => {
@@ -41,8 +42,8 @@ export const BulkProductUpload = ({ onComplete }: Props) => {
     if (!csvFile) return;
     setUploading(true);
     try {
-const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
-        const products = parsedRows.map(row => ({
+      const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
+      const products: Database['public']['Tables']['equipment']['Insert'][] = parsedRows.map(row => ({
           name: row.name,
           description: row.description || null,
           price_per_day: row.price_per_day ? Number(row.price_per_day) : 0,
@@ -54,18 +55,19 @@ const parsedRows = (await parseCsv(csvFile)).map(normalizeRow);
         }));
 
       if (products.length > 0) {
-        const { error } = await supabase.from('equipment').insert(products as any);
+        const { error } = await supabase.from('equipment').insert(products);
         if (error) throw error;
       }
 
       toast({ title: 'Success', description: 'Products uploaded successfully.' });
       setCsvFile(null);
       if (onComplete) onComplete();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const message = err instanceof Error ? err.message : 'Failed to upload products. Check file format.';
       toast({
         title: 'Error',
-        description: err.message || 'Failed to upload products. Check file format.',
+        description: message,
         variant: 'destructive',
       });
     } finally {

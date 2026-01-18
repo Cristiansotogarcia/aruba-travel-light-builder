@@ -149,9 +149,10 @@ export const BookingStatusWorkflow: React.FC<BookingStatusWorkflowProps> = ({ bo
         }
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating booking status in workflow:', error);
-      toast({ title: 'Error', description: `Failed to update status: ${error.message}`, variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast({ title: 'Error', description: `Failed to update status: ${message}`, variant: 'destructive' });
     }
   };
 

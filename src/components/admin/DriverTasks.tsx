@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,13 +27,7 @@ export const DriverTasks = () => {
   const { hasPermission, profile } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('DriverTasks') && profile?.id) {
-      fetchTasks(profile.id); // Pass profile.id directly
-    }
-  }, [hasPermission, profile]);
-
-  const fetchTasks = async (driverId: string) => { // Add driverId parameter
+  const fetchTasks = useCallback(async (driverId: string) => {
     try {
       // Fetch bookings assigned to current driver
       const { data, error } = await supabase
@@ -70,7 +64,13 @@ export const DriverTasks = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('DriverTasks') && profile?.id) {
+      fetchTasks(profile.id);
+    }
+  }, [fetchTasks, hasPermission, profile]);
 
   const getTaskDate = (task: Task) => {
     return task.task_type === 'delivery' ? task.start_date : task.end_date;

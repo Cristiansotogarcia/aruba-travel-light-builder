@@ -8,6 +8,7 @@ interface BookingActionButtonsProps {
   booking: Booking;
   onStatusUpdate: (bookingId: string, newStatus: BookingStatus) => void; // Changed string to BookingStatus
   onEdit: (booking: Booking) => void;
+  onPaymentReceived?: (booking: Booking) => void;
   onShowDeleteModal: () => void;
   onShowUndeliverableModal: () => void;
   onClose: () => void;
@@ -17,11 +18,14 @@ export const BookingActionButtons = ({
   booking, 
   onStatusUpdate, 
   onEdit, 
+  onPaymentReceived,
   onShowDeleteModal, 
   onShowUndeliverableModal,
   onClose 
 }: BookingActionButtonsProps) => {
   const { profile } = useAuth();
+  const isPaid = booking.payment_status === 'paid';
+  const isPaymentPending = booking.status === 'pending' && !isPaid;
 
   // Check if user can delete bookings
   const canDelete = profile?.role === 'SuperUser' || profile?.role === 'Admin';
@@ -35,7 +39,7 @@ export const BookingActionButtons = ({
   const getActionButtons = () => {
     const buttons = [];
 
-    if (booking.status === 'confirmed') {
+    if (booking.status === 'confirmed' && isPaid) {
       buttons.push(
         <Button
           key="out-for-delivery"
@@ -104,6 +108,22 @@ export const BookingActionButtons = ({
         >
           <Calendar className="h-4 w-4" />
           Reschedule Delivery
+        </Button>
+      );
+    }
+
+    if (isPaymentPending && onPaymentReceived) {
+      buttons.push(
+        <Button
+          key="payment-received"
+          onClick={() => {
+            onPaymentReceived(booking);
+            onClose();
+          }}
+          className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2"
+        >
+          <CheckCircle className="h-4 w-4" />
+          Mark Payment Received
         </Button>
       );
     }

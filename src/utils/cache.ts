@@ -325,7 +325,7 @@ class SimpleCache<T> {
 /**
  * Memoization decorator for functions
  */
-export function memoize<T extends (...args: any[]) => any>(
+export function memoize<T extends (...args: unknown[]) => unknown>(
   fn: T,
   options: { ttl?: number; maxSize?: number } = {}
 ): T {
@@ -351,7 +351,7 @@ export function memoize<T extends (...args: any[]) => any>(
 /**
  * Async memoization for promises
  */
-export function memoizeAsync<T extends (...args: any[]) => Promise<any>>(
+export function memoizeAsync<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   options: { ttl?: number; maxSize?: number } = {}
 ): T {
@@ -376,13 +376,13 @@ export function memoizeAsync<T extends (...args: any[]) => Promise<any>>(
 
 // Pre-configured cache instances
 export const imageCache = new SimpleCache<string>(30); // 30 minutes for image URLs
-export const dataCache = new AdvancedCache<any>({
+export const dataCache = new AdvancedCache<unknown>({
   ttl: 5 * 60 * 1000, // 5 minutes
   maxSize: 100,
   enablePersistence: true,
   storageKey: 'app_data_cache'
 });
-export const apiCache = new AdvancedCache<any>({
+export const apiCache = new AdvancedCache<unknown>({
   ttl: 2 * 60 * 1000, // 2 minutes
   maxSize: 200,
   enablePersistence: false

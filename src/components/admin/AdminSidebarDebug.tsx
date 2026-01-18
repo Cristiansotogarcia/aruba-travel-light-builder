@@ -62,6 +62,7 @@ export const AdminSidebarDebug = ({ activeSection, onSectionChange }: AdminSideb
             src={assets.logo || '/placeholder.svg'}
             alt="Travel Light Aruba"
             className="h-8 w-auto mr-3"
+            style={{ transform: 'scale(3)', transformOrigin: 'left center' }}
           />
           <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
         </div>

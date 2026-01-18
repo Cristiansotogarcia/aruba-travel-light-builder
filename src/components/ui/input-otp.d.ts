@@ -4,7 +4,7 @@ declare const InputOTP: React.ForwardRefExoticComponent<(Omit<Omit<React.InputHT
     onChange?: (newValue: string) => unknown;
     maxLength: number;
     textAlign?: "left" | "center" | "right";
-    onComplete?: (...args: any[]) => unknown;
+    onComplete?: (...args: unknown[]) => unknown;
     pushPasswordManagerStrategy?: "increase-width" | "none";
     containerClassName?: string;
     noScriptCSSFallback?: string | null;
@@ -16,7 +16,7 @@ declare const InputOTP: React.ForwardRefExoticComponent<(Omit<Omit<React.InputHT
     onChange?: (newValue: string) => unknown;
     maxLength: number;
     textAlign?: "left" | "center" | "right";
-    onComplete?: (...args: any[]) => unknown;
+    onComplete?: (...args: unknown[]) => unknown;
     pushPasswordManagerStrategy?: "increase-width" | "none";
     containerClassName?: string;
     noScriptCSSFallback?: string | null;

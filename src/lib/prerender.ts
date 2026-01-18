@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 export class Prerenderer {
   private static SITE_URL = 'https://travellightaruba.com';
   private static DEFAULT_IMAGE = 'https://abofxrgdxfzrhjbvhdkj.supabase.co/storage/v1/object/public/site-assets/featured-products/beach-chair-1.jpg';
+  private static DEFAULT_TITLE = 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
 
   static async getProductSEOData(slug: string): Promise<{
     title: string;
@@ -23,7 +24,11 @@ export class Prerenderer {
         return null;
       }
 
-      const product = products as any;
+      const product = products as {
+        name: string;
+        description: string | null;
+        images: string[] | null;
+      };
 
       return {
         title: `${product.name} - TLA Equipment Rentals`,
@@ -45,7 +50,7 @@ export class Prerenderer {
     image: string;
     url: string;
   } | null, isProductPage: boolean = false): string {
-    const title = seoData?.title || 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
+    const title = seoData?.title || this.DEFAULT_TITLE;
     const description = seoData?.description || 'Premium Beach & Baby Equipment Rentals in Aruba';
     const image = seoData?.image || this.DEFAULT_IMAGE;
     const url = seoData?.url || this.SITE_URL;

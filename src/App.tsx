@@ -10,15 +10,17 @@ import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
+import { CartProvider } from "@/hooks/useCart";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
+import Book from "./pages/Book";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
 const Equipment = lazy(() => import("./pages/Equipment"));
 const EquipmentItem = lazy(() => import("./pages/EquipmentItem"));
 const About = lazy(() => import("./pages/About"));
-const Book = lazy(() => import("./pages/Book"));
+const Cart = lazy(() => import("./pages/Cart"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
@@ -28,6 +30,7 @@ const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
 const SeoDemo = lazy(() => import("./pages/SeoDemo"));
 const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Invoice = lazy(() => import("./pages/Invoice"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -52,66 +55,68 @@ const App = () => {
       <TooltipProvider>
         <AuthProvider>
           <SiteAssetsProvider>
-            <Toaster />
-            <Sonner />
-            <ErrorBoundary>
-              <HelmetProvider>
-                <BrowserRouter>
-                  <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/about-us" element={<About />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/equipment" element={<Equipment />} />
-                    <Route path="/equipment/:slug" element={<EquipmentItem />} />
-                    <Route path="/login" element={<Login />} />
-
-                    {/* Protected Routes */}
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["Customer", "Booker", "Admin", "SuperUser"]} />
-                      }
-                    >
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <ErrorBoundary>
+                <HelmetProvider>
+                  <BrowserRouter
+                    future={{
+                      v7_startTransition: true,
+                      v7_relativeSplatPath: true,
+                    }}
+                  >
+                    <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/about-us" element={<About />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/equipment" element={<Equipment />} />
+                      <Route path="/equipment/:slug" element={<EquipmentItem />} />
+                      <Route path="/login" element={<Login />} />
                       <Route path="/book" element={<Book />} />
-                    </Route>
+                      <Route path="/cart" element={<Cart />} />
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
-                    >
-                      <Route path="/admin" element={<Admin />} />
-                    </Route>
+                      {/* Protected Routes */}
+                      <Route
+                        element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
+                      >
+                        <Route path="/admin" element={<Admin />} />
+                      </Route>
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["Driver"]} />}
-                    >
-                      <Route path="/driver-dashboard" element={<DriverDashboard />} />
-                    </Route>
+                      <Route
+                        element={<ProtectedRoute allowedRoles={["Driver"]} />}
+                      >
+                        <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                      </Route>
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["Customer"]} />}
-                    >
-                      <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-                    </Route>
+                      <Route
+                        element={<ProtectedRoute allowedRoles={["Customer"]} />}
+                      >
+                        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                      </Route>
 
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
-                      }
-                    >
-                      <Route path="/booker" element={<BookerDashboard />} />
-                    </Route>
+                      <Route
+                        element={
+                          <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
+                        }
+                      >
+                        <Route path="/booker" element={<BookerDashboard />} />
+                      </Route>
 
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/seo-demo" element={<SeoDemo />} />
-                    <Route path="/seo-test" element={<SeoTest />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/seo-demo" element={<SeoDemo />} />
+                      <Route path="/seo-test" element={<SeoTest />} />
+                      <Route path="/invoice/:id" element={<Invoice />} />
 
-                    {/* Catch all */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </HelmetProvider>
-            </ErrorBoundary>
+                      {/* Catch all */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                    </Suspense>
+                  </BrowserRouter>
+                </HelmetProvider>
+              </ErrorBoundary>
+            </CartProvider>
           </SiteAssetsProvider>
         </AuthProvider>
       </TooltipProvider>

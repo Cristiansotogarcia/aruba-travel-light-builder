@@ -26,10 +26,29 @@ export const SiteSettings = () => {
   const [uploading, setUploading] = useState<AssetKey | null>(null);
   const [siteTitle, setSiteTitle] = useState('');
   const [savingTitle, setSavingTitle] = useState(false);
+  const [paymentLink, setPaymentLink] = useState('');
+  const [savingPaymentLink, setSavingPaymentLink] = useState(false);
 
   useEffect(() => {
     setSiteTitle(assets.title || '');
   }, [assets.title]);
+
+  useEffect(() => {
+    const fetchPaymentLink = async () => {
+      const { data, error } = await supabase
+        .from('content_blocks')
+        .select('content')
+        .eq('block_key', 'payment_link')
+        .eq('page_slug', 'global')
+        .maybeSingle();
+
+      if (!error) {
+        setPaymentLink(data?.content || '');
+      }
+    };
+
+    fetchPaymentLink();
+  }, []);
 
   const handleFileChange = (key: AssetKey, file: File | null) => {
     setFiles(prev => ({ ...prev, [key]: file }));
@@ -82,6 +101,29 @@ export const SiteSettings = () => {
     setSavingTitle(false);
   };
 
+  const updatePaymentLink = async () => {
+    setSavingPaymentLink(true);
+    const { error } = await supabase
+      .from('content_blocks')
+      .upsert(
+        {
+          block_key: 'payment_link',
+          page_slug: 'global',
+          title: 'Payment Link',
+          block_type: 'text',
+          content: paymentLink
+        },
+        { onConflict: 'block_key' }
+      );
+
+    if (error) {
+      toast({ title: 'Error', description: 'Payment link update failed', variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Payment link updated' });
+    }
+    setSavingPaymentLink(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -120,6 +162,23 @@ export const SiteSettings = () => {
           <Input value={siteTitle} onChange={e => setSiteTitle(e.target.value)} />
           <Button onClick={updateTitle} disabled={savingTitle}>
             {savingTitle ? 'Saving...' : 'Save Title'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Link</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input
+            value={paymentLink}
+            onChange={e => setPaymentLink(e.target.value)}
+            placeholder="https://"
+            type="url"
+          />
+          <Button onClick={updatePaymentLink} disabled={savingPaymentLink}>
+            {savingPaymentLink ? 'Saving...' : 'Save Payment Link'}
           </Button>
         </CardContent>
       </Card>

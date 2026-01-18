@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { UserList } from './user-management/UserList';
 import { UserManagementHeader } from './user-management/UserManagementHeader';
 import { supabase } from '@/integrations/supabase/client'; 
@@ -29,19 +29,13 @@ export const UserManagement = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (hasPermission('UserManagement')) {
-      fetchProfiles();
-    }
-  }, [hasPermission]);
-
-  useEffect(() => {
     // Check if current user needs to change password
     if (currentProfile?.needs_password_change) {
       setIsPasswordModalOpen(true);
     }
   }, [currentProfile]);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -60,7 +54,13 @@ export const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('UserManagement')) {
+      fetchProfiles();
+    }
+  }, [fetchProfiles, hasPermission]);
 
   const handleUserCreated = (result: TempPasswordResult) => {
     setCreatedUserResult(result);

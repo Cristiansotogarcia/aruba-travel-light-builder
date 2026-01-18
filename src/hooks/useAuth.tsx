@@ -1,4 +1,5 @@
 
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState, ReactNode, useCallback, useContext, createContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -228,8 +229,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sign in failed';
+      return { success: false, error: message };
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,52 @@ import { Footer } from '@/components/layout/Footer';
 import type { ActiveFiltersState } from '@/components/equipment/EquipmentFilters';
 import { useSearchParams } from 'react-router-dom';
 import { SEO } from '@/components/common/SEO';
+import type { AvailabilityStatus } from '@/types/types';
+import type { Database } from '@/types/supabase';
+
+type EquipmentRow = Database['public']['Tables']['equipment']['Row'] & {
+  equipment_category?: { name: string | null; sort_order: number | null } | null;
+  equipment_sub_category?: { name: string | null; sort_order: number | null } | null;
+};
+
+type EquipmentItem = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  sub_category: string;
+  price: number;
+  price_per_week?: number;
+  image: string;
+  images: string[];
+  description: string;
+  availability: 'available' | 'limited' | 'unavailable';
+  availability_status: AvailabilityStatus;
+  features: string[];
+  stock_quantity: number;
+  category_sort_order: number;
+  sub_category_sort_order: number;
+  sort_order: number;
+};
+
+const availabilityStatuses: AvailabilityStatus[] = [
+  'Available',
+  'Low Stock',
+  'Out of Stock',
+  'Temporarily Not Available',
+];
+
+const normalizeAvailabilityStatus = (
+  status: string | null | undefined,
+  stock: number
+): AvailabilityStatus => {
+  if (status && availabilityStatuses.includes(status as AvailabilityStatus)) {
+    return status as AvailabilityStatus;
+  }
+  if (stock <= 0) return 'Out of Stock';
+  if (stock <= 5) return 'Low Stock';
+  return 'Available';
+};
 
 const Equipment = () => {
   const [searchParams] = useSearchParams();
@@ -41,33 +87,37 @@ const Equipment = () => {
     gcTime: 30 * 60 * 1000, // 30 minutes in cache (renamed from cacheTime in v5)
   });
 
-  const equipmentData = useMemo(() => {
+  const equipmentData = useMemo<EquipmentItem[]>(() => {
     return products.map((p) => {
+      const typedProduct = p as EquipmentRow;
       const stock = p.stock_quantity ?? 0;
       let availability: 'available' | 'limited' | 'unavailable';
       if (stock <= 0) availability = 'unavailable';
       else if (stock <= 5) availability = 'limited';
       else availability = 'available';
+      const availability_status = normalizeAvailabilityStatus(p.availability_status, stock);
 
       return {
         id: p.id,
         name: p.name,
         slug: slugify(p.name),
-        category: p.equipment_category?.name || 'Uncategorized',
-        sub_category: p.equipment_sub_category?.name || 'General',
+        category: typedProduct.equipment_category?.name || 'Uncategorized',
+        sub_category: typedProduct.equipment_sub_category?.name || 'General',
         price: p.price_per_day,
+        price_per_week: p.price_per_week ?? undefined,
 
         image: (p.images && p.images[0]) || '',
         images: p.images || [],
 
         description: p.description || '',
         availability,
-        availability_status: p.availability_status || 'Available',
+        availability_status,
         features: [],
-        category_sort_order: p.equipment_category?.sort_order ?? 0,
-        sub_category_sort_order: p.equipment_sub_category?.sort_order ?? 0,
-        sort_order: (p as any).sort_order ?? 0,
-      };
+        stock_quantity: stock,
+        category_sort_order: typedProduct.equipment_category?.sort_order ?? 0,
+        sub_category_sort_order: typedProduct.equipment_sub_category?.sort_order ?? 0,
+          sort_order: p.sort_order ?? 0,
+        };
     });
   }, [products]);
 
@@ -119,7 +169,7 @@ const Equipment = () => {
   }, [filters, equipmentData]);
 
   const groupedEquipment = useMemo(() => {
-    const map: Record<string, { order: number; subs: Record<string, { order: number; items: any[] }> }> = {};
+    const map: Record<string, { order: number; subs: Record<string, { order: number; items: EquipmentItem[] }> }> = {};
     filteredEquipment.forEach(item => {
       const category = item.category || 'Uncategorized';
       const subCategory = item.sub_category || 'General';
@@ -133,13 +183,13 @@ const Equipment = () => {
     });
 
     const sortedCategories = Object.entries(map).sort((a, b) => a[1].order - b[1].order);
-    const result: Record<string, Record<string, any[]>> = {};
+    const result: Record<string, Record<string, EquipmentItem[]>> = {};
     sortedCategories.forEach(([catName, catData]) => {
       const sortedSubs = Object.entries(catData.subs).sort((a, b) => a[1].order - b[1].order);
       result[catName] = {};
       sortedSubs.forEach(([subName, subData]) => {
         // Sort items within each subcategory by their sort_order
-        result[catName][subName] = subData.items.sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        result[catName][subName] = subData.items.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
       });
     });
 
@@ -158,15 +208,20 @@ const Equipment = () => {
         pageSlug="equipment"
       />
       <Header />
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
-          Our Equipment
-        </h1>
+      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <div className="mb-8 sm:mb-10">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground">
+            Our Equipment
+          </h1>
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl">
+            Browse curated beach and baby essentials with clear pricing and availability.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="space-y-6 sticky top-0 lg:top-4">
+            <div className="space-y-6 lg:sticky lg:top-6">
               <EquipmentFilters
                 filters={filterOptions}
                 activeFilters={filters}
@@ -186,13 +241,13 @@ const Equipment = () => {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
+          <div className="lg:col-span-3 space-y-10">
             {Object.entries(groupedEquipment).map(([category, subCategories]) => (
               <div key={category}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">{category}</h2>
+                <h2 className="text-2xl font-semibold text-foreground mb-4">{category}</h2>
                 {Object.entries(subCategories).map(([subCategory, items]) => (
                   <div key={subCategory}>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-3">{subCategory}</h3>
+                    <h3 className="text-lg font-semibold text-muted-foreground mb-3">{subCategory}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                       {items.map(equipment => (
                         <EquipmentCard key={equipment.id} equipment={equipment} />

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,11 +40,15 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
     if (!error && data) {
       const result: SiteAssets = {};
       data.forEach(({ image_key, file_path }) => {
+        if (!['hero_image', 'logo', 'favicon'].includes(image_key)) {
+          return;
+        }
         const path = file_path.startsWith(`${image_key}/`) ? file_path : `${image_key}/${file_path}`;
         const { data: url } = supabase.storage
           .from('site-assets')
           .getPublicUrl(path);
-        (result as any)[image_key] = url.publicUrl;
+        const key = image_key as keyof SiteAssets;
+        result[key] = url.publicUrl;
       });
       if (titleData?.content) {
         result.title = titleData.content as string;

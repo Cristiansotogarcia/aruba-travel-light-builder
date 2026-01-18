@@ -24,7 +24,7 @@ const AboutUsSection: React.FC = () => {
         .eq('page_slug', 'homepage')
         .single();
 
-      const metadata = (contentData?.metadata as any) || {};
+      const metadata = (contentData?.metadata as Record<string, unknown> | null) || {};
       
       return {
         title: contentData?.title || 'About Us',
@@ -36,7 +36,7 @@ const AboutUsSection: React.FC = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
@@ -58,32 +58,32 @@ const AboutUsSection: React.FC = () => {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-16 sm:py-20">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-12">
+            <h2 className="text-3xl md:text-4xl font-semibold text-foreground">
               {aboutContent?.title}
             </h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid md:grid-cols-2 gap-10 items-center">
             {/* Image first on mobile, text first on desktop */}
             <div className="flex justify-center md:order-last">
               {aboutContent?.about_image ? (
                 <img 
                   src={aboutContent.about_image}
                   alt="About Us"
-                  className="w-80 h-80 rounded-full object-cover shadow-lg"
+                  className="w-72 h-72 sm:w-80 sm:h-80 rounded-3xl object-cover shadow-soft"
                 />
               ) : (
-                <div className="w-80 h-80 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400">No image uploaded</span>
+                <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-3xl bg-muted/60 flex items-center justify-center">
+                  <span className="text-muted-foreground">No image uploaded</span>
                 </div>
               )}
             </div>
             
             <div className="space-y-6">
-              <p className="text-lg text-gray-600 leading-relaxed">
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
                 {aboutContent?.short_description}
               </p>
               <div className="text-center md:text-left">

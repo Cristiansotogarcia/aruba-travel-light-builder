@@ -36,7 +36,7 @@ const About = () => {
         .eq('page_slug', 'about-us')
         .single();
 
-      const metadata = (contentData?.metadata as any) || {};
+      const metadata = (contentData?.metadata as Record<string, unknown> | null) || {};
       
       const result = {
         title: contentData?.title || 'About Us',
@@ -64,7 +64,7 @@ const About = () => {
         .eq('page_slug', 'about-us')
         .single();
 
-      const metadata = (contentData?.metadata as any) || {};
+      const metadata = (contentData?.metadata as Record<string, unknown> | null) || {};
 
       // Update metadata with new image URL
       const updatedMetadata = {
@@ -149,7 +149,7 @@ const About = () => {
       />
       <Header />
       <main className="flex-1">
-          <div className="container mx-auto px-4 py-8">
+          <div className="container mx-auto px-4 py-10 sm:py-12">
             <div className="text-center mb-8">
               <Skeleton className="h-12 w-64 mx-auto mb-4" />
             </div>
@@ -172,9 +172,9 @@ const About = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-10 sm:py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900">{aboutContent?.title}</h1>
+            <h1 className="text-4xl font-semibold text-foreground">{aboutContent?.title}</h1>
             {user?.role === 'Admin' && (
               <div className="flex gap-2 justify-center mt-4">
                 {isEditing ? (
@@ -206,7 +206,7 @@ const About = () => {
                   <img 
                     src={aboutContent.about_image}
                     alt="About Us"
-                    className="w-full max-w-2xl h-96 object-cover rounded-lg shadow-lg"
+                    className="w-full max-w-2xl h-96 object-cover rounded-2xl shadow-soft"
                   />
                   {user?.role === 'Admin' && (
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">
@@ -221,13 +221,13 @@ const About = () => {
                   )}
                 </div>
               ) : (
-                <div className="w-full max-w-2xl h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="w-full max-w-2xl h-96 bg-muted/60 rounded-2xl flex items-center justify-center">
                   {user?.role === 'Admin' ? (
                     <Button onClick={() => setIsUploadOpen(true)}>
                       Upload Image
                     </Button>
                   ) : (
-                    <span className="text-gray-400">No image uploaded</span>
+                    <span className="text-muted-foreground">No image uploaded</span>
                   )}
                 </div>
               )}
@@ -256,7 +256,7 @@ const About = () => {
                 </div>
               ) : (
                 <div className="prose prose-lg max-w-none">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                     {aboutContent?.full_description}
                   </p>
                 </div>
@@ -270,7 +270,7 @@ const About = () => {
                   <img 
                     src={aboutContent.additional_image}
                     alt="Additional About Us Image"
-                    className="w-full max-w-xl h-64 object-cover rounded-lg shadow-lg"
+                    className="w-full max-w-xl h-64 object-cover rounded-2xl shadow-soft"
                   />
                   {user?.role === 'Admin' && (
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">

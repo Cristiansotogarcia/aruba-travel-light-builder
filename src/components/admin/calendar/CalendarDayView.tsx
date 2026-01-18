@@ -52,7 +52,7 @@ export const CalendarDayView = ({ bookings, currentDate }: CalendarDayViewProps)
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold">${booking.total_amount}</div>
+                    <div className="text-lg font-bold">${Number(booking.total_amount).toFixed(2)}</div>
                     <Button
                       variant="outline"
                       size="sm"

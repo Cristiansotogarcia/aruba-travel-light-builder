@@ -2,6 +2,7 @@
  * Enhanced Error Boundary component with detailed error reporting and recovery
  */
 
+/* eslint-disable react-refresh/only-export-components */
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 export interface ErrorBoundaryState {
@@ -141,7 +142,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }, delay);
   };
 
-  private reportError = async (_error: Error, _errorInfo: ErrorInfo, _details: any) => {
+  private reportError = async (_error: Error, _errorInfo: ErrorInfo, _details: unknown) => {
     try {
       // Here you would typically send to an error reporting service
       // like Sentry, Bugsnag, or your own error tracking endpoint
@@ -229,10 +230,10 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
   const canRetry = retryCount < maxRetries;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 text-red-500">
+          <div className="mx-auto h-12 w-12 text-rose-500">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -242,10 +243,10 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
               />
             </svg>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-foreground">
             Something went wrong
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             We're sorry, but something unexpected happened. Our team has been notified.
           </p>
         </div>
@@ -255,13 +256,13 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
             <div className="flex space-x-3">
               <button
                 onClick={onRetry}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                className="flex-1 bg-primary text-primary-foreground px-4 py-2 rounded-full hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
               >
                 Try Again
               </button>
               <button
                 onClick={onRetryWithDelay}
-                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                className="flex-1 bg-secondary text-secondary-foreground px-4 py-2 rounded-full hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
               >
                 Retry in 2s
               </button>
@@ -270,30 +271,30 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
 
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+            className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-full hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
           >
             Reload Page
           </button>
 
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            className="w-full bg-muted/60 text-foreground px-4 py-2 rounded-full hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
           >
             {showDetails ? 'Hide' : 'Show'} Error Details
           </button>
 
           {showDetails && (
-            <div className="mt-4 p-4 bg-gray-100 rounded-md">
+            <div className="mt-4 p-4 bg-muted/60 rounded-md">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium text-gray-900">Error Details</h3>
+                <h3 className="text-sm font-medium text-foreground">Error Details</h3>
                 <button
                   onClick={copyErrorDetails}
-                  className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
+                  className="text-xs bg-accent/70 text-foreground px-2 py-1 rounded hover:bg-accent transition-colors"
                 >
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
-              <div className="text-xs text-gray-700 space-y-2">
+              <div className="text-xs text-muted-foreground space-y-2">
                 <div>
                   <strong>Error:</strong> {error.message}
                 </div>
@@ -303,7 +304,7 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
                 {error.stack && (
                   <details className="mt-2">
                     <summary className="cursor-pointer font-medium">Stack Trace</summary>
-                    <pre className="mt-1 text-xs bg-white p-2 rounded border overflow-auto max-h-32">
+                    <pre className="mt-1 text-xs bg-background p-2 rounded border border-border/60 overflow-auto max-h-32">
                       {error.stack}
                     </pre>
                   </details>
@@ -311,7 +312,7 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
                 {errorInfo.componentStack && (
                   <details className="mt-2">
                     <summary className="cursor-pointer font-medium">Component Stack</summary>
-                    <pre className="mt-1 text-xs bg-white p-2 rounded border overflow-auto max-h-32">
+                    <pre className="mt-1 text-xs bg-background p-2 rounded border border-border/60 overflow-auto max-h-32">
                       {errorInfo.componentStack}
                     </pre>
                   </details>
@@ -321,8 +322,8 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
           )}
 
           {!canRetry && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-800">
+            <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-md">
+              <p className="text-sm text-rose-800">
                 Maximum retry attempts reached. Please reload the page or contact support if the problem persists.
               </p>
             </div>
