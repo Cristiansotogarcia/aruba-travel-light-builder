@@ -36,8 +36,13 @@ export default defineConfig(({ mode }) => ({
             output: {
                 manualChunks: (id) => {
                     const normalizedId = id.replace(/\\/g, "/");
-                    // React core
-                    if (normalizedId.includes("react") && normalizedId.includes("react-dom")) {
+                    const isNodeModule = normalizedId.includes("/node_modules/");
+                    // React core (avoid circular chunking)
+                    if (isNodeModule &&
+                        (normalizedId.includes("/node_modules/react/") ||
+                            normalizedId.includes("/node_modules/react-dom/") ||
+                            normalizedId.includes("/node_modules/react-is/") ||
+                            normalizedId.includes("/node_modules/scheduler/"))) {
                         return "react-vendor";
                     }
                     if (normalizedId.includes("react-router")) {
@@ -87,17 +92,7 @@ export default defineConfig(({ mode }) => ({
                     if (normalizedId.includes("zod")) {
                         return "forms-validation";
                     }
-                    // Heavy libraries - make these load on-demand wherever possible
-                    // Note: recharts, leaflet, editor are already dynamically imported
-                    if (normalizedId.includes("recharts")) {
-                        return "charts-lib";
-                    }
-                    if (normalizedId.includes("leaflet") || normalizedId.includes("react-leaflet")) {
-                        return "maps-lib";
-                    }
-                    if (normalizedId.includes("@uiw/react-md-editor")) {
-                        return "editor-lib";
-                    }
+                    // Heavy libraries are already dynamically imported; let Rollup decide chunking.
                     // Date utilities - split date-fns more aggressively
                     // This will help with the locale issue
                     if (normalizedId.includes("date-fns")) {
