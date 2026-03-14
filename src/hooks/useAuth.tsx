@@ -45,6 +45,9 @@ const DEFAULT_PERMISSION_MATRIX: Record<UserRole, Record<string, boolean>> = {
     TaskMaster: true,
     settings: true,
   },
+  Accounting: {
+    ReportingAccess: true,
+  },
   Booker: {
     BookingManagement: true,
     BookingAssignment: true,

@@ -36,14 +36,18 @@ export const UserManagement = () => {
   }, [currentProfile]);
 
   const fetchProfiles = useCallback(async () => {
+    setLoading(true);
+
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+        body: {
+          action: 'list_users',
+        },
+      });
 
       if (error) throw error;
-      setProfiles(data || []);
+      if (data?.error) throw new Error(data.error);
+      setProfiles(data?.data || []);
     } catch (error) {
       console.error('Error fetching profiles:', error);
       toast({
@@ -60,6 +64,23 @@ export const UserManagement = () => {
     if (hasPermission('UserManagement')) {
       fetchProfiles();
     }
+  }, [fetchProfiles, hasPermission]);
+
+  useEffect(() => {
+    if (!hasPermission('UserManagement')) {
+      return;
+    }
+
+    const profilesSubscription = supabase
+      .channel('admin-user-management-profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchProfiles();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesSubscription);
+    };
   }, [fetchProfiles, hasPermission]);
 
   const handleUserCreated = (result: TempPasswordResult) => {

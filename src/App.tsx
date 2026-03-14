@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
+import { PasswordChangeGate } from "@/components/auth/PasswordChangeGate";
 import { initPerformanceMonitoring } from "@/utils/performanceMonitoring";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
@@ -25,6 +26,7 @@ const Cart = lazy(() => import("./pages/Cart"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Book = lazy(() => import("./pages/Book"));
 const Admin = lazy(() => import("./pages/Admin"));
+const Accounting = lazy(() => import("./pages/Accounting"));
 const Login = lazy(() => import("./pages/Login"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
@@ -33,6 +35,8 @@ const SeoDemo = lazy(() => import("./pages/SeoDemo"));
 const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Invoice = lazy(() => import("./pages/Invoice"));
+const DeliverySlip = lazy(() => import("./pages/DeliverySlip"));
+const DeliveryTracking = lazy(() => import("./pages/DeliveryTracking"));
 
 // Loading fallback with skeleton
 const PageLoader = () => <PageSkeleton />;
@@ -157,6 +161,7 @@ const App = () => {
                     }}
                   >
                     <ScrollLockGuard />
+                    <PasswordChangeGate />
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
@@ -173,6 +178,12 @@ const App = () => {
                         element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
                       >
                         <Route path="/admin" element={<Admin />} />
+                      </Route>
+
+                      <Route
+                        element={<ProtectedRoute allowedRoles={["Accounting", "Admin", "SuperUser"]} />}
+                      >
+                        <Route path="/accounting" element={<Accounting />} />
                       </Route>
 
                       <Route
@@ -199,6 +210,15 @@ const App = () => {
                       <Route path="/seo-demo" element={<SeoDemo />} />
                       <Route path="/seo-test" element={<SeoTest />} />
                       <Route path="/invoice/:id" element={<Invoice />} />
+                      <Route path="/track/:token" element={<DeliveryTracking />} />
+
+                      <Route
+                        element={
+                          <ProtectedRoute allowedRoles={["Admin", "SuperUser", "Accounting", "Booker", "Customer", "Driver"]} />
+                        }
+                      >
+                        <Route path="/delivery-slip/:id" element={<DeliverySlip />} />
+                      </Route>
 
                       {/* Catch all */}
                       <Route path="*" element={<NotFound />} />

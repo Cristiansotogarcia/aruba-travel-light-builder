@@ -102,6 +102,7 @@ export const EditUserModal = ({ open, onClose, user, onUserUpdated }: EditUserMo
                 <SelectItem value="Driver">Driver</SelectItem>
                 <SelectItem value="Booker">Booker</SelectItem>
                 <SelectItem value="Customer">Customer</SelectItem>
+                <SelectItem value="Accounting">Accounting</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
                 <SelectItem value="SuperUser">SuperUser</SelectItem>
               </SelectContent>

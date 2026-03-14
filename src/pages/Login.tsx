@@ -44,6 +44,8 @@ const Login = () => {
         navigate(decodeURIComponent(redirectUrl));
       } else if (userRole === 'Admin' || userRole === 'SuperUser') {
         navigate('/admin');
+      } else if (userRole === 'Accounting') {
+        navigate('/accounting');
       } else if (userRole === 'Driver') {
         navigate('/driver-dashboard');
       } else if (userRole === 'Booker') {

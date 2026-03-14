@@ -47,9 +47,13 @@ const MobileNav = () => {
       case 'Admin':
       case 'SuperUser':
         return { path: '/admin', label: 'Admin Dashboard' };
+      case 'Accounting':
+        return { path: '/accounting', label: 'Accounting Dashboard' };
       case 'Driver':
         return { path: '/driver-dashboard', label: 'Driver Dashboard' };
       case 'Booker':
+        return { path: '/booker', label: 'Booker Dashboard' };
+      case 'Customer':
         return { path: '/customer-dashboard', label: 'My Dashboard' };
       default:
         return null;

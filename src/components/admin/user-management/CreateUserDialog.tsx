@@ -187,6 +187,7 @@ export const CreateUserDialog = ({ onUserCreated, onRefreshProfiles }: CreateUse
               <SelectContent>
                 <SelectItem value="Driver">Driver</SelectItem>
                 <SelectItem value="Booker">Booker</SelectItem>
+                <SelectItem value="Accounting">Accounting</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
                 <SelectItem value="SuperUser">SuperUser</SelectItem>
               </SelectContent>
