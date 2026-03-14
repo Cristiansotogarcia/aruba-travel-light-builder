@@ -1,4 +1,4 @@
-
+﻿
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,9 +38,20 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   
   const selectedProductDetails = products.find(p => p.id === selectedEquipment);
+  const isSundayStart = currentSelectedDate?.getDay() === 0;
+  const hasSundayRequiredItem = bookingItems.some(item => {
+    const name = item.equipment_name.toLowerCase();
+    return name.includes('crib') || name.includes('pack and play') || name.includes('pack & play');
+  });
+  const isSundayRestricted = Boolean(isSundayStart && !hasSundayRequiredItem);
+
+  const isSundayAllowedItem = (productName: string) => {
+    const name = productName.toLowerCase();
+    return name.includes('crib') || name.includes('pack and play') || name.includes('pack & play');
+  };
+
   const availableProducts = products.filter(p => p.stock_quantity > 0);
   const outOfStockProducts = products.filter(p => p.stock_quantity <= 0);
-
   // Validation functions
   const validateSelection = (): ValidationError[] => {
     const validationErrors: ValidationError[] = [];
@@ -80,6 +91,12 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
       });
     }
 
+    if (selectedProductDetails && isSundayRestricted && !isSundayAllowedItem(selectedProductDetails.name)) {
+      validationErrors.push({
+        field: 'equipment',
+        message: 'Sunday bookings require a crib or pack and play before adding other items'
+      });
+    }
     // Check if equipment is already in cart
     const existingItem = bookingItems.find(item => item.equipment_id === selectedEquipment);
     if (existingItem && selectedProductDetails) {
@@ -108,6 +125,11 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
 
     try {
       if (selectedProductDetails && quantity > 0) {
+        if (isSundayRestricted && !isSundayAllowedItem(selectedProductDetails.name)) {
+          toast.error('Please add a crib or pack and play before other items for Sunday starts');
+          setIsLoading(false);
+          return;
+        }
         addItem(selectedProductDetails, quantity, currentSelectedDate);
         toast.success(`Added ${quantity} ${selectedProductDetails.name} to booking`);
         
@@ -195,7 +217,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
     if (errors.length > 0) {
       setErrors([]);
     }
-  }, [selectedEquipment, quantity]);
+  }, [errors.length, quantity, selectedEquipment]);
 
   const getFieldError = (field: string) => {
     return errors.find(error => error.field === field)?.message;
@@ -212,6 +234,14 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isSundayRestricted && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sunday start dates require a crib or pack and play before adding other items.
+            </AlertDescription>
+          </Alert>
+        )}
         {hasErrors && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -257,8 +287,12 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                 {availableProducts.length > 0 && (
                   <optgroup label="Available Equipment">
                     {availableProducts.map(equipment => (
-                      <option key={equipment.id} value={equipment.id}>
-                        {equipment.name} - ${equipment.price_per_day}/day | ${Number(equipment.price_per_day * 5).toFixed(2)}/week
+                      <option
+                        key={equipment.id}
+                        value={equipment.id}
+                        disabled={isSundayRestricted && !isSundayAllowedItem(equipment.name)}
+                      >
+                        {equipment.name} - ${equipment.price_per_day}/day | ${Number(equipment.price_per_week ?? equipment.price_per_day * 5).toFixed(2)}/week
                         {equipment.stock_quantity < 5 ? ` (${equipment.stock_quantity} left)` : ''}
                       </option>
                     ))}
@@ -323,7 +357,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                     ${selectedProductDetails.price_per_day}/day
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    ${Number(selectedProductDetails.price_per_day * 5).toFixed(2)}/week
+                    ${Number(selectedProductDetails.price_per_week ?? selectedProductDetails.price_per_day * 5).toFixed(2)}/week
                   </span>
                   <span className={`text-sm ${
                     selectedProductDetails.stock_quantity < 5 ? 'text-orange-600' : 'text-green-600'
@@ -417,7 +451,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                             </span>
                             <span className="mx-2">|</span>
                             <span>
-                              ${Number(item.equipment_price * 5).toFixed(2)}/week
+                              ${Number((equipmentDetails.price_per_week ?? equipmentDetails.price_per_day * 5)).toFixed(2)}/week
                             </span>
                           </div>
                           <div className="text-sm text-muted-foreground">
@@ -461,7 +495,11 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
               <div className="flex justify-between items-center text-sm text-muted-foreground mt-1">
                 <span>Weekly Rate:</span>
                 <span>
-                  ${bookingItems.reduce((total, item) => total + (item.equipment_price * item.quantity * 5), 0).toFixed(2)}
+                  ${bookingItems.reduce((total, item) => {
+                    const equipment = products.find(eq => eq.id === item.equipment_id);
+                    const weeklyRate = equipment?.price_per_week ?? item.equipment_price * 5;
+                    return total + (weeklyRate * item.quantity);
+                  }, 0).toFixed(2)}
                 </span>
               </div>
             </div>

@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DateSelection } from './DateSelection';
+import EquipmentSelection from './EquipmentSelection';
 import { DeliverySlotSelector } from './DeliverySlotSelector';
 import { PickupSlotSelector } from './PickupSlotSelector';
 import { CustomerInformation } from './CustomerInformation';
 import { BookingSummary } from './BookingSummary';
 import useBooking from '@/hooks/useBooking';
-import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
-import { AlertCircle, Loader2, ShoppingCart, Calendar } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle, Loader2, Calendar } from 'lucide-react';
 
 interface FormValidationErrors {
   dates?: string;
@@ -26,7 +25,11 @@ export const BookingForm = () => {
   const {
     bookingData,
     products,
+    selectedEquipment,
+    quantity,
     isSubmitting,
+    setSelectedEquipment,
+    setQuantity,
     updateCustomerInfo,
     updateDates,
     calculateDays,
@@ -36,30 +39,22 @@ export const BookingForm = () => {
   } = useBooking();
   
   const { items } = useCart();
-  const navigate = useNavigate();
   const [formErrors, setFormErrors] = useState<FormValidationErrors>({});
   const [isValidating, setIsValidating] = useState(false);
   
   // Helper functions
-  const isSunday = (dateString: string): boolean => {
+  const isSunday = useCallback((dateString: string): boolean => {
     if (!dateString) return false;
     const date = new Date(dateString);
     return date.getDay() === 0;
-  };
+  }, []);
   
-  const hasCribOrPackAndPlay = (): boolean => {
+  const hasCribOrPackAndPlay = useCallback((): boolean => {
     return items.some(item => {
       const name = item.equipment_name.toLowerCase();
       return name.includes('crib') || name.includes('pack and play') || name.includes('pack & play');
     });
-  };
-
-  // Redirect to cart if empty
-  useEffect(() => {
-    if (items.length === 0) {
-      navigate('/cart');
-    }
-  }, [items.length, navigate]);
+  }, [items]);
 
   // Validate form before submission
   const validateForm = (): FormValidationErrors => {
@@ -77,7 +72,7 @@ export const BookingForm = () => {
     // Sunday validation
     if (bookingData.startDate && isSunday(bookingData.startDate)) {
       if (!hasCribOrPackAndPlay()) {
-        errors.sunday = 'Sunday bookings require a crib or pack and play in your cart';
+        errors.sunday = 'Sunday bookings require a crib or pack and play.';
       }
     }
     
@@ -168,7 +163,7 @@ export const BookingForm = () => {
         ((!bookingData.startDate || !isSunday(bookingData.startDate)) || hasCribOrPackAndPlay())) {
       setFormErrors(prev => ({ ...prev, sunday: undefined }));
     }
-  }, [bookingData.startDate, items, formErrors.sunday]);
+  }, [bookingData.startDate, formErrors.sunday, hasCribOrPackAndPlay, isSunday]);
   
   useEffect(() => {
     if (formErrors.equipment && items.length > 0) {
@@ -190,10 +185,6 @@ export const BookingForm = () => {
                          !bookingData.deliverySlot || !bookingData.pickupSlot || 
                          hasSundayRequirement || isSubmitting || isValidating;
 
-  if (items.length === 0) {
-    return null; // Will redirect via useEffect
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -210,8 +201,7 @@ export const BookingForm = () => {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Sunday Delivery Notification:</strong> Sunday deliveries are only available for orders that include a crib or pack and play. 
-              Please add one to your cart to continue with a Sunday booking, or select a different start date.
+              <strong>Sunday Booking Notice:</strong> A crib or pack and play is required to start a booking on Sunday.
             </AlertDescription>
           </Alert>
         )}
@@ -221,44 +211,11 @@ export const BookingForm = () => {
           <Alert className="bg-blue-50 border-blue-200">
             <Calendar className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              <strong>Sunday Booking Confirmed:</strong> Your order includes a crib/pack and play, so Sunday delivery is available! 
-              Note: Sunday deliveries are 4-6 PM only, and Sunday pickups are 8-10 AM only. A $20 Sunday delivery fee applies.
+              <strong>Sunday Booking Ready:</strong> Sunday time slots and the one-time fee apply.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Cart Items Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Your Cart ({items.length} {items.length === 1 ? 'item' : 'items'})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {items.map(item => (
-                <div key={item.equipment_id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{item.equipment_name}</p>
-                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                  </div>
-                  <p className="font-semibold text-primary">${item.equipment_price.toFixed(2)}/day</p>
-                </div>
-              ))}
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-2"
-                onClick={() => navigate('/cart')}
-              >
-                Edit Cart
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
         {/* Date Selection */}
         <div className="space-y-2">
           <DateSelection
@@ -274,6 +231,16 @@ export const BookingForm = () => {
             </Alert>
           )}
         </div>
+
+        {/* Equipment Selection */}
+        <EquipmentSelection
+          products={products}
+          selectedEquipment={selectedEquipment}
+          quantity={quantity}
+          setSelectedEquipment={setSelectedEquipment}
+          setQuantity={setQuantity}
+          currentSelectedDate={bookingData.startDate ? new Date(bookingData.startDate) : undefined}
+        />
 
         {/* Delivery Slot Selection */}
         {bookingData.startDate && (
@@ -374,7 +341,7 @@ export const BookingForm = () => {
         {/* Form Status Indicator */}
         {!hasErrors && showSummary && bookingData.deliverySlot && bookingData.pickupSlot && !hasSundayRequirement && (
           <div className="text-center text-sm text-muted-foreground">
-            ✓ All information is valid. Ready to submit your reservation.
+            All information is valid. Ready to submit your reservation.
           </div>
         )}
       </form>

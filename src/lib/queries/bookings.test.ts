@@ -3,12 +3,16 @@ import { updateBookingStatus } from './bookings';
 import type { BookingStatus } from '@/components/admin/calendar/types';
 
 // Mock the Supabase client used in the query utilities
-const singleFn = vi.fn();
-const selectFn = vi.fn(() => ({ single: singleFn }));
-const eqFn = vi.fn(() => ({ select: selectFn }));
-const updateFn = vi.fn(() => ({ eq: eqFn }));
-const fromFn = vi.fn(() => ({ update: updateFn }));
-const invokeFn = vi.fn().mockResolvedValue({ error: null });
+const { singleFn, selectFn, eqFn, updateFn, fromFn, invokeFn } = vi.hoisted(() => {
+  const singleFn = vi.fn();
+  const selectFn = vi.fn(() => ({ single: singleFn }));
+  const eqFn = vi.fn(() => ({ select: selectFn }));
+  const updateFn = vi.fn(() => ({ eq: eqFn }));
+  const fromFn = vi.fn(() => ({ update: updateFn }));
+  const invokeFn = vi.fn().mockResolvedValue({ error: null });
+
+  return { singleFn, selectFn, eqFn, updateFn, fromFn, invokeFn };
+});
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -42,9 +46,10 @@ describe('updateBookingStatus', () => {
     singleFn.mockResolvedValue({ data: mockBooking, error: null });
 
     const result = await updateBookingStatus('1', 'confirmed' as BookingStatus);
+    const bookingResult = result as unknown as typeof mockBooking;
 
     expect(selectFn).toHaveBeenCalledWith('*, booking_items(*, equipment(*))');
-    expect(result?.booking_items[0].equipment?.name).toBe('Stroller');
+    expect(bookingResult?.booking_items[0].equipment?.name).toBe('Stroller');
   });
 });
 

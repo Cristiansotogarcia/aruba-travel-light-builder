@@ -1,9 +1,9 @@
-
+﻿
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, AlertCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DateSelectionProps {
@@ -18,13 +18,12 @@ interface DateValidationError {
   message: string;
 }
 
-export const DateSelection = ({ 
+export const DateSelection = ({
   startDate, 
   endDate, 
   onStartDateChange, 
   onEndDateChange 
 }: DateSelectionProps) => {
-  const [errors, setErrors] = useState<DateValidationError[]>([]);
   const [touched, setTouched] = useState({ startDate: false, endDate: false });
 
   // Validation constants
@@ -37,8 +36,9 @@ export const DateSelection = ({
   const maxBookingDate = new Date();
   maxBookingDate.setDate(maxBookingDate.getDate() + maxAdvanceBookingDays);
   const maxBookingDateStr = maxBookingDate.toISOString().split('T')[0];
+  const maxBookingDateTime = maxBookingDate.getTime();
 
-  const validateDates = () => {
+  const errors = useMemo(() => {
     const newErrors: DateValidationError[] = [];
     
     if (!startDate && touched.startDate) {
@@ -55,6 +55,7 @@ export const DateSelection = ({
       const todayDate = new Date(today);
       const diffTime = end.getTime() - start.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const maxDate = new Date(maxBookingDateTime);
       
       // Check if start date is in the past
       if (start < todayDate) {
@@ -62,11 +63,11 @@ export const DateSelection = ({
       }
       
       // Check if dates are too far in advance
-      if (start > maxBookingDate) {
+      if (start > maxDate) {
         newErrors.push({ field: 'startDate', message: `Bookings can only be made up to ${maxAdvanceBookingDays} days in advance` });
       }
       
-      if (end > maxBookingDate) {
+      if (end > maxDate) {
         newErrors.push({ field: 'endDate', message: `Bookings can only be made up to ${maxAdvanceBookingDays} days in advance` });
       }
       
@@ -84,13 +85,9 @@ export const DateSelection = ({
         newErrors.push({ field: 'general', message: `Maximum rental period is ${maxRentalDays} days` });
       }
     }
-    
-    setErrors(newErrors);
-  };
 
-  useEffect(() => {
-    validateDates();
-  }, [startDate, endDate, touched]);
+    return newErrors;
+  }, [endDate, maxAdvanceBookingDays, maxBookingDateTime, maxRentalDays, minRentalDays, startDate, today, touched]);
 
   const handleStartDateChange = (date: string) => {
     setTouched(prev => ({ ...prev, startDate: true }));

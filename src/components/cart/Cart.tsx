@@ -1,4 +1,4 @@
-import { useCart } from '@/hooks/useCart';
+﻿import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Trash2, ShoppingCart } from 'lucide-react';

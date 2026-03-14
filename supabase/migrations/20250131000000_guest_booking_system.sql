@@ -1,4 +1,4 @@
--- Guest Booking System Migration
+﻿-- Guest Booking System Migration
 -- Enables guest bookings with admin confirmation and delivery slot management
 
 -- ============================================
@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_delivery_slots_date_slot ON public.delivery_slots
 -- ============================================
 -- Add new columns for guest booking flow
 ALTER TABLE public.bookings 
+    ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.profiles(id),
     ADD COLUMN IF NOT EXISTS delivery_slot VARCHAR(20) CHECK (delivery_slot IN ('morning', 'afternoon')),
     ADD COLUMN IF NOT EXISTS admin_confirmed_at TIMESTAMP WITH TIME ZONE,
     ADD COLUMN IF NOT EXISTS admin_confirmed_by UUID REFERENCES public.profiles(id),
@@ -265,10 +266,10 @@ CREATE POLICY "Admins can update notifications" ON public.admin_notifications
 
 -- Update RLS for bookings to allow guest bookings
 DROP POLICY IF EXISTS "Users can view own bookings" ON public.bookings;
-CREATE POLICY "Users can view own bookings or guest bookings by email" ON public.bookings
-    FOR SELECT USING (
-        user_id = auth.uid() 
-        OR user_id IS NULL -- Guest bookings
+CREATE POLICY "Users can view own bookings" ON public.bookings
+    FOR SELECT TO authenticated
+    USING (
+        user_id = auth.uid()
         OR EXISTS (
             SELECT 1 FROM public.profiles
             WHERE profiles.id = auth.uid()

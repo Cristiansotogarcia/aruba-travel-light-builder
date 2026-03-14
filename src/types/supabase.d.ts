@@ -48,54 +48,117 @@ export type Database = {
             bookings: {
                 Row: {
                     assigned_to: string | null;
+                    admin_confirmed_at: string | null;
+                    admin_confirmed_by: string | null;
+                    assigned_driver_id: string | null;
                     created_at: string;
                     customer_address: string;
+                    customer_comment: string | null;
                     customer_email: string;
                     customer_name: string;
                     customer_phone: string;
-                    customer_comment: string | null;
                     delivery_failure_reason: string | null;
+                    delivery_slot: string | null;
+                    delivery_scheduled_at: string | null;
+                    delivered_at: string | null;
                     end_date: string;
                     id: string;
-                    user_id: string | null;
+                    metadata: Json | null;
+                    payment_link_expires_at: string | null;
+                    payment_link_generated_at: string | null;
+                    payment_link_url: string | null;
+                    payment_status: string | null;
+                    pickup_slot: string | null;
+                    pickup_scheduled_at: string | null;
+                    picked_up_at: string | null;
+                    rejected_at: string | null;
+                    rejected_by: string | null;
+                    rejection_reason: string | null;
+                    reservation_email_sent_at: string | null;
+                    room_number: string | null;
                     start_date: string;
                     status: string;
+                    stripe_payment_intent_id: string | null;
+                    stripe_session_id: string | null;
                     total_amount: number;
                     updated_at: string;
+                    user_id: string | null;
                 };
                 Insert: {
                     assigned_to?: string | null;
+                    admin_confirmed_at?: string | null;
+                    admin_confirmed_by?: string | null;
+                    assigned_driver_id?: string | null;
                     created_at?: string;
                     customer_address: string;
+                    customer_comment?: string | null;
                     customer_email: string;
                     customer_name: string;
                     customer_phone: string;
-                    customer_comment?: string | null;
                     delivery_failure_reason?: string | null;
+                    delivery_slot?: string | null;
+                    delivery_scheduled_at?: string | null;
+                    delivered_at?: string | null;
                     end_date: string;
                     id?: string;
-                    user_id?: string | null;
+                    metadata?: Json | null;
+                    payment_link_expires_at?: string | null;
+                    payment_link_generated_at?: string | null;
+                    payment_link_url?: string | null;
+                    payment_status?: string | null;
+                    pickup_slot?: string | null;
+                    pickup_scheduled_at?: string | null;
+                    picked_up_at?: string | null;
+                    rejected_at?: string | null;
+                    rejected_by?: string | null;
+                    rejection_reason?: string | null;
+                    reservation_email_sent_at?: string | null;
+                    room_number?: string | null;
                     start_date: string;
                     status?: string;
+                    stripe_payment_intent_id?: string | null;
+                    stripe_session_id?: string | null;
                     total_amount: number;
                     updated_at?: string;
+                    user_id?: string | null;
                 };
                 Update: {
                     assigned_to?: string | null;
+                    admin_confirmed_at?: string | null;
+                    admin_confirmed_by?: string | null;
+                    assigned_driver_id?: string | null;
                     created_at?: string;
                     customer_address?: string;
+                    customer_comment?: string | null;
                     customer_email?: string;
                     customer_name?: string;
                     customer_phone?: string;
-                    customer_comment?: string | null;
                     delivery_failure_reason?: string | null;
+                    delivery_slot?: string | null;
+                    delivery_scheduled_at?: string | null;
+                    delivered_at?: string | null;
                     end_date?: string;
                     id?: string;
-                    user_id?: string | null;
+                    metadata?: Json | null;
+                    payment_link_expires_at?: string | null;
+                    payment_link_generated_at?: string | null;
+                    payment_link_url?: string | null;
+                    payment_status?: string | null;
+                    pickup_slot?: string | null;
+                    pickup_scheduled_at?: string | null;
+                    picked_up_at?: string | null;
+                    rejected_at?: string | null;
+                    rejected_by?: string | null;
+                    rejection_reason?: string | null;
+                    reservation_email_sent_at?: string | null;
+                    room_number?: string | null;
                     start_date?: string;
                     status?: string;
+                    stripe_payment_intent_id?: string | null;
+                    stripe_session_id?: string | null;
                     total_amount?: number;
                     updated_at?: string;
+                    user_id?: string | null;
                 };
                 Relationships: [
                     {
@@ -106,6 +169,122 @@ export type Database = {
                         referencedColumns: ["id"];
                     }
                 ];
+            };
+            payment_records: {
+                Row: {
+                    amount: number;
+                    booking_id: string;
+                    card_last_four: string | null;
+                    created_at: string | null;
+                    currency: string | null;
+                    currency_code: string | null;
+                    gross_amount: number | null;
+                    id: string;
+                    is_refund: boolean | null;
+                    net_amount: number | null;
+                    payment_method: string | null;
+                    processed_at: string | null;
+                    processor_fee_amount: number | null;
+                    processor_fee_percent: number | null;
+                    processor_transaction_id: string | null;
+                    refund_amount: number | null;
+                    settlement_date: string | null;
+                    statement_reference: string | null;
+                    status: string;
+                    stripe_metadata: Json | null;
+                    stripe_payment_intent_id: string | null;
+                    stripe_session_id: string | null;
+                };
+                Insert: {
+                    amount: number;
+                    booking_id: string;
+                    card_last_four?: string | null;
+                    created_at?: string | null;
+                    currency?: string | null;
+                    currency_code?: string | null;
+                    gross_amount?: number | null;
+                    id?: string;
+                    is_refund?: boolean | null;
+                    net_amount?: number | null;
+                    payment_method?: string | null;
+                    processed_at?: string | null;
+                    processor_fee_amount?: number | null;
+                    processor_fee_percent?: number | null;
+                    processor_transaction_id?: string | null;
+                    refund_amount?: number | null;
+                    settlement_date?: string | null;
+                    statement_reference?: string | null;
+                    status: string;
+                    stripe_metadata?: Json | null;
+                    stripe_payment_intent_id?: string | null;
+                    stripe_session_id?: string | null;
+                };
+                Update: {
+                    amount?: number;
+                    booking_id?: string;
+                    card_last_four?: string | null;
+                    created_at?: string | null;
+                    currency?: string | null;
+                    currency_code?: string | null;
+                    gross_amount?: number | null;
+                    id?: string;
+                    is_refund?: boolean | null;
+                    net_amount?: number | null;
+                    payment_method?: string | null;
+                    processed_at?: string | null;
+                    processor_fee_amount?: number | null;
+                    processor_fee_percent?: number | null;
+                    processor_transaction_id?: string | null;
+                    refund_amount?: number | null;
+                    settlement_date?: string | null;
+                    statement_reference?: string | null;
+                    status?: string;
+                    stripe_metadata?: Json | null;
+                    stripe_payment_intent_id?: string | null;
+                    stripe_session_id?: string | null;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: "payment_records_booking_id_fkey";
+                        columns: ["booking_id"];
+                        isOneToOne: false;
+                        referencedRelation: "bookings";
+                        referencedColumns: ["id"];
+                    }
+                ];
+            };
+            system_settings: {
+                Row: {
+                    created_at: string | null;
+                    description: string | null;
+                    id: string;
+                    is_active: boolean | null;
+                    setting_key: string;
+                    setting_type: string | null;
+                    setting_value: string | null;
+                    updated_at: string | null;
+                };
+                Insert: {
+                    created_at?: string | null;
+                    description?: string | null;
+                    id?: string;
+                    is_active?: boolean | null;
+                    setting_key: string;
+                    setting_type?: string | null;
+                    setting_value?: string | null;
+                    updated_at?: string | null;
+                };
+                Update: {
+                    created_at?: string | null;
+                    description?: string | null;
+                    id?: string;
+                    is_active?: boolean | null;
+                    setting_key?: string;
+                    setting_type?: string | null;
+                    setting_value?: string | null;
+                    updated_at?: string | null;
+                };
+                Relationships: [];
             };
             component_visibility: {
                 Row: {
@@ -218,8 +397,11 @@ export type Database = {
                     featured_sort_order: number | null; // <-- Add this line
                     id: string;
                     images: string[] | null;
+                    low_stock_threshold: number | null;
                     name: string;
                     price_per_day: number;
+                    price_per_week: number | null;
+                    reserved_quantity: number | null;
                     sort_order: number | null;
                     stock_quantity: number;
                     sub_category: string | null;
@@ -236,8 +418,11 @@ export type Database = {
                     featured?: boolean;
                     id?: string;
                     images?: string[] | null;
+                    low_stock_threshold?: number | null;
                     name: string;
                     price_per_day?: number;
+                    price_per_week?: number | null;
+                    reserved_quantity?: number | null;
                     sort_order?: number | null;
                     stock_quantity?: number;
                     sub_category?: string | null;
@@ -254,8 +439,11 @@ export type Database = {
                     featured?: boolean;
                     id?: string;
                     images?: string[] | null;
+                    low_stock_threshold?: number | null;
                     name?: string;
                     price_per_day?: number;
+                    price_per_week?: number | null;
+                    reserved_quantity?: number | null;
                     sort_order?: number | null;
                     stock_quantity?: number;
                     sub_category?: string | null;
@@ -489,9 +677,36 @@ export type Database = {
             [_ in never]: never;
         };
         Functions: {
+            check_delivery_slot_availability: {
+                Args: {
+                    p_delivery_date: string;
+                    p_time_slot: string;
+                };
+                Returns: {
+                    available: boolean;
+                    current_count: number;
+                    max_bookings: number;
+                    remaining_slots: number;
+                }[];
+            };
             cleanup_expired_temp_passwords: {
                 Args: Record<PropertyKey, never>;
                 Returns: undefined;
+            };
+            get_delivery_slots_availability: {
+                Args: {
+                    p_start_date: string;
+                    p_end_date: string;
+                };
+                Returns: {
+                    delivery_date: string;
+                    morning_available: boolean;
+                    morning_count: number;
+                    morning_remaining: number;
+                    afternoon_available: boolean;
+                    afternoon_count: number;
+                    afternoon_remaining: number;
+                }[];
             };
             get_current_user_role: {
                 Args: Record<PropertyKey, never>;
@@ -499,7 +714,7 @@ export type Database = {
             };
         };
         Enums: {
-            app_role: "SuperUser" | "Admin" | "Booker" | "Driver";
+            app_role: "SuperUser" | "Admin" | "Booker" | "Customer" | "Driver";
         };
         CompositeTypes: {
             [_ in never]: never;
@@ -557,7 +772,7 @@ export type CompositeTypes<PublicCompositeTypeNameOrOptions extends keyof Defaul
 export declare const Constants: {
     readonly public: {
         readonly Enums: {
-            readonly app_role: readonly ["SuperUser", "Admin", "Booker", "Driver"];
+            readonly app_role: readonly ["SuperUser", "Admin", "Booker", "Customer", "Driver"];
         };
     };
 };

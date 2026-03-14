@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Booking, BookingStatus, BookingItem } from '@/components/admin/calendar/types'; // Direct import for clarity
+import { BookingStatus } from '@/components/admin/calendar/types';
 import {
   LineChart,
   Line,
@@ -18,6 +18,7 @@ import {
 import { subDays, format, parseISO, eachDayOfInterval, compareAsc, startOfMonth, subMonths, formatDistanceToNow } from '@/utils/dateUtils';
 import { Product } from '@/types/types';
 import { DateRange } from 'react-day-picker'; // Re-adding based on error, assuming it's needed.
+import type { Database } from '@/types/supabase';
 import {
   Table,
   TableBody,
@@ -51,6 +52,31 @@ interface ActivityLogEntry {
   bookingId: string;
 }
 
+type BookingRow = Pick<
+  Database['public']['Tables']['bookings']['Row'],
+  | 'id'
+  | 'start_date'
+  | 'end_date'
+  | 'status'
+  | 'total_amount'
+  | 'customer_name'
+  | 'customer_email'
+  | 'customer_phone'
+  | 'customer_address'
+  | 'assigned_to'
+  | 'delivery_failure_reason'
+  | 'created_at'
+  | 'updated_at'
+> & {
+  booking_items?: Array<{
+    equipment_name?: string;
+    quantity?: number;
+    equipment_id?: string;
+    equipment_price?: number | null;
+    subtotal?: number | null;
+  }> | null;
+};
+
 export const ReportsDashboard: React.FC = () => {
   const [bookingTrends, setBookingTrends] = useState<BookingTrendData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
@@ -71,7 +97,7 @@ export const ReportsDashboard: React.FC = () => {
   const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>("");
 
-  const processBookingDataForTrends = (bookings: Booking[]): BookingTrendData[] => {
+  const processBookingDataForTrends = useCallback((bookings: BookingRow[]): BookingTrendData[] => {
     if (!bookings || bookings.length === 0) return [];
     const endDate = new Date();
     const startDate = subDays(endDate, 29);
@@ -84,7 +110,7 @@ export const ReportsDashboard: React.FC = () => {
       try {
         const bookingStartDate = parseISO(booking.start_date);
         const formattedStartDate = format(bookingStartDate, 'yyyy-MM-dd');
-        if (bookingsByDay.hasOwnProperty(formattedStartDate)) {
+        if (Object.prototype.hasOwnProperty.call(bookingsByDay, formattedStartDate)) {
           bookingsByDay[formattedStartDate]++;
         }
       } catch (e) {
@@ -94,9 +120,9 @@ export const ReportsDashboard: React.FC = () => {
     return Object.entries(bookingsByDay)
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)));
-  };
+  }, []);
 
-  const processBookingDataForRevenue = (bookings: Booking[]) => {
+  const processBookingDataForRevenue = useCallback((bookings: BookingRow[]) => {
     if (!bookings || bookings.length === 0) {
       setTotalRevenue(0);
       setRevenueTrends([]);
@@ -122,7 +148,7 @@ export const ReportsDashboard: React.FC = () => {
       try {
         const bookingDate = parseISO(booking.start_date);
         const monthKey = format(startOfMonth(bookingDate), 'yyyy-MM');
-        if (monthlyRevenue.hasOwnProperty(monthKey)) {
+        if (Object.prototype.hasOwnProperty.call(monthlyRevenue, monthKey)) {
           monthlyRevenue[monthKey] += booking.total_amount || 0;
         }
       } catch (e) {
@@ -138,9 +164,9 @@ export const ReportsDashboard: React.FC = () => {
       .sort((a, b) => compareAsc(parseISO(a.month), parseISO(b.month))); // Ensure chronological order
     
     setRevenueTrends(trends);
-  };
+  }, []);
 
-  const processDataForEquipmentUtilization = (bookings: Booking[], products: Product[]): EquipmentUtilizationData[] => {
+  const processDataForEquipmentUtilization = useCallback((bookings: BookingRow[], products: Product[]): EquipmentUtilizationData[] => {
     if (!bookings || bookings.length === 0 || !products || products.length === 0) return [];
 
     const utilizationMap: { [productName: string]: number } = {};
@@ -153,7 +179,7 @@ export const ReportsDashboard: React.FC = () => {
     // Aggregate booked quantities from booking_items
     bookings.forEach(booking => {
       booking.booking_items?.forEach(item => {
-        if (item.equipment_name && utilizationMap.hasOwnProperty(item.equipment_name)) {
+        if (item.equipment_name && Object.prototype.hasOwnProperty.call(utilizationMap, item.equipment_name)) {
           utilizationMap[item.equipment_name] += item.quantity || 0;
         }
       });
@@ -162,9 +188,9 @@ export const ReportsDashboard: React.FC = () => {
     return Object.entries(utilizationMap)
       .map(([name, bookedQuantity]) => ({ name, bookedQuantity }))
       .sort((a, b) => b.bookedQuantity - a.bookedQuantity); // Sort by most utilized
-  };
+  }, []);
 
-  const processBookingsForActivityLog = (bookings: Booking[]): ActivityLogEntry[] => {
+  const processBookingsForActivityLog = useCallback((bookings: BookingRow[]): ActivityLogEntry[] => {
     if (!bookings || bookings.length === 0) return [];
 
     const logEntries: ActivityLogEntry[] = [];
@@ -196,15 +222,15 @@ export const ReportsDashboard: React.FC = () => {
 
     // Sort by actual timestamp descending
     return logEntries.sort((a, b) => compareAsc(parseISO(b.timestamp), parseISO(a.timestamp)));
-  };
+  }, []);
 
-  const fetchBookingData = async (filters: { dateRange?: DateRange, productId?: string, customerName?: string }) => {
+  const fetchBookingData = useCallback(async (filters: { dateRange?: DateRange; productId?: string; customerName?: string }) => {
     setLoading(true);
     setError(null);
     try {
       let bookingsQuery = supabase
         .from('bookings')
-        .select('id, start_date, end_date, status, total_amount, customer_name, customer_email, customer_phone, customer_address, assigned_to, delivery_failure_reason, created_at, updated_at, booking_items(equipment_name, quantity, equipment_id)') // Added end_date, customer_email, customer_phone, customer_address, assigned_to, delivery_failure_reason
+        .select('id, start_date, end_date, status, total_amount, customer_name, customer_email, customer_phone, customer_address, assigned_to, delivery_failure_reason, created_at, updated_at, booking_items(equipment_name, quantity, equipment_id, equipment_price, subtotal)') // Added end_date, customer_email, customer_phone, customer_address, assigned_to, delivery_failure_reason
         .order('created_at', { ascending: false });
 
       if (filters.dateRange?.from) {
@@ -223,21 +249,21 @@ export const ReportsDashboard: React.FC = () => {
       if (bookingsError) throw bookingsError;
 
       // Ensure bookingsData is not null and then map, casting status
-      let mappedBookings = bookingsData ? bookingsData.map(b => ({
+      const mappedBookings = (bookingsData || []).map((b) => ({
         ...b,
         status: b.status as BookingStatus, // Cast status to BookingStatus
         assigned_to: b.assigned_to || null, // Ensure assigned_to field exists
         // Ensure booking_items is always an array, even if null/undefined from DB
-        booking_items: (b.booking_items || []).map((item: any) => ({
-          equipment_name: item.equipment_name,
-          quantity: item.quantity,
-          equipment_id: item.equipment_id,
-          equipment_price: item.equipment_price || 0, // Ensure equipment_price exists or provide default
-          subtotal: item.subtotal || 0 // Ensure subtotal exists or provide default
-        })) as BookingItem[], 
-      })) : [];
+        booking_items: (b.booking_items || []).map((item) => ({
+          equipment_name: item.equipment_name || '',
+          quantity: item.quantity || 0,
+          equipment_id: item.equipment_id || '',
+          equipment_price: item.equipment_price || 0,
+          subtotal: item.subtotal || 0
+        })),
+      })) as BookingRow[];
 
-      let filteredBookings = mappedBookings as Booking[];
+      let filteredBookings = mappedBookings;
 
       if (filters.productId) {
         filteredBookings = mappedBookings.filter(booking => 
@@ -251,7 +277,7 @@ export const ReportsDashboard: React.FC = () => {
       if (productsError) throw productsError;
       
       // Ensure productsData is an array before mapping and conforms to Product[] type
-      const typedProductsData = (Array.isArray(productsData) ? productsData.map((p: any) => ({
+      const typedProductsData = (Array.isArray(productsData) ? productsData.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -261,7 +287,7 @@ export const ReportsDashboard: React.FC = () => {
         availability_status: p.availability_status,
         created_at: p.created_at,
         updated_at: p.updated_at,
-        stock_quantity: p.stock_quantity ?? 0 // Ensure stock_quantity exists or provide default
+        stock_quantity: p.stock_quantity ?? 0
       })) : []) as Product[];
       setAllProducts(typedProductsData); 
 
@@ -270,13 +296,14 @@ export const ReportsDashboard: React.FC = () => {
       setEquipmentUtilization(processDataForEquipmentUtilization(filteredBookings, typedProductsData));
       setActivityLog(processBookingsForActivityLog(filteredBookings));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching report data:", err);
-      setError(err.message || 'Failed to fetch report data.');
+      const message = err instanceof Error ? err.message : 'Failed to fetch report data.';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [processBookingDataForRevenue, processBookingDataForTrends, processBookingsForActivityLog, processDataForEquipmentUtilization]);
 
   useEffect(() => {
     fetchBookingData({ 
@@ -307,7 +334,7 @@ export const ReportsDashboard: React.FC = () => {
     return () => {
       supabase.removeChannel(bookingsSubscription);
     };
-  }, [selectedDateRange, selectedProductId, selectedCustomerName]); // Re-run effect if filters change
+  }, [fetchBookingData, selectedDateRange, selectedProductId, selectedCustomerName]); // Re-run effect if filters change
 
   if (loading) return <div className="p-4">Loading reports...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
@@ -357,12 +384,15 @@ export const ReportsDashboard: React.FC = () => {
           </div>
           <div>
             <Label htmlFor="product-filter">Product</Label>
-            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+            <Select
+              value={selectedProductId ?? 'all'}
+              onValueChange={(value) => setSelectedProductId(value === 'all' ? undefined : value)}
+            >
               <SelectTrigger className="w-[200px]" id="product-filter">
                 <SelectValue placeholder="All Products" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={undefined as any}>All Products</SelectItem> {/* Ensure 'undefined' is passed to clear filter */}
+                <SelectItem value="all">All Products</SelectItem>
                 {allProducts.map((product) => (
                   <SelectItem key={product.id} value={product.id.toString()}>
                     {product.name}

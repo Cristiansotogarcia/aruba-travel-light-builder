@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,13 +39,7 @@ export const CategoryManagement = () => {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('CategoryManagement')) {
-      fetchData();
-    }
-  }, [hasPermission]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data: cats, error: catError } = await supabase
         .from('equipment_category')
@@ -78,7 +72,13 @@ export const CategoryManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('CategoryManagement')) {
+      fetchData();
+    }
+  }, [hasPermission, fetchData]);
 
   // Category Handlers
   const handleEditCategory = (category: Category) => {

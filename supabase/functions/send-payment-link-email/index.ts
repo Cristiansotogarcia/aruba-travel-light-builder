@@ -77,8 +77,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Aruba Travel Light <reservations@arubatravel.com>',
+        from: 'Travel Light Aruba <info@travelightaruba.com>',
         to: [customer_email],
+        reply_to: 'info@travelightaruba.com',
         subject: `Payment Link Ready - Booking #${booking_id.slice(0, 8)}`,
         html: emailHtml,
       }),
@@ -142,13 +143,13 @@ function generatePaymentLinkEmail(data: {
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Aruba Travel Light</h1>
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Travel Light Aruba</h1>
       <p style="color: #d1fae5; margin: 10px 0 0; font-size: 16px;">Your Reservation is Confirmed!</p>
     </div>
 
     <div style="padding: 40px 30px;">
       <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 16px; margin-bottom: 30px; border-radius: 4px;">
-        <p style="margin: 0; color: #065f46; font-weight: bold;">✓ Reservation Approved</p>
+        <p style="margin: 0; color: #065f46; font-weight: bold;">Reservation Approved</p>
         <p style="margin: 8px 0 0; color: #065f46; font-size: 14px;">Your equipment rental has been confirmed by our team!</p>
       </div>
 
@@ -168,7 +169,7 @@ function generatePaymentLinkEmail(data: {
         <p style="margin: 0 0 20px; color: #1e3a8a; font-size: 36px; font-weight: bold;">$${data.total_amount.toFixed(2)}</p>
         
         <a href="${data.payment_link}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
-          Complete Payment →
+          Complete Payment
         </a>
         
         <p style="margin: 20px 0 0; color: #6b7280; font-size: 12px;">
@@ -177,7 +178,7 @@ function generatePaymentLinkEmail(data: {
       </div>
 
       <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 20px; border-radius: 8px; margin: 30px 0;">
-        <h3 style="color: #92400e; margin: 0 0 10px; font-size: 16px;">⏰ Payment Deadline</h3>
+        <h3 style="color: #92400e; margin: 0 0 10px; font-size: 16px;">Payment Deadline</h3>
         <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.6;">
           Please complete your payment within <strong>48 hours</strong> to keep your reservation. After this time, your booking may be released.
         </p>
@@ -194,7 +195,7 @@ function generatePaymentLinkEmail(data: {
       </div>
 
       <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
-        <h3 style="color: #111827; margin: 0 0 10px; font-size: 16px;">📋 Payment Link</h3>
+        <h3 style="color: #111827; margin: 0 0 10px; font-size: 16px;">Payment Link</h3>
         <p style="color: #6b7280; margin: 0 0 10px; font-size: 14px;">
           If the button above doesn't work, copy and paste this link into your browser:
         </p>
@@ -209,14 +210,14 @@ function generatePaymentLinkEmail(data: {
           If you have any questions or issues with the payment, please contact us:
         </p>
         <p style="color: #374151; margin: 10px 0 0; font-weight: 500;">
-          📧 Email: support@arubatravel.com<br>
-          📞 Phone: +297 123 4567<br>
-          🕐 Hours: Monday - Sunday, 9AM - 6PM
+          Email: info@travelightaruba.com<br>
+          Phone: +297 593-2028<br>
+          Hours: Monday - Sunday, 9AM - 6PM
         </p>
       </div>
 
       <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0;">
-        Thank you for choosing Aruba Travel Light!<br>
+        Thank you for choosing Travel Light Aruba!<br>
         We're excited to serve you.
       </p>
     </div>
@@ -226,10 +227,11 @@ function generatePaymentLinkEmail(data: {
         This is an automated email. Please do not reply directly to this message.
       </p>
       <p style="margin: 10px 0 0; color: #9ca3af; font-size: 12px;">
-        © ${new Date().getFullYear()} Aruba Travel Light. All rights reserved.
+        &copy; ${new Date().getFullYear()} Travel Light Aruba. All rights reserved.
       </p>
     </div>
   </div>
 </body>
 </html>`;
 }
+

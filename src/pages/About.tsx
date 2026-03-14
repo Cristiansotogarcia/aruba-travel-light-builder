@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { SEO } from '@/components/common/SEO';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,9 +13,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Edit, Save, X } from 'lucide-react';
+import type { Json } from '@/types/supabase';
+
+interface AboutContentData {
+  title: string;
+  full_description: string;
+  about_image?: string;
+  additional_image?: string;
+}
+
+interface AboutMetadata {
+  about_image?: string;
+  additional_image?: string;
+}
 
 const About = () => {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isAdditionalUploadOpen, setIsAdditionalUploadOpen] = useState(false);
@@ -24,7 +38,9 @@ const About = () => {
     full_description: ''
   });
 
-  const { data: aboutContent, isLoading, refetch } = useQuery({
+  const isAdmin = profile?.role === 'Admin' || profile?.role === 'SuperUser';
+
+  const { data: aboutContent, isLoading, refetch } = useQuery<AboutContentData>({
     queryKey: ['about-us-full-content'],
     queryFn: async () => {
       // Get about us content and images from metadata
@@ -35,13 +51,13 @@ const About = () => {
         .eq('page_slug', 'about-us')
         .single();
 
-      const metadata = (contentData?.metadata as any) || {};
-      
-      const result = {
+      const metadata = (contentData?.metadata as AboutMetadata | null) || {};
+
+      const result: AboutContentData = {
         title: contentData?.title || 'About Us',
         full_description: contentData?.content || 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
-        about_image: metadata?.about_image || undefined,
-        additional_image: metadata?.additional_image || undefined
+        about_image: typeof metadata.about_image === 'string' ? metadata.about_image : undefined,
+        additional_image: typeof metadata.additional_image === 'string' ? metadata.additional_image : undefined
       };
 
       setEditedContent({
@@ -63,7 +79,7 @@ const About = () => {
         .eq('page_slug', 'about-us')
         .single();
 
-      const metadata = (contentData?.metadata as any) || {};
+      const metadata = (contentData?.metadata as AboutMetadata | null) || {};
 
       // Update metadata with new image URL
       const updatedMetadata = {
@@ -80,7 +96,7 @@ const About = () => {
           content: aboutContent?.full_description || '',
           block_type: 'text',
           is_active: true,
-          metadata: updatedMetadata
+          metadata: updatedMetadata as Json
         }, {
           onConflict: 'block_key,page_slug'
         });
@@ -138,11 +154,17 @@ const About = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">
-          <div className="container mx-auto px-4 py-8">
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* SEO Meta Tags */}
+      <SEO
+        title="About Us - Travel Light Aruba"
+        description="Learn about Travel Light Aruba - your trusted partner for premium beach and baby equipment rentals in Aruba with exceptional service."
+        pageSlug="about"
+      />
+      <Header />
+      <main className="flex-1">
+          <div className="container mx-auto px-4 py-10 sm:py-12">
             <div className="text-center mb-8">
               <Skeleton className="h-12 w-64 mx-auto mb-4" />
             </div>
@@ -165,10 +187,10 @@ const About = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-10 sm:py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900">{aboutContent?.title}</h1>
-            {user?.role === 'Admin' && (
+            <h1 className="text-4xl font-semibold text-foreground">{aboutContent?.title}</h1>
+            {isAdmin && (
               <div className="flex gap-2 justify-center mt-4">
                 {isEditing ? (
                   <>
@@ -199,9 +221,9 @@ const About = () => {
                   <img 
                     src={aboutContent.about_image}
                     alt="About Us"
-                    className="w-full max-w-2xl h-96 object-cover rounded-lg shadow-lg"
+                    className="w-full max-w-2xl h-96 object-cover rounded-2xl shadow-soft"
                   />
-                  {user?.role === 'Admin' && (
+                  {isAdmin && (
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">
                       <Button
                         onClick={() => setIsUploadOpen(true)}
@@ -214,13 +236,13 @@ const About = () => {
                   )}
                 </div>
               ) : (
-                <div className="w-full max-w-2xl h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-                  {user?.role === 'Admin' ? (
+                <div className="w-full max-w-2xl h-96 bg-muted/60 rounded-2xl flex items-center justify-center">
+                  {isAdmin ? (
                     <Button onClick={() => setIsUploadOpen(true)}>
                       Upload Image
                     </Button>
                   ) : (
-                    <span className="text-gray-400">No image uploaded</span>
+                    <span className="text-muted-foreground">No image uploaded</span>
                   )}
                 </div>
               )}
@@ -249,7 +271,7 @@ const About = () => {
                 </div>
               ) : (
                 <div className="prose prose-lg max-w-none">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                     {aboutContent?.full_description}
                   </p>
                 </div>
@@ -263,9 +285,9 @@ const About = () => {
                   <img 
                     src={aboutContent.additional_image}
                     alt="Additional About Us Image"
-                    className="w-full max-w-xl h-64 object-cover rounded-lg shadow-lg"
+                    className="w-full max-w-xl h-64 object-cover rounded-2xl shadow-soft"
                   />
-                  {user?.role === 'Admin' && (
+                  {isAdmin && (
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">
                       <Button
                         onClick={() => setIsAdditionalUploadOpen(true)}
@@ -281,7 +303,7 @@ const About = () => {
             )}
 
             {/* Add Additional Image Button for Admin */}
-            {user?.role === 'Admin' && !aboutContent?.additional_image && (
+            {isAdmin && !aboutContent?.additional_image && (
               <div className="flex justify-center">
                 <Button onClick={() => setIsAdditionalUploadOpen(true)} variant="outline">
                   Add Additional Image

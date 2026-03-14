@@ -65,14 +65,18 @@ export const PickupSlotSelector = ({
         <Alert className="bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>Sunday Pickup:</strong> Only morning pickups (8:00 AM - 10:00 AM) are available on Sundays.
+            <strong>Sunday Pickup:</strong> Sunday pickups are limited to the morning time slot.
           </AlertDescription>
         </Alert>
       )}
 
       <RadioGroup
-        value={selectedSlot}
-        onValueChange={(value) => onSlotChange(value as 'morning' | 'afternoon')}
+        value={selectedSlot ?? ''}
+        onValueChange={(value) => {
+          if (value === 'morning' || value === 'afternoon') {
+            onSlotChange(value);
+          }
+        }}
         disabled={Boolean(disabled)}
         className="space-y-3"
       >

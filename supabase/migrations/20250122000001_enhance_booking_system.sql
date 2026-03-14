@@ -1,4 +1,4 @@
--- Enhanced Booking System Migration
+﻿-- Enhanced Booking System Migration
 -- Adds payment tracking, audit logging, and stock management capabilities
 
 -- Add payment tracking fields to bookings table

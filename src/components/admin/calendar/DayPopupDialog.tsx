@@ -80,7 +80,7 @@ export const DayPopupDialog = ({
                 </div>
                 <div className="text-right flex items-center gap-2">
                   <div>
-                    <div className="font-bold">${booking.total_amount}</div>
+                    <div className="font-bold">${Number(booking.total_amount).toFixed(2)}</div>
                     <Badge className={getStatusColor(booking.status)}>
                       {isDelivery ? getDeliveryStatusLabel(booking.status) : getPickupStatusLabel(booking.status)}
                     </Badge>

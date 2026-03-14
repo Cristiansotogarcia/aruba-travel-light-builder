@@ -1,4 +1,4 @@
--- Add customer_comment column to bookings table
+﻿-- Add customer_comment column to bookings table
 -- This allows customers to add special instructions or notes with their booking
 
 ALTER TABLE public.bookings 

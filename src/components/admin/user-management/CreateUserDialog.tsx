@@ -9,6 +9,7 @@ import { UserPlus, RefreshCw, Copy, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generateTempPassword } from '@/utils/passwordUtils';
+import type { UserRole } from '@/types/types';
 
 interface TempPasswordResult {
   user: {
@@ -27,7 +28,11 @@ interface CreateUserDialogProps {
 
 export const CreateUserDialog = ({ onUserCreated, onRefreshProfiles }: CreateUserDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Driver' as const });
+  const [newUser, setNewUser] = useState<{ name: string; email: string; role: UserRole }>({
+    name: '',
+    email: '',
+    role: 'Driver',
+  });
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -174,7 +179,7 @@ export const CreateUserDialog = ({ onUserCreated, onRefreshProfiles }: CreateUse
             <Label htmlFor="role">Role</Label>
             <Select
               value={newUser.role}
-              onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}
+              onValueChange={(value) => setNewUser({ ...newUser, role: value as UserRole })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />

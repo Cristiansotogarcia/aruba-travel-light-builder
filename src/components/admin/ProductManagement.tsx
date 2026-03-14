@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import type { ActiveAdminFiltersState } from './AdminEquipmentFilters';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
 
 interface Product extends GlobalProduct {
+  category_id?: string | null;
   sub_category?: string | null;
   sub_category_id?: string | null;
   sort_order?: number | null;
@@ -34,6 +35,19 @@ interface SubCategory {
   id: string;
   name: string;
   category_id: string;
+}
+
+interface ProductFormState {
+  name: string;
+  description: string;
+  category_id: string;
+  sub_category_id: string;
+  price_per_day: number;
+  availability_status: AvailabilityStatus;
+  stock_quantity: number;
+  images: string[];
+  featured: boolean;
+  sort_order: number;
 }
 
 export const ProductManagement = () => {
@@ -53,7 +67,7 @@ export const ProductManagement = () => {
   });
 
 
-  const [formState, setFormState] = useState<any>({
+  const [formState, setFormState] = useState<ProductFormState>({
     name: '',
     description: '',
     category_id: '',
@@ -70,12 +84,6 @@ export const ProductManagement = () => {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('ProductManagement')) {
-      fetchData();
-    }
-  }, [hasPermission]);
-
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const { category, subcategory } = activeFilters;
@@ -89,17 +97,22 @@ export const ProductManagement = () => {
     });
   }, [products, activeFilters]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data: productsData, error: productsError } = await supabase.from('equipment').select('*, equipment_category(name), equipment_sub_category(name)');
       if (productsError) throw productsError;
-      setProducts(productsData.map(p => ({
+      const mappedProducts: Product[] = (productsData || []).map((p) => ({
         ...p,
+        description: p.description ?? '',
         images: p.images || [],
+        price_per_week: p.price_per_week ?? undefined,
         category: p.equipment_category?.name || 'Uncategorized',
-        sub_category: p.equipment_sub_category?.name,
-        availability_status: (p.availability_status || 'Available') as AvailabilityStatus
-      })));
+        category_id: p.category_id,
+        sub_category: p.equipment_sub_category?.name ?? null,
+        sub_category_id: p.sub_category_id,
+        availability_status: (p.availability_status || 'Available') as AvailabilityStatus,
+      }));
+      setProducts(mappedProducts);
 
       const { data: cats, error: catError } = await supabase.from('equipment_category').select('*');
       if (catError) throw catError;
@@ -115,7 +128,13 @@ export const ProductManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('ProductManagement')) {
+      fetchData();
+    }
+  }, [fetchData, hasPermission]);
 
   const handleImageUpload = (imageUrl: string) => {
     setFormState({ ...formState, images: [...formState.images, imageUrl] });
@@ -124,7 +143,7 @@ export const ProductManagement = () => {
   };
 
   const handleRemoveImage = (url: string) => {
-    setFormState({ ...formState, images: formState.images.filter((img: string) => img !== url) });
+    setFormState({ ...formState, images: formState.images.filter((img) => img !== url) });
   };
 
   const handleSaveProduct = async () => {
@@ -164,13 +183,19 @@ export const ProductManagement = () => {
     }
   };
   
-  const handleEditProduct = (product: any) => {
+  const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setFormState({
-      ...product,
-      images: product.images || [],
+      name: product.name,
+      description: product.description ?? '',
       category_id: product.category_id || '',
       sub_category_id: product.sub_category_id || '',
+      price_per_day: product.price_per_day,
+      availability_status: product.availability_status || 'Available',
+      stock_quantity: product.stock_quantity,
+      images: product.images || [],
+      featured: product.featured || false,
+      sort_order: product.sort_order || 0,
     });
     setIsEditDialogOpen(true);
   };
@@ -195,7 +220,7 @@ export const ProductManagement = () => {
       </DialogHeader>
       <div className="space-y-4 py-4">
         <Input placeholder="Product Name" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} />
-        <RichTextEditor value={formState.description} onChange={html => setFormState({ ...formState, description: html })} />
+        <RichTextEditor value={formState.description} onChange={html => setFormState({ ...formState, description: html ?? '' })} />
         <Select value={formState.category_id} onValueChange={value => setFormState({ ...formState, category_id: value, sub_category_id: '' })}>
           <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
           <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
@@ -218,7 +243,7 @@ export const ProductManagement = () => {
         </div>
         <div>
           <Label>Availability Status</Label>
-          <Select value={formState.availability_status} onValueChange={value => setFormState({ ...formState, availability_status: value })}>
+          <Select value={formState.availability_status} onValueChange={value => setFormState({ ...formState, availability_status: value as AvailabilityStatus })}>
             <SelectTrigger><SelectValue placeholder="Select availability status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Available">Available</SelectItem>

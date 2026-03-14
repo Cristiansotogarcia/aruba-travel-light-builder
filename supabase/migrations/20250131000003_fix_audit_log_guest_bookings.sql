@@ -1,4 +1,4 @@
--- Fix audit log to support guest bookings
+﻿-- Fix audit log to support guest bookings
 -- Makes user_id nullable in booking_audit_log and updates trigger
 
 -- Step 1: Make user_id nullable in booking_audit_log

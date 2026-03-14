@@ -9,7 +9,7 @@ export interface Product {
   name: string;
   description: string | null | undefined;
   price_per_day: number;
-  price_per_week?: number; // Weekly rate (applies for 5-7 day bookings)
+  price_per_week?: number;
   category: string;
   images: string[];
   stock_quantity: number; // Made non-optional
@@ -52,7 +52,7 @@ export interface SupabaseBookingData {
   end_date: string;
   total_price: number;
   total_amount: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable'; // Updated to match BookingStatus
+  status: 'pending' | 'pending_admin_review' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable' | 'rejected';
   delivery_slot?: 'morning' | 'afternoon';
   pickup_slot?: 'morning' | 'afternoon';
   created_at?: string;
@@ -61,11 +61,11 @@ export interface SupabaseBookingData {
 // Defines the structure for data submitted to Supabase 'booking_items' table
 export interface SupabaseBookingItemData {
   booking_id: string;
+  quantity: number;
+  price_at_booking: number;
   equipment_id: string;
   equipment_name: string;
   equipment_price: number;
-  quantity: number;
-  price_at_booking: number;
   subtotal: number;
 }
 

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'; // Added Label import
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { Profile } from '@/types/types';
+import type { Profile, UserRole } from '@/types/types';
 
 interface EditUserModalProps {
   open: boolean;
@@ -18,7 +18,7 @@ interface EditUserModalProps {
 
 export const EditUserModal = ({ open, onClose, user, onUserUpdated }: EditUserModalProps) => {
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'SuperUser' | 'Admin' | 'Booker' | 'Driver'>('Driver');
+  const [role, setRole] = useState<UserRole>('Driver');
   const [isDeactivated, setIsDeactivated] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
@@ -94,13 +94,14 @@ export const EditUserModal = ({ open, onClose, user, onUserUpdated }: EditUserMo
           
           <div>
             <Label htmlFor="edit-role">Role</Label>
-            <Select value={role} onValueChange={(value: any) => setRole(value)}>
+            <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Driver">Driver</SelectItem>
                 <SelectItem value="Booker">Booker</SelectItem>
+                <SelectItem value="Customer">Customer</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
                 <SelectItem value="SuperUser">SuperUser</SelectItem>
               </SelectContent>

@@ -1,4 +1,4 @@
-
+﻿
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, BookingFormData, CustomerInfo, AvailabilityStatus } from '../types/types';
@@ -130,6 +130,13 @@ const useBooking = () => {
     return date.getDay() === 0;
   };
 
+  const hasCribOrPackAndPlay = () => {
+    return bookingData.items.some(item => {
+      const name = item.equipment_name.toLowerCase();
+      return name.includes('crib') || name.includes('pack and play') || name.includes('pack & play');
+    });
+  };
+
   // Helper function to calculate delivery fee
   const calculateDeliveryFee = (startDate: string, days: number): number => {
     // Sunday bookings: $20 fee
@@ -231,7 +238,11 @@ const useBooking = () => {
       }
       
       const maxDays = 365; // Maximum rental period
+      const minDays = 3; // Minimum rental period
       const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      if (days < minDays) {
+        errors.push(`Minimum rental period is ${minDays} days.`);
+      }
       if (days > maxDays) {
         errors.push(`Rental period cannot exceed ${maxDays} days.`);
       }
@@ -239,6 +250,10 @@ const useBooking = () => {
     
     if (bookingData.items.length === 0) {
       errors.push('Please add equipment to your booking.');
+    }
+
+    if (bookingData.startDate && isSunday(bookingData.startDate) && !hasCribOrPackAndPlay()) {
+      errors.push('Sunday bookings require a crib or pack and play.');
     }
     
     // Validate customer information
@@ -256,7 +271,7 @@ const useBooking = () => {
     // Phone is required
     if (!phone?.trim()) {
       errors.push('Phone number is required.');
-    } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+    } else if (!/^[+]?[1-9]\d{0,15}$/.test(phone.replace(/[\s()-]/g, ''))) {
       errors.push('Please enter a valid phone number.');
     }
     
@@ -295,6 +310,33 @@ const useBooking = () => {
           title: 'Validation Error', 
           description: 'Please select a delivery time slot.', 
           variant: 'destructive' 
+        });
+        return;
+      }
+
+      if (!bookingData.pickupSlot) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please select a pickup time slot.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (bookingData.startDate && isSunday(bookingData.startDate) && bookingData.deliverySlot !== 'afternoon') {
+        toast({
+          title: 'Validation Error',
+          description: 'Sunday deliveries are only available in the afternoon.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (bookingData.endDate && isSunday(bookingData.endDate) && bookingData.pickupSlot !== 'morning') {
+        toast({
+          title: 'Validation Error',
+          description: 'Sunday pickups are only available in the morning.',
+          variant: 'destructive'
         });
         return;
       }
@@ -389,7 +431,7 @@ const useBooking = () => {
           window.location.href = '/';
         }, 3000);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error during reservation submission:', error);
         
         // Rollback: Delete booking if created
@@ -405,14 +447,14 @@ const useBooking = () => {
         }
         
         // Show user-friendly error message
-        const errorMessage = error.message || 'An unexpected error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
         toast({ 
           title: 'Reservation Failed', 
           description: errorMessage, 
           variant: 'destructive' 
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Unexpected error during reservation submission:', error);
       toast({ 
         title: 'Unexpected Error', 

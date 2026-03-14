@@ -2,7 +2,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, AlertCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DeliverySlotSelectorProps {
@@ -35,20 +35,12 @@ export const DeliverySlotSelector = ({
   const [error, setError] = useState<string | null>(null);
   
   // Check if selected date is Sunday
-  const isSunday = selectedDate && new Date(selectedDate).getDay() === 0;
+  const isSunday = useMemo(
+    () => Boolean(selectedDate && new Date(selectedDate).getDay() === 0),
+    [selectedDate]
+  );
 
-  useEffect(() => {
-    if (selectedDate) {
-      checkSlotAvailability();
-      
-      // If it's Sunday and morning is selected, auto-switch to afternoon
-      if (isSunday && selectedSlot === 'morning') {
-        onSlotChange('afternoon');
-      }
-    }
-  }, [selectedDate]);
-
-  const checkSlotAvailability = async () => {
+  const checkSlotAvailability = useCallback(async () => {
     if (!selectedDate) return;
 
     setLoading(true);
@@ -57,14 +49,14 @@ export const DeliverySlotSelector = ({
     try {
       // Check morning slot
       const { data: morningData, error: morningError } = await supabase
-        .rpc('check_delivery_slot_availability' as any, {
+        .rpc('check_delivery_slot_availability', {
           p_delivery_date: selectedDate,
           p_time_slot: 'morning'
         });
 
       // Check afternoon slot
       const { data: afternoonData, error: afternoonError } = await supabase
-        .rpc('check_delivery_slot_availability' as any, {
+        .rpc('check_delivery_slot_availability', {
           p_delivery_date: selectedDate,
           p_time_slot: 'afternoon'
         });
@@ -114,7 +106,18 @@ export const DeliverySlotSelector = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, selectedSlot, onSlotChange]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      checkSlotAvailability();
+      
+      // If it's Sunday and morning is selected, auto-switch to afternoon
+      if (isSunday && selectedSlot === 'morning') {
+        onSlotChange('afternoon');
+      }
+    }
+  }, [selectedDate, checkSlotAvailability, isSunday, selectedSlot, onSlotChange]);
 
   const getAvailabilityBadge = (slot: SlotAvailability) => {
     if (!slot.available) {
@@ -174,7 +177,7 @@ export const DeliverySlotSelector = ({
         <Alert className="bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>Sunday Delivery:</strong> Only afternoon deliveries (4:00 PM - 6:00 PM) are available on Sundays.
+            <strong>Sunday Delivery:</strong> Sunday deliveries are limited to the afternoon time slot.
           </AlertDescription>
         </Alert>
       )}
@@ -186,8 +189,12 @@ export const DeliverySlotSelector = ({
         </div>
       ) : (
         <RadioGroup
-          value={selectedSlot}
-          onValueChange={(value) => onSlotChange(value as 'morning' | 'afternoon')}
+          value={selectedSlot ?? ''}
+          onValueChange={(value) => {
+            if (value === 'morning' || value === 'afternoon') {
+              onSlotChange(value);
+            }
+          }}
           disabled={disabled || false}
           className="space-y-3"
         >

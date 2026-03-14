@@ -1,4 +1,4 @@
--- Step 1: Drop the existing foreign key constraint on booking_items
+﻿-- Step 1: Drop the existing foreign key constraint on booking_items
 ALTER TABLE public.booking_items DROP CONSTRAINT IF EXISTS booking_items_equipment_id_fkey;
 
 -- Step 2: Add the correct foreign key constraint, referencing the equipment table

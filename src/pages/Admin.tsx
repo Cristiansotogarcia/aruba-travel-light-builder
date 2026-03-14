@@ -15,6 +15,7 @@ import { SiteSettings } from '@/components/admin/SiteSettings';
 import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
 import { PendingReservations } from '@/components/admin/PendingReservations';
+import { InvoicesList } from '@/components/admin/InvoicesList';
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState(() => {
@@ -36,10 +37,12 @@ const Admin = () => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <AdminDashboard />;
+        return <AdminDashboard onNavigate={handleSectionChange} />;
       case 'bookings':
         return <BookingsList />;
-      case 'reservations':
+      case 'invoices':
+        return <InvoicesList />;
+      case 'pending-reservations':
         return <PendingReservations />;
       case 'customers':
         return <CustomersList />;
@@ -74,7 +77,7 @@ const Admin = () => {
     <DashboardLayout>
       <div className="min-h-screen flex w-full">
         <AdminSidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
-        <main className="flex-1 p-6 bg-gray-50">
+        <main className="flex-1 p-4 sm:p-6">
           {renderActiveSection()}
         </main>
       </div>

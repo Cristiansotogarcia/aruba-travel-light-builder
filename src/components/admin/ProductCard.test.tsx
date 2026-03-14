@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import { ProductCard } from './ProductCard';
+import type { Product } from '@/types/types';
 
-const product = {
+const product: Product = {
   id: '1',
   name: 'Tent',
   description: '<b>Test</b><script>alert("xss")</script>',
@@ -19,7 +20,7 @@ describe('ProductCard sanitation', () => {
     render(
       <BrowserRouter>
         <ProductCard
-          product={product as any}
+          product={product}
           onEdit={() => {}}
           onDelete={() => {}}
           onToggleAvailability={() => {}}

@@ -1,9 +1,10 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { CreateBookingModal } from './CreateBookingModal';
 import { CompactEditBookingModal } from './CompactEditBookingModal';
 import { BookingViewModal } from './BookingViewModal';
@@ -11,6 +12,7 @@ import { BookingCalendarView } from './BookingCalendarView';
 import { BookingFilters } from './BookingFilters';
 import { BookingsListView } from './BookingsListView';
 import Spinner from '@/components/common/Spinner'; // Added Spinner import
+import { calculateProcessorFee, calculateNetAmount } from '@/utils/feeCalculator';
 
 import { Booking, BookingStatus } from './calendar/types'; // Removed BookingItem, kept BookingStatus
 import { useQueryClient } from '@tanstack/react-query'; // Added import for useQueryClient
@@ -27,14 +29,75 @@ export const BookingsList = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient(); // Initialize queryClient
+  const { getNumericSetting, settings: systemSettings } = useSystemSettings();
+  const processorFeePercent = getNumericSetting('processor_fee_percent', 3.99);
+  const defaultCurrency = systemSettings['default_currency'] || 'AWG';
+
+  const fetchBookings = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          booking_items (
+            equipment_name,
+            quantity,
+            equipment_price,
+            subtotal,
+            equipment_id
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      // Cast status to BookingStatus
+      const typedBookings = data ? data.map(b => ({ ...b, status: b.status as BookingStatus })) : [];
+      setBookings(typedBookings);
+    } catch (error: unknown) {
+      console.error('Error fetching bookings:', error);
+      let description = 'Failed to fetch bookings.';
+      const message = error instanceof Error ? error.message : '';
+      const code = typeof (error as { code?: unknown }).code === 'string' ? (error as { code?: string }).code : '';
+      if (message.includes('permission denied')) {
+        description = "You do not have permission to view all bookings. Please contact an administrator if you believe this is an error.";
+      } else if (code === 'PGRST116') { // Example: Supabase RLS violation code
+        description = "Access to some bookings is restricted due to security policies.";
+      }
+      toast({
+        title: "Error Fetching Bookings",
+        description,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const filterBookings = useCallback(() => {
+    let filtered = bookings;
+
+    if (searchTerm) {
+      filtered = filtered.filter(booking =>
+        booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status === statusFilter);
+    }
+
+    setFilteredBookings(filtered);
+  }, [bookings, searchTerm, statusFilter]);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   useEffect(() => {
     filterBookings();
-  }, [bookings, searchTerm, statusFilter]);
+  }, [filterBookings]);
 
   // Real-time subscription for bookings
   useEffect(() => {
@@ -72,63 +135,18 @@ export const BookingsList = () => {
       supabase.removeChannel(bookingsChannel);
       supabase.removeChannel(bookingItemsChannel);
     };
-  }, []);
+  }, [fetchBookings]);
 
-  const fetchBookings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          booking_items (
-            equipment_name,
-            quantity,
-            equipment_price,
-            subtotal,
-            equipment_id
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      // Cast status to BookingStatus
-      const typedBookings = data ? data.map(b => ({ ...b, status: b.status as BookingStatus })) : [];
-      setBookings(typedBookings);
-    } catch (error: any) {
-      console.error('Error fetching bookings:', error);
-      let description = "Failed to fetch bookings.";
-      if (error && error.message && error.message.includes('permission denied')) {
-        description = "You do not have permission to view all bookings. Please contact an administrator if you believe this is an error.";
-      } else if (error && error.code === 'PGRST116') { // Example: Supabase RLS violation code
-        description = "Access to some bookings is restricted due to security policies.";
-      }
-      toast({
-        title: "Error Fetching Bookings",
-        description,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!bookings.length) return;
+    const openBookingId = sessionStorage.getItem('admin:openBookingId');
+    if (!openBookingId) return;
+    const bookingToOpen = bookings.find((booking) => booking.id === openBookingId);
+    if (bookingToOpen) {
+      setViewingBooking(bookingToOpen);
+      sessionStorage.removeItem('admin:openBookingId');
     }
-  };
-
-  const filterBookings = () => {
-    let filtered = bookings;
-
-    if (searchTerm) {
-      filtered = filtered.filter(booking =>
-        booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === statusFilter);
-    }
-
-    setFilteredBookings(filtered);
-  };
+  }, [bookings]);
 
   const updateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => { // Changed newStatus type
     try {
@@ -136,16 +154,7 @@ export const BookingsList = () => {
         .from('bookings')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', bookingId)
-        .select(`
-          *,
-          booking_items (
-            equipment_name,
-            quantity,
-            equipment_price,
-            subtotal,
-            equipment_id
-          )
-        `)
+        .select('*, booking_items(equipment_name, quantity, equipment_price, subtotal, equipment_id)') // Select the updated booking details
         .single();
 
       if (error) {
@@ -202,6 +211,78 @@ export const BookingsList = () => {
         variant: "destructive"
       });
       console.error('Unexpected error in updateBookingStatus:', err);
+    }
+  };
+
+  const confirmPaymentReceived = async (booking: Booking) => {
+    try {
+      const processedAt = new Date().toISOString();
+      const processedDate = processedAt.split('T')[0];
+      const grossAmount = Number(booking.total_amount);
+      const feeAmount = calculateProcessorFee(grossAmount, processorFeePercent);
+      const netAmount = calculateNetAmount(grossAmount, processorFeePercent);
+
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_status: 'paid',
+          updated_at: processedAt
+        })
+        .eq('id', booking.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      const { error: paymentRecordError } = await supabase
+        .from('payment_records')
+        .insert({
+          booking_id: booking.id,
+          amount: grossAmount,
+          gross_amount: grossAmount,
+          processor_fee_percent: processorFeePercent,
+          processor_fee_amount: feeAmount,
+          net_amount: netAmount,
+          currency_code: defaultCurrency,
+          status: 'paid',
+          processed_at: processedAt,
+          settlement_date: processedDate
+        });
+
+      if (paymentRecordError) {
+        console.error('Error creating payment record:', paymentRecordError);
+      }
+
+      try {
+        await supabase.functions.invoke('send-invoice-email', {
+          body: {
+            booking_id: booking.id,
+            customer_name: booking.customer_name,
+            customer_email: booking.customer_email,
+            total_amount: booking.total_amount,
+            processed_at: processedAt,
+            items: booking.booking_items || []
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send invoice email:', emailError);
+      }
+
+      toast({
+        title: "Payment Confirmed",
+        description: "Invoice sent to the customer.",
+      });
+
+      fetchBookings();
+    } catch (error: unknown) {
+      console.error('Error confirming payment:', error);
+      const message = error instanceof Error ? error.message : 'Failed to confirm payment.';
+      toast({
+        title: "Payment Confirmation Failed",
+        description: message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -297,6 +378,7 @@ export const BookingsList = () => {
           onClose={handleCloseView}
           onStatusUpdate={updateBookingStatus}
           onEdit={handleEditBooking}
+          onPaymentReceived={confirmPaymentReceived}
           onBookingDeleted={fetchBookings}
           open={!!viewingBooking}
         />

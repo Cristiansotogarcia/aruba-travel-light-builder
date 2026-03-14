@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Users, Phone, Calendar, Search } from 'lucide-react';
 import { CustomerDetailsModal } from './customer-management/CustomerDetailsModal';
 
 import { Booking } from './calendar/types';
+import type { Database } from '@/types/supabase';
 
 interface Customer {
   id: string;
@@ -21,6 +22,37 @@ interface Customer {
   last_booking: string;
 }
 
+type BookingRow = Database['public']['Tables']['bookings']['Row'] & {
+  booking_items: Array<{
+    id: string;
+    equipment_id?: string | null;
+    quantity: number;
+    equipment_price?: number | null;
+    subtotal?: number | null;
+    equipment_name?: string | null;
+  }>;
+};
+
+const toBooking = (booking: BookingRow): Booking => ({
+  ...booking,
+  status: booking.status as Booking['status'],
+  customer_address: booking.customer_address ?? '',
+  customer_comment: booking.customer_comment ?? null,
+  room_number: booking.room_number ?? null,
+  user_id: booking.user_id ?? null,
+  payment_status: booking.payment_status ?? null,
+  payment_link_url: booking.payment_link_url ?? null,
+  assigned_to: booking.assigned_to ?? null,
+  delivery_failure_reason: booking.delivery_failure_reason ?? null,
+  booking_items: (booking.booking_items || []).map((item) => ({
+    equipment_id: item.equipment_id ?? '',
+    equipment_name: item.equipment_name ?? 'Equipment',
+    equipment_price: item.equipment_price ?? 0,
+    quantity: item.quantity ?? 0,
+    subtotal: item.subtotal ?? 0,
+  })),
+});
+
 export const CustomersList = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
@@ -30,15 +62,7 @@ export const CustomersList = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  useEffect(() => {
-    filterCustomers();
-  }, [customers, searchTerm]);
-
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -59,7 +83,7 @@ export const CustomersList = () => {
       // Group bookings by customer email
       const customerMap = new Map<string, Customer>();
 
-      data?.forEach((booking: any) => {
+      data?.forEach((booking: BookingRow) => {
         const email = booking.customer_email;
         
         if (!customerMap.has(email)) {
@@ -76,7 +100,7 @@ export const CustomersList = () => {
         }
 
         const customer = customerMap.get(email) as Customer;
-        customer.bookings.push(booking);
+        customer.bookings.push(toBooking(booking));
         customer.total_spent += Number(booking.total_amount);
         
         // Update last booking date if this one is more recent
@@ -99,9 +123,9 @@ export const CustomersList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterCustomers = () => {
+  const filterCustomers = useCallback(() => {
     if (!searchTerm) {
       setFilteredCustomers(customers);
       return;
@@ -114,7 +138,15 @@ export const CustomersList = () => {
     );
 
     setFilteredCustomers(filtered);
-  };
+  }, [customers, searchTerm]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  useEffect(() => {
+    filterCustomers();
+  }, [filterCustomers]);
 
   const handleCustomerClick = (customer: Customer) => {
     setSelectedCustomer(customer);

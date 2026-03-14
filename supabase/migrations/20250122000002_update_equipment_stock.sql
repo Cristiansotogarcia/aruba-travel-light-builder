@@ -1,4 +1,4 @@
--- Update equipment stock quantities to enable Book Now buttons
+﻿-- Update equipment stock quantities to enable Book Now buttons
 -- This migration adds reasonable stock quantities to all equipment items
 
 -- Update all equipment items with stock quantities

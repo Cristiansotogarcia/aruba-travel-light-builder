@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { Product, BookingItem } from '@/types/types';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,16 +17,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<BookingItem[]>([]);
   const { toast } = useToast();
 
-  const addItem = (equipment: Product, quantity: number, selectedDate?: Date) => {
-    if (!selectedDate) {
-      toast({
-        title: 'Date Not Selected',
-        description: 'Please select a date before adding equipment.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const addItem = (equipment: Product, quantity: number, _selectedDate?: Date) => {
     if (equipment.stock_quantity < quantity) {
       toast({
         title: 'Insufficient Stock',

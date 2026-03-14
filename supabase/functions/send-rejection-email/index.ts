@@ -74,8 +74,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Aruba Travel Light <reservations@arubatravel.com>',
+        from: 'Travel Light Aruba <info@travelightaruba.com>',
         to: [customer_email],
+        reply_to: 'info@travelightaruba.com',
         subject: `Reservation Update - Booking #${booking_id.slice(0, 8)}`,
         html: emailHtml,
       }),
@@ -138,7 +139,7 @@ function generateRejectionEmail(data: {
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px 20px; text-align: center;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Aruba Travel Light</h1>
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Travel Light Aruba</h1>
       <p style="color: #d1d5db; margin: 10px 0 0; font-size: 16px;">Reservation Update</p>
     </div>
 
@@ -151,7 +152,7 @@ function generateRejectionEmail(data: {
       <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">Dear ${data.customer_name},</p>
       
       <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-        Thank you for your interest in Aruba Travel Light. We appreciate you taking the time to submit a reservation request.
+        Thank you for your interest in Travel Light Aruba. We appreciate you taking the time to submit a reservation request.
       </p>
 
       <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px;">
@@ -186,14 +187,14 @@ function generateRejectionEmail(data: {
           We're here to help find a solution that works for you. Please don't hesitate to reach out:
         </p>
         <p style="color: #374151; margin: 0; font-weight: 500;">
-          📧 Email: support@arubatravel.com<br>
-          📞 Phone: +297 123 4567<br>
-          🕐 Hours: Monday - Sunday, 9AM - 6PM
+          Email: info@travelightaruba.com<br>
+          Phone: +297 593-2028<br>
+          Hours: Monday - Sunday, 9AM - 6PM
         </p>
       </div>
 
       <div style="text-align: center; margin: 30px 0;">
-        <a href="https://arubatravel.com" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        <a href="https://travelightaruba.com" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
           Visit Our Website
         </a>
       </div>
@@ -201,7 +202,7 @@ function generateRejectionEmail(data: {
       <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0;">
         We apologize for any inconvenience and hope to serve you in the future.<br><br>
         Best regards,<br>
-        <strong style="color: #374151;">The Aruba Travel Light Team</strong>
+        <strong style="color: #374151;">The Travel Light Aruba Team</strong>
       </p>
     </div>
 
@@ -210,10 +211,11 @@ function generateRejectionEmail(data: {
         This is an automated email. Please do not reply directly to this message.
       </p>
       <p style="margin: 10px 0 0; color: #9ca3af; font-size: 12px;">
-        © ${new Date().getFullYear()} Aruba Travel Light. All rights reserved.
+        &copy; ${new Date().getFullYear()} Travel Light Aruba. All rights reserved.
       </p>
     </div>
   </div>
 </body>
 </html>`;
 }
+
