@@ -1,4 +1,4 @@
--- Fix booking status constraint and add weekly pricing
+﻿-- Fix booking status constraint and add weekly pricing
 -- Allows 'pending_admin_review' status and adds price_per_week column
 
 -- Step 1: Drop existing status constraint if it exists
@@ -19,11 +19,13 @@ ALTER TABLE public.bookings
         'pending',
         'pending_admin_review',
         'confirmed',
+        'out_for_delivery',
         'in_transit',
         'delivered',
         'completed',
         'cancelled',
-        'rejected'
+        'rejected',
+        'undeliverable'
     ));
 
 -- Step 3: Add price_per_week column to equipment table

@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-import { Booking, BookingStatus, BookingItem } from '@/components/admin/calendar/types';
+import { Booking, BookingStatus } from '@/components/admin/calendar/types';
 
 export const getBookings = async (userId: string) => {
   return supabase
@@ -33,7 +33,16 @@ export const updateBookingStatus = async (bookingId: string, newStatus: BookingS
 
     // Call the email notification function
     if (updatedBooking && updatedBooking.customer_email) {
-      const equipmentDetails = updatedBooking.booking_items?.map((item: BookingItem) => `${item.equipment_name} (x${item.quantity})`).join(', ') || 'N/A';
+      const bookingWithItems = updatedBooking as typeof updatedBooking & {
+        booking_items?: Array<{
+          equipment_name: string;
+          quantity: number;
+        }>;
+      };
+
+      const equipmentDetails = bookingWithItems.booking_items
+        ?.map((item) => `${item.equipment_name} (x${item.quantity})`)
+        .join(', ') || 'N/A';
       const { error: functionError } = await supabase.functions.invoke('booking-status-update-email', {
         body: {
           customer_email: updatedBooking.customer_email,

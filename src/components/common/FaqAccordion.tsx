@@ -9,7 +9,7 @@ const faqData = [
   },
   {
     question: "Is there a minimum rental duration or amount?",
-    answer: "Yes, we require a minimum rental of 3 days and a minimum order total of $30. This helps us ensure efficient delivery and service across the island. If your selected items or rental period don’t meet the minimum, we’re happy to help you adjust your order to fit!",
+    answer: "Yes, we require a minimum rental of 3 days and a minimum order total of $30. This helps us ensure efficient delivery and service across the island. If your selected items or rental period don't meet the minimum, we're happy to help you adjust your order to fit!",
   },
   {
     question: "How long is a weekly rental?",
@@ -17,18 +17,15 @@ const faqData = [
   },
   {
     question: "Is delivery and pickup free?",
-    answer: "Delivery and pickup are free ONLY for weekly rentals (5–7 days). For non-weekly rentals, there is a one-time $10 delivery fee that covers both delivery and pickup. A $20 delivery fee applies for Sunday crib delivery",
+    answer: "Delivery and pickup are free ONLY for weekly rentals (5-7 days). For non-weekly rentals, there is a one-time $10 delivery fee that covers both delivery and pickup. A $20 delivery fee applies for Sunday crib delivery.",
   },
-  
- {
-  question: "What are the delivery and pickup time slots?",
-  answer: `We offer two time slots for both delivery and pickup from Monday through Saturday:\n\n• Morning: 8:00 AM – 10:00 AM\n• Afternoon: 4:00 PM – 6:00 PM\n\n
-  On Saturdays, afternoon slots are extended until 7:00 PM.\n\nSunday deliveries are only available for crib or pack and play rentals and are limited to the afternoon time slot.`,
-},
- 
   {
-    question: "What if we need a crib or pack and play on sunday?",
-    answer: "Sunday deliveries are available only if your order includes a crib or pack and play. A $20 delivery fee applies for Sunday crib delivery",
+    question: "What are the delivery and pickup time slots?",
+    answer: `We offer two time slots for both delivery and pickup from Monday through Saturday:\n\n- Morning: 8:00 AM - 10:00 AM\n- Afternoon: 4:00 PM - 6:00 PM\n\nOn Saturdays, afternoon slots are extended until 7:00 PM.\n\nSunday deliveries are only available for crib or pack and play rentals and are limited to the afternoon time slot.`,
+  },
+  {
+    question: "What if we need a crib or pack and play on Sunday?",
+    answer: "Sunday deliveries are available only if your order includes a crib or pack and play. A $20 delivery fee applies for Sunday crib delivery.",
   },
 ];
 
@@ -47,10 +44,10 @@ export const FaqAccordion: React.FC<FaqAccordionProps> = ({ className }) => {
           <Accordion type="single" collapsible className="w-full space-y-2">
             {faqData.map((item, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-sm lg:text-base font-small text-left leading-tight break-words">
-  {item.question}
+                <AccordionTrigger className="text-sm lg:text-base font-medium text-left leading-tight break-words">
+                  {item.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-gray-700 pt-1 pb-2">
+                <AccordionContent className="text-sm text-muted-foreground pt-1 pb-2 whitespace-pre-line">
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>

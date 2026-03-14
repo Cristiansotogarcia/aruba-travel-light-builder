@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 interface ComponentVisibility {
   id: string;
   component_name: string;
-  role: 'SuperUser' | 'Admin' | 'Booker' | 'Driver';
+  role: 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
   is_visible: boolean;
 }
 
@@ -24,7 +24,7 @@ const components = [
   'TaskMaster'
 ];
 
-const roles = ['SuperUser', 'Admin', 'Booker', 'Driver'] as const;
+const roles = ['SuperUser', 'Admin', 'Booker', 'Customer', 'Driver'] as const;
 
 export const VisibilitySettings = () => {
   const [visibilitySettings, setVisibilitySettings] = useState<ComponentVisibility[]>([]);
@@ -33,13 +33,7 @@ export const VisibilitySettings = () => {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('VisibilitySettings')) {
-      fetchVisibilitySettings();
-    }
-  }, [hasPermission]);
-
-  const fetchVisibilitySettings = async () => {
+  const fetchVisibilitySettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('component_visibility')
@@ -58,7 +52,13 @@ export const VisibilitySettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('VisibilitySettings')) {
+      fetchVisibilitySettings();
+    }
+  }, [fetchVisibilitySettings, hasPermission]);
 
   const handleVisibilityChange = (componentName: string, role: string, isVisible: boolean) => {
     setVisibilitySettings(prev => 

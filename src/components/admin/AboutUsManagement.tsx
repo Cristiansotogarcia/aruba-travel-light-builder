@@ -25,6 +25,11 @@ interface AboutContent {
   };
 }
 
+const getMetadataString = (metadata: Record<string, unknown>, key: string): string => {
+  const value = metadata[key];
+  return typeof value === 'string' ? value : '';
+};
+
 const AboutUsManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,20 +68,20 @@ const AboutUsManagement = () => {
         }
 
         // Parse metadata for image URLs
-        const homepageMetadata = (homepageContent?.metadata as any) || {};
-        const aboutPageMetadata = (aboutPageContent?.metadata as any) || {};
+        const homepageMetadata = (homepageContent?.metadata as Record<string, unknown> | null) || {};
+        const aboutPageMetadata = (aboutPageContent?.metadata as Record<string, unknown> | null) || {};
 
         return {
           homepage: {
             title: homepageContent?.title || 'About Us',
             short_description: homepageContent?.content || 'Learn more about our company and what we do.',
-            about_image: (homepageMetadata as any)?.about_image || ''
+            about_image: getMetadataString(homepageMetadata, 'about_image')
           },
           aboutPage: {
             title: aboutPageContent?.title || 'About Us',
             full_description: aboutPageContent?.content || 'Welcome to our company. We are dedicated to providing excellent service and quality products to our customers.',
-            about_image: (aboutPageMetadata as any)?.about_image || '',
-            additional_image: (aboutPageMetadata as any)?.additional_image || ''
+            about_image: getMetadataString(aboutPageMetadata, 'about_image'),
+            additional_image: getMetadataString(aboutPageMetadata, 'additional_image')
           }
         } as AboutContent;
       } catch (error) {
@@ -137,8 +142,8 @@ const AboutUsManagement = () => {
           .eq('page_slug', 'about-us')
           .single();
 
-        const homepageMetadata = (homepageData?.metadata as any) || {};
-        const aboutPageMetadata = (aboutPageData?.metadata as any) || {};
+        const homepageMetadata = (homepageData?.metadata as Record<string, unknown> | null) || {};
+        const aboutPageMetadata = (aboutPageData?.metadata as Record<string, unknown> | null) || {};
 
         // Update homepage
         const { error: homepageError } = await supabase
@@ -195,7 +200,7 @@ const AboutUsManagement = () => {
           .eq('page_slug', 'about-us')
           .single();
 
-        const aboutPageMetadata = (aboutPageData?.metadata as any) || {};
+        const aboutPageMetadata = (aboutPageData?.metadata as Record<string, unknown> | null) || {};
 
         const { error } = await supabase
           .from('content_blocks')
@@ -251,7 +256,7 @@ const AboutUsManagement = () => {
           .eq('page_slug', 'homepage')
           .single();
 
-        const homepageMetadata = (homepageData?.metadata as any) || {};
+        const homepageMetadata = (homepageData?.metadata as Record<string, unknown> | null) || {};
 
         const { error } = await supabase
           .from('content_blocks')
@@ -279,7 +284,7 @@ const AboutUsManagement = () => {
           .eq('page_slug', 'about-us')
           .single();
 
-        const aboutPageMetadata = (aboutPageData?.metadata as any) || {};
+        const aboutPageMetadata = (aboutPageData?.metadata as Record<string, unknown> | null) || {};
 
         const { error } = await supabase
           .from('content_blocks')

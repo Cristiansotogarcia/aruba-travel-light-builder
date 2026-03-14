@@ -91,8 +91,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Aruba Travel Light <reservations@arubatravel.com>',
+        from: 'Travel Light Aruba <info@travelightaruba.com>',
         to: [customer_email],
+        reply_to: 'info@travelightaruba.com',
         subject: `Reservation Received - Booking #${booking_id.slice(0, 8)}`,
         html: emailHtml,
       }),
@@ -174,13 +175,13 @@ function generateReservationEmail(data: {
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 20px; text-align: center;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Aruba Travel Light</h1>
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Travel Light Aruba</h1>
       <p style="color: #dbeafe; margin: 10px 0 0; font-size: 16px;">Reservation Received</p>
     </div>
 
     <div style="padding: 40px 30px;">
       <div style="background-color: #dcfce7; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 30px; border-radius: 4px;">
-        <p style="margin: 0; color: #166534; font-weight: bold;">✓ Reservation Successfully Received</p>
+        <p style="margin: 0; color: #166534; font-weight: bold;">Reservation Successfully Received</p>
         <p style="margin: 8px 0 0; color: #166534; font-size: 14px;">Your reservation is now being reviewed by our team.</p>
       </div>
 
@@ -252,14 +253,14 @@ function generateReservationEmail(data: {
           If you have any questions about your reservation, please don't hesitate to contact us:
         </p>
         <p style="color: #374151; margin: 10px 0 0; font-weight: 500;">
-          📧 Email: support@arubatravel.com<br>
-          📞 Phone: +297 123 4567<br>
-          🕐 Hours: Monday - Sunday, 9AM - 6PM
+          Email: info@travelightaruba.com<br>
+          Phone: +297 593-2028<br>
+          Hours: Monday - Sunday, 9AM - 6PM
         </p>
       </div>
 
       <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0;">
-        Thank you for choosing Aruba Travel Light!<br>
+        Thank you for choosing Travel Light Aruba!<br>
         We look forward to serving you.
       </p>
     </div>
@@ -269,10 +270,12 @@ function generateReservationEmail(data: {
         This is an automated email. Please do not reply directly to this message.
       </p>
       <p style="margin: 10px 0 0; color: #9ca3af; font-size: 12px;">
-        © ${new Date().getFullYear()} Aruba Travel Light. All rights reserved.
+        &copy; ${new Date().getFullYear()} Travel Light Aruba. All rights reserved.
       </p>
     </div>
   </div>
 </body>
 </html>`;
 }
+
+

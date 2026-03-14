@@ -124,10 +124,8 @@ export const handleApiError = (error: unknown): AppError => {
 
   // Object with message
   if (error && typeof error === 'object' && 'message' in error) {
-    return new AppError(
-      String((error as any).message),
-      'OBJECT_ERROR'
-    );
+    const message = (error as { message?: unknown }).message;
+    return new AppError(String(message ?? 'Unknown error'), 'OBJECT_ERROR');
   }
 
   // Fallback for unknown error types
@@ -140,7 +138,7 @@ export const handleApiError = (error: unknown): AppError => {
 /**
  * Error handler for async functions
  */
-export const asyncErrorHandler = <T extends any[], R>(
+export const asyncErrorHandler = <T extends unknown[], R>(
   fn: (...args: T) => Promise<R>
 ) => {
   return async (...args: T): Promise<R> => {
@@ -223,7 +221,7 @@ export const formatErrorForUser = (error: unknown): string => {
 /**
  * Error reporting utility (for external services)
  */
-export const reportError = (error: AppError, context?: Record<string, any>) => {
+export const reportError = (error: AppError, context?: Record<string, unknown>) => {
   // Only report non-operational errors or critical errors
   if (!error.isOperational || error.statusCode >= 500) {
     console.error('Error reported:', {

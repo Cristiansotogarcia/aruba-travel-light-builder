@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 import { useCategories } from '@/hooks/useCategories';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -12,6 +13,7 @@ const MobileNav = () => {
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>({});
   const { user, profile, signOut, loading } = useAuth();
+  const { items } = useCart();
   const { categories, loading: categoriesLoading } = useCategories();
   const navigate = useNavigate();
 
@@ -32,7 +34,7 @@ const MobileNav = () => {
     <Link
       to={to}
       onClick={() => setIsOpen(false)}
-      className="block px-3 py-2 text-gray-700 hover:text-blue-600"
+      className="block rounded-xl px-4 py-3 text-sm font-semibold text-foreground/80 transition-colors hover:bg-accent/60 hover:text-foreground"
     >
       {children}
     </Link>
@@ -55,6 +57,28 @@ const MobileNav = () => {
   };
 
   const dashboardLink = getDashboardLink();
+  const cartLabel = items.length > 0 ? `Cart (${items.length})` : 'Cart';
+
+  useEffect(() => {
+    if (isOpen || typeof document === "undefined") return;
+    const cleanupStyle = (element: HTMLElement) => {
+      element.style.removeProperty("overflow");
+      element.style.removeProperty("padding-right");
+      element.style.removeProperty("position");
+      element.style.removeProperty("top");
+      element.style.removeProperty("left");
+      element.style.removeProperty("right");
+      element.style.removeProperty("width");
+      element.style.removeProperty("height");
+      element.style.removeProperty("touch-action");
+      element.style.removeProperty("transform");
+    };
+
+    cleanupStyle(document.body);
+    cleanupStyle(document.documentElement);
+    document.body.removeAttribute("data-scroll-locked");
+    document.documentElement.removeAttribute("data-scroll-locked");
+  }, [isOpen]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -64,22 +88,24 @@ const MobileNav = () => {
           <span className="sr-only">Open menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left">
-        <div className="flex justify-between items-center p-4 border-b">
+      <SheetContent side="left" className="max-h-[100vh] overflow-y-auto p-0">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-border/60">
           <h2 className="text-lg font-semibold">Menu</h2>
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
             <X className="h-6 w-6" />
             <span className="sr-only">Close menu</span>
           </Button>
         </div>
-        <nav className="py-4">
+        <nav className="px-4 py-4 space-y-2">
+          <NavLink to="/book">Book Now</NavLink>
+          <NavLink to="/cart">{cartLabel}</NavLink>
           <Collapsible open={equipmentOpen} onOpenChange={setEquipmentOpen}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-gray-700 hover:text-blue-600">
+            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-foreground/80 transition-colors hover:bg-accent/60 hover:text-foreground">
               <span>Equipment</span>
               {equipmentOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="pl-4 border-l ml-3 mt-1 space-y-1">
+              <div className="pl-4 border-l border-border/60 ml-3 mt-2 space-y-1">
                 <NavLink to="/equipment">All Equipment</NavLink>
                 
                 {!categoriesLoading && categories.map((category) => (
@@ -89,16 +115,16 @@ const MobileNav = () => {
                         open={categoryStates[category.id] || false} 
                         onOpenChange={() => toggleCategory(category.id)}
                       >
-                        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1 text-sm text-gray-600 hover:text-blue-600">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-accent/50 hover:text-foreground">
                           <span>{category.name}</span>
                           {categoryStates[category.id] ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <div className="pl-4 border-l ml-2 mt-1 space-y-1">
+                          <div className="pl-4 border-l border-border/60 ml-2 mt-1 space-y-1">
                             <Link
                               to={`/equipment?category=${encodeURIComponent(category.name)}`}
                               onClick={() => setIsOpen(false)}
-                              className="block px-2 py-1 text-xs text-gray-500 hover:text-blue-600"
+                              className="block rounded-lg px-2 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
                             >
                               All {category.name}
                             </Link>
@@ -107,7 +133,7 @@ const MobileNav = () => {
                                 key={subCategory.id}
                                 to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
                                 onClick={() => setIsOpen(false)}
-                                className="block px-2 py-1 text-xs text-gray-500 hover:text-blue-600"
+                                className="block rounded-lg px-2 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
                               >
                                 {subCategory.name}
                               </Link>
@@ -119,7 +145,7 @@ const MobileNav = () => {
                       <Link
                         to={`/equipment?category=${encodeURIComponent(category.name)}`}
                         onClick={() => setIsOpen(false)}
-                        className="block px-2 py-1 text-sm text-gray-600 hover:text-blue-600"
+                        className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
                       >
                         {category.name}
                       </Link>
@@ -135,7 +161,7 @@ const MobileNav = () => {
           {(loading || (user && profile)) && (
             <div className="mt-4 pt-4 border-t">
               {loading ? (
-                <p className="px-3 py-2 text-gray-700">Loading...</p>
+                <p className="px-4 py-3 text-sm text-muted-foreground">Loading...</p>
               ) : (
                 <div className="space-y-2">
                   {dashboardLink && (

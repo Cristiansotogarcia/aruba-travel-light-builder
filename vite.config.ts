@@ -4,153 +4,179 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { Buffer } from 'buffer';
-import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "127.0.0.1",
-    port: 8080,
-  },
-  plugins: [
-    react(),
-    mode === 'development' && componentTagger(),
-    mode === 'production' && visualizer({
-      open: true,
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    }),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "dompurify": path.resolve(__dirname, "./src/lib/dompurify.ts"),
-      'crypto': 'crypto-browserify',
-      'buffer': 'buffer/',
+export default defineConfig(async ({ mode }) => {
+  const plugins = [react()];
+
+  if (mode === 'development') {
+    plugins.push(componentTagger());
+  }
+
+  if (mode === 'production') {
+    try {
+      const { visualizer } = await import('rollup-plugin-visualizer');
+      plugins.push(
+        visualizer({
+          open: true,
+          filename: 'dist/stats.html',
+          gzipSize: true,
+          brotliSize: true,
+        })
+      );
+    } catch {
+      // Allow tests and local builds to run even if the optional analyzer package is missing.
+    }
+  }
+
+  return {
+    server: {
+      host: "127.0.0.1",
+      port: 8080,
     },
-  },
-  define: {
-    'globalThis.Buffer': Buffer,
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // React core
-          if (id.includes('react') && id.includes('react-dom')) {
-            return 'react-vendor';
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+        "dompurify": path.resolve(__dirname, "./src/lib/dompurify.ts"),
+        'crypto': 'crypto-browserify',
+        'buffer': 'buffer/',
+      },
+    },
+    define: {
+      'globalThis.Buffer': Buffer,
+    },
+    build: {
+      modulePreload: {
+        resolveDependencies: (url, deps, { hostType }) => {
+          if (hostType === "html") {
+            return deps.filter(
+              (dep) =>
+                !/admin-(core|reports)/.test(dep) &&
+                !/editor-lib/.test(dep) &&
+                !/charts-lib/.test(dep) &&
+                !/maps-lib/.test(dep)
+            );
           }
-          if (id.includes('react-router')) {
-            return 'react-router';
-          }
-
-          // Radix UI components - split into very small chunks to avoid large bundles
-          if (id.includes('@radix-ui')) {
-            if (id.includes('react-dialog') || id.includes('react-dropdown-menu') ||
-                id.includes('react-popover') || id.includes('react-tooltip')) {
-              return 'radix-overlays';
+          return deps;
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            const normalizedId = id.replace(/\\/g, "/");
+            const isNodeModule = normalizedId.includes("/node_modules/");
+            // React core (avoid circular chunking)
+            if (
+              isNodeModule &&
+              (normalizedId.includes("/node_modules/react/") ||
+                normalizedId.includes("/node_modules/react-dom/") ||
+                normalizedId.includes("/node_modules/react-is/") ||
+                normalizedId.includes("/node_modules/scheduler/"))
+            ) {
+              return "react-vendor";
             }
-            if (id.includes('react-select') || id.includes('react-accordion') ||
-                id.includes('react-tabs') || id.includes('react-navigation-menu')) {
-              return 'radix-navigation';
+            if (normalizedId.includes('react-router')) {
+              return 'react-router';
             }
-            if (id.includes('react-checkbox') || id.includes('react-radio') ||
-                id.includes('react-switch') || id.includes('react-slider') ||
-                id.includes('react-progress')) {
-              return 'radix-form-controls';
+
+            // Radix UI components - split into very small chunks to avoid large bundles
+            if (normalizedId.includes('@radix-ui')) {
+              if (normalizedId.includes('react-dialog') || normalizedId.includes('react-dropdown-menu') ||
+                  normalizedId.includes('react-popover') || normalizedId.includes('react-tooltip')) {
+                return 'radix-overlays';
+              }
+              if (normalizedId.includes('react-select') || normalizedId.includes('react-accordion') ||
+                  normalizedId.includes('react-tabs') || normalizedId.includes('react-navigation-menu')) {
+                return 'radix-navigation';
+              }
+              if (normalizedId.includes('react-checkbox') || normalizedId.includes('react-radio') ||
+                  normalizedId.includes('react-switch') || normalizedId.includes('react-slider') ||
+                  normalizedId.includes('react-progress')) {
+                return 'radix-form-controls';
+              }
+              if (normalizedId.includes('react-separator') || normalizedId.includes('react-scroll-area') ||
+                  normalizedId.includes('react-aspect-ratio') || normalizedId.includes('react-collapsible')) {
+                return 'radix-layout';
+              }
+              if (normalizedId.includes('react-toast') || normalizedId.includes('react-alert-dialog') ||
+                  normalizedId.includes('react-hover-card')) {
+                return 'radix-feedback';
+              }
+              // Core primitives - split smaller
+              return 'radix-core';
             }
-            if (id.includes('react-separator') || id.includes('react-scroll-area') ||
-                id.includes('react-aspect-ratio') || id.includes('react-collapsible')) {
-              return 'radix-layout';
+
+            // Icons - split lucide icons into smaller chunks
+            if (normalizedId.includes('lucide-react')) {
+              return 'lucide-icons';
             }
-            if (id.includes('react-toast') || id.includes('react-alert-dialog') ||
-                id.includes('react-hover-card')) {
-              return 'radix-feedback';
+
+            // Data management - split further
+            if (normalizedId.includes('@tanstack/react-query')) {
+              return 'react-query';
             }
-            // Core primitives - split smaller
-            return 'radix-core';
-          }
-
-          // Icons - split lucide icons into smaller chunks
-          if (id.includes('lucide-react')) {
-            return 'lucide-icons';
-          }
-
-          // Data management - split further
-          if (id.includes('@tanstack/react-query')) {
-            return 'react-query';
-          }
-          if (id.includes('@supabase/supabase-js')) {
-            return 'supabase';
-          }
-
-          // Forms - split libraries
-          if (id.includes('react-hook-form') || id.includes('@hookform/resolvers')) {
-            return 'forms';
-          }
-          if (id.includes('zod')) {
-            return 'forms-validation';
-          }
-
-          // Heavy libraries - make these load on-demand wherever possible
-          // Note: recharts, leaflet, editor are already dynamically imported
-          if (id.includes('recharts')) {
-            return 'charts-lib';
-          }
-          if (id.includes('leaflet') || id.includes('react-leaflet')) {
-            return 'maps-lib';
-          }
-          if (id.includes('@uiw/react-md-editor')) {
-            return 'editor-lib';
-          }
-
-          // Date utilities - split date-fns more aggressively
-          // This will help with the locale issue
-          if (id.includes('date-fns')) {
-            if (id.includes('locale')) {
-              return 'date-locales';
+            if (normalizedId.includes('@supabase/supabase-js')) {
+              return 'supabase';
             }
-            return 'date-utils';
-          }
 
-          // UI utilities
-          if (id.includes('clsx') || id.includes('class-variance-authority') ||
-              id.includes('tailwind-merge') || id.includes('tailwindcss-animate')) {
-            return 'ui-utils';
-          }
-
-          // Other utilities - split smaller
-          if (id.includes('papaparse') || id.includes('dompurify')) {
-            return 'data-utils';
-          }
-          if (id.includes('next-themes') || id.includes('sonner') ||
-              id.includes('vaul') || id.includes('cmdk') || id.includes('input-otp')) {
-            return 'ui-enhancements';
-          }
-          if (id.includes('embla-carousel-react') || id.includes('react-day-picker') ||
-              id.includes('react-resizable-panels')) {
-            return 'interactive-components';
-          }
-
-          // Force admin components into separate chunks
-          if (id.includes('src/components/admin') || id.includes('src/pages/Admin')) {
-            if (id.includes('ReportsDashboard') || id.includes('EnhancedReportsDashboard')) {
-              return 'admin-reports';
+            // Forms - split libraries
+            if (normalizedId.includes('react-hook-form') || normalizedId.includes('@hookform/resolvers')) {
+              return 'forms';
             }
-            return 'admin-core';
+            if (normalizedId.includes('zod')) {
+              return 'forms-validation';
+            }
+
+            // Heavy libraries are already dynamically imported; let Rollup decide chunking.
+
+            // Date utilities - split date-fns more aggressively
+            // This will help with the locale issue
+            if (normalizedId.includes('date-fns')) {
+              if (normalizedId.includes('locale')) {
+                return 'date-locales';
+              }
+              return 'date-utils';
+            }
+
+            // UI utilities
+            if (normalizedId.includes('clsx') || normalizedId.includes('class-variance-authority') ||
+                normalizedId.includes('tailwind-merge') || normalizedId.includes('tailwindcss-animate')) {
+              return 'ui-utils';
+            }
+
+            // Other utilities - split smaller
+            if (normalizedId.includes('papaparse') || normalizedId.includes('dompurify')) {
+              return 'data-utils';
+            }
+            if (normalizedId.includes('next-themes') || normalizedId.includes('sonner') ||
+                normalizedId.includes('vaul') || normalizedId.includes('cmdk') || normalizedId.includes('input-otp')) {
+              return 'ui-enhancements';
+            }
+            if (normalizedId.includes('embla-carousel-react') || normalizedId.includes('react-day-picker') ||
+                normalizedId.includes('react-resizable-panels')) {
+              return 'interactive-components';
+            }
+
+            // Force admin components into separate chunks
+            if (normalizedId.includes('src/components/admin') || normalizedId.includes('src/pages/Admin')) {
+              if (normalizedId.includes('ReportsDashboard') || normalizedId.includes('EnhancedReportsDashboard')) {
+                return 'admin-reports';
+              }
+              return 'admin-core';
+            }
           }
         }
-      }
+      },
+      // Increase chunk size warning limit to 1MB for this feature-rich application
+      // Modern web applications commonly have bundles this size with many features
+      chunkSizeWarningLimit: 1000,
     },
-    // Increase chunk size warning limit to 1MB for this feature-rich application
-    // Modern web applications commonly have bundles this size with many features
-    chunkSizeWarningLimit: 1000,
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts', // or path to your setup file
-    css: true, // if you want to process CSS in tests
-  },
-}));
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/setupTests.ts',
+      css: true,
+    },
+  };
+});

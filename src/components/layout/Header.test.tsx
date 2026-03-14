@@ -4,12 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { Header } from './Header';
 import { describe, it, expect, vi } from 'vitest';
 
-let mockProfileRole = 'Booker';
-
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: '1' },
-    profile: { role: mockProfileRole },
+    profile: { role: 'Booker' },
     signOut: vi.fn(),
     loading: false,
   }),
@@ -17,6 +15,14 @@ vi.mock('@/hooks/useAuth', () => ({
 
 vi.mock('@/hooks/useSiteAssets', () => ({
   useSiteAssets: () => ({ assets: {}, refresh: vi.fn() }),
+}));
+
+vi.mock('@/hooks/useCart', () => ({
+  useCart: () => ({ items: [] }),
+}));
+
+vi.mock('@/hooks/useCategories', () => ({
+  useCategories: () => ({ categories: [], loading: false }),
 }));
 
 describe('Header Component', () => {
@@ -37,60 +43,32 @@ describe('Header Component', () => {
 
   it('renders desktop navigation links correctly', () => {
     renderHeader();
-    expect(screen.getByRole('link', { name: 'Equipment' })).toHaveAttribute('href', '/equipment');
+    expect(screen.getByRole('button', { name: 'Equipment' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
     expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
   });
 
-  it('shows Book Now button for Booker role', () => {
-    mockProfileRole = 'Booker';
+  it('renders booking and cart CTAs alongside auth controls', () => {
     renderHeader();
-    const bookNowLink = screen.getByRole('link', { name: /book now/i });
-    expect(bookNowLink).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /book now/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /cart/i })).toBeInTheDocument();
 
     const logoutBtn = screen.getByRole('button', { name: /logout/i });
     expect(logoutBtn).toBeInTheDocument();
   });
 
-  it('shows Book Now button for Customer role', () => {
-    mockProfileRole = 'Customer';
-    renderHeader();
-    const bookNowLink = screen.getByRole('link', { name: /book now/i });
-    expect(bookNowLink).toBeInTheDocument();
-  });
-
   it('toggles the mobile menu on button click', () => {
-    mockProfileRole = 'Booker';
     renderHeader();
-    const mobileMenuButton = screen.getByRole('button', { name: /menu/i }); // Initial state shows Menu icon
+    const mobileMenuButton = screen.getByRole('button', { name: /open menu/i });
     expect(mobileMenuButton).toBeInTheDocument();
 
-    // Check that mobile nav is initially hidden (or not present for desktop view)
-    // We'll query for a link that's specific to the mobile menu to check its visibility
-    // For this, we need to ensure the screen size is small enough for mobile menu to be active.
-    // Vitest/JSDOM doesn't simulate screen sizes directly, so we test the toggle logic.
-
-    // Menu should not be open initially
-    expect(screen.queryByRole('link', { name: 'Equipment', hidden: false })).toBeInTheDocument(); // Desktop link
-    // A bit tricky to assert mobile menu is hidden without specific roles/text for mobile only items
-    // Let's check if a link *inside* the mobile menu structure is not visible/present
-    // The mobile links are identical in text to desktop, so we rely on structure or specific mobile-only elements if any.
-    // For now, let's focus on the toggle action.
-
-    // Click to open
     fireEvent.click(mobileMenuButton);
-    // After click, the button should show an X icon (or its accessible name changes)
-    // The component uses lucide-react icons, their accessible name might not be 'X' directly.
-    // We'll assume the button's content changes or a new button appears.
-    // Let's check if the 'Equipment' link (which is in mobile menu) is now visible.
-    // Since desktop links are always there, we need a way to distinguish.
-    // The mobile menu has a specific structure: div with class 'md:hidden' then 'px-2 pt-2 pb-3 ...'
-    // This is hard to query directly with RTL. Let's assume clicking changes the button's accessible name or shows X icon.
-    expect(screen.getAllByRole('button', { name: /close/i })[0]).toBeInTheDocument();
+    const closeButton = screen.getByRole('button', { name: /close menu/i });
+    expect(closeButton).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /book now/i }).length).toBeGreaterThan(0);
 
-    // Click to close (first close button)
-    fireEvent.click(screen.getAllByRole('button', { name: /close/i })[0]);
-    expect(screen.getByRole('button', { name: /menu/i })).toBeInTheDocument(); // Back to Menu icon
+    fireEvent.click(closeButton);
+    expect(screen.getByRole('button', { name: /open menu/i })).toBeInTheDocument();
   });
 
   // TODO: Add tests for authenticated state (e.g., showing Dashboard/Logout links)

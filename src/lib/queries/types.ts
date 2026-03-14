@@ -1,22 +1,4 @@
-export interface Booking {
-  id: string;
-  created_at: string;
-  start_date: string;
-  end_date: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable';
-  total_amount: number;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  customer_comment: string | null;
-
-  user_id: string;
-
-  assigned_to: string | null;
-  delivery_failure_reason: string | null;
-  updated_at: string;
-}
+export type { Booking, BookingItem, BookingStatus } from '@/components/admin/calendar/types';
 
 export interface Customer {
   id: string;

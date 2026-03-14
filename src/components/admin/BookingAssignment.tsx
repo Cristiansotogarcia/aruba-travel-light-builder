@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,14 +23,7 @@ export const BookingAssignment = () => {
   const { hasPermission, profile } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (hasPermission('BookingAssignment')) {
-      fetchBookings();
-      fetchDrivers();
-    }
-  }, [hasPermission]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -38,7 +31,7 @@ export const BookingAssignment = () => {
           *,
           booking_items (*)
         `)
-        .in('status', ['pending', 'confirmed'])
+        .in('status', ['confirmed'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -54,9 +47,9 @@ export const BookingAssignment = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchDrivers = async () => {
+  const fetchDrivers = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -68,7 +61,14 @@ export const BookingAssignment = () => {
     } catch (error) {
       console.error('Error fetching drivers:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (hasPermission('BookingAssignment')) {
+      fetchBookings();
+      fetchDrivers();
+    }
+  }, [hasPermission, fetchBookings, fetchDrivers]);
 
   const assignBooking = async (bookingId: string, driverId: string) => {
     try {
@@ -151,7 +151,7 @@ export const BookingAssignment = () => {
                         <MapPin className="h-4 w-4" />
                         {booking.customer_address}
                       </div>
-                      <span className="font-medium">${booking.total_amount}</span>
+                      <span className="font-medium">${Number(booking.total_amount).toFixed(2)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -204,7 +204,7 @@ export const BookingAssignment = () => {
                           <MapPin className="h-4 w-4" />
                           {booking.customer_address}
                         </div>
-                        <span className="font-medium">${booking.total_amount}</span>
+                        <span className="font-medium">${Number(booking.total_amount).toFixed(2)}</span>
                       </div>
                     </div>
                     <Button variant="outline" size="sm">

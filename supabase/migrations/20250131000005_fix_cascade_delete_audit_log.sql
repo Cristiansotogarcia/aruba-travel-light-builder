@@ -1,4 +1,4 @@
--- Fix cascade delete issue with booking audit log
+﻿-- Fix cascade delete issue with booking audit log
 -- The issue: AFTER DELETE trigger tries to insert audit log after booking is deleted,
 -- causing foreign key violation. Solution: Don't create audit logs for DELETE operations
 -- since they'll be cascade deleted anyway.

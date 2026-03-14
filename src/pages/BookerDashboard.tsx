@@ -102,22 +102,22 @@ const BookerDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p>Loading dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Booker Dashboard</h1>
+        <h1 className="text-3xl font-semibold mb-8">Booker Dashboard</h1>
         
         {bookings.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center text-gray-600">
+            <CardContent className="p-6 text-center text-muted-foreground">
               No bookings found.
             </CardContent>
           </Card>
@@ -133,20 +133,20 @@ const BookerDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Customer:</p>
-                    <p className="text-sm text-gray-600">{booking.customer_name} ({booking.customer_email})</p>
+                    <p className="text-sm font-medium text-foreground">Customer:</p>
+                    <p className="text-sm text-muted-foreground">{booking.customer_name} ({booking.customer_email})</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Dates:</p>
-                    <p className="text-sm text-gray-600">{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-foreground">Dates:</p>
+                    <p className="text-sm text-muted-foreground">{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Total Amount:</p>
-                    <p className="text-sm text-gray-600">${booking.total_amount.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-foreground">Total Amount:</p>
+                    <p className="text-sm text-muted-foreground">${booking.total_amount.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Items:</p>
-                    <ul className="list-disc list-inside text-sm text-gray-600">
+                    <p className="text-sm font-medium text-foreground">Items:</p>
+                    <ul className="list-disc list-inside text-sm text-muted-foreground">
                       {booking.booking_items.map((item: BookerBookingItem, index: number) => (
                         <li key={index}>{item.equipment_name} (x{item.quantity})</li>
                       ))}

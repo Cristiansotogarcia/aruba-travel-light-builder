@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/types/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface PendingReservation {
   }>;
 }
 
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
 export const PendingReservations = () => {
   const [reservations, setReservations] = useState<PendingReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export const PendingReservations = () => {
 
       // Fetch booking items for each reservation
       const reservationsWithItems = await Promise.all(
-        (bookings || []).map(async (booking: any) => {
+        (bookings || []).map(async (booking: BookingRow) => {
           const { data: items, error: itemsError } = await supabase
             .from('booking_items')
             .select('equipment_name, quantity, equipment_price, subtotal')

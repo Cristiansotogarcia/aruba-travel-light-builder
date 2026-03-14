@@ -1,4 +1,4 @@
--- Add pickup_slot column to bookings table
+﻿-- Add pickup_slot column to bookings table
 ALTER TABLE bookings
 ADD COLUMN IF NOT EXISTS pickup_slot TEXT CHECK (pickup_slot IN ('morning', 'afternoon'));
 

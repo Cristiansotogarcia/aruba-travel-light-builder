@@ -20,7 +20,8 @@ describe('Footer Component', () => {
       </BrowserRouter>
     );
     // screen.debug(); // Removed for now
-    const expected = '© 2025 Travel Light Aruba. All rights reserved.';
+    const year = new Date().getFullYear();
+    const expected = new RegExp(`${year} Travel Light Aruba\\. All rights reserved\\.`);
     const copyrightElement = screen.getByText(expected);
     expect(copyrightElement).toBeInTheDocument();
   });
@@ -46,3 +47,5 @@ describe('Footer Component', () => {
     expect(screen.getByRole('link', { name: /Book Now/i })).toBeInTheDocument();
   });
 });
+
+

@@ -1,6 +1,6 @@
--- Add user_id column to bookings and update RLS policies
+﻿-- Add user_id column to bookings and update RLS policies
 ALTER TABLE public.bookings
-ADD COLUMN user_id uuid REFERENCES public.profiles(id);
+ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES public.profiles(id);
 
 -- Backfill existing rows using profile email if possible
 UPDATE public.bookings b

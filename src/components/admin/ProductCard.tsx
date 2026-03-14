@@ -7,13 +7,15 @@ import { Edit, Trash2, Package } from 'lucide-react';
 import type { Product as GlobalProduct } from '@/types/types';
 import DOMPurify from 'dompurify';
 
-interface Product extends GlobalProduct {}
+type ProductCardProduct = GlobalProduct & {
+  sub_category?: string | null;
+};
 
 interface ProductCardProps {
-  product: Product;
-  onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
-  onToggleAvailability: (product: Product) => void;
+  product: ProductCardProduct;
+  onEdit: (product: ProductCardProduct) => void;
+  onDelete: (product: ProductCardProduct) => void;
+  onToggleAvailability: (product: ProductCardProduct) => void;
 }
 
 export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }: ProductCardProps) => {
@@ -43,7 +45,7 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleAvailability }:
             dangerouslySetInnerHTML={{ __html: sanitizedDescription || 'No description available.' }}
           />
           <div className="text-sm text-gray-500">Category: {product.category || 'Uncategorized'}</div>
-          <div className="text-sm text-gray-500">Sub-Category: {(product as any).sub_category || 'N/A'}</div>
+          <div className="text-sm text-gray-500">Sub-Category: {product.sub_category || 'N/A'}</div>
           <div className="text-sm text-gray-500">Stock: {product.stock_quantity}</div>
           <div className="text-lg font-bold text-green-600">
             {"$"}

@@ -1,4 +1,4 @@
--- Add room_number column to bookings table
+﻿-- Add room_number column to bookings table
 ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS room_number text;
 

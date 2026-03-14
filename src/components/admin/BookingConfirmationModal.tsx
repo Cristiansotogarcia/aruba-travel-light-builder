@@ -68,7 +68,8 @@ export const BookingConfirmationModal = ({
         .from('content_blocks')
         .select('content')
         .eq('block_key', 'payment_link')
-        .single();
+        .eq('page_slug', 'global')
+        .maybeSingle();
       
       if (data?.content) {
         setPaymentLink(data.content);
@@ -165,7 +166,8 @@ export const BookingConfirmationModal = ({
       const { error: updateError } = await supabase
         .from('bookings')
         .update({
-          status: 'confirmed',
+          status: 'pending',
+          payment_status: 'pending',
           admin_confirmed_at: new Date().toISOString(),
           admin_confirmed_by: user.id,
           payment_link_url: paymentLink.trim(),
@@ -192,17 +194,18 @@ export const BookingConfirmationModal = ({
       }
 
       toast({
-        title: 'Reservation Confirmed',
-        description: 'Payment link has been sent to the customer',
+        title: 'Payment Link Sent',
+        description: 'Reservation is pending payment confirmation.',
         variant: 'default'
       });
 
       onComplete();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error confirming reservation:', error);
+      const message = error instanceof Error ? error.message : 'An error occurred while confirming the reservation';
       toast({
         title: 'Confirmation Failed',
-        description: error.message || 'An error occurred while confirming the reservation',
+        description: message,
         variant: 'destructive'
       });
     } finally {
@@ -269,11 +272,12 @@ export const BookingConfirmationModal = ({
       });
 
       onComplete();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting reservation:', error);
+      const message = error instanceof Error ? error.message : 'An error occurred while rejecting the reservation';
       toast({
         title: 'Rejection Failed',
-        description: error.message || 'An error occurred while rejecting the reservation',
+        description: message,
         variant: 'destructive'
       });
     } finally {

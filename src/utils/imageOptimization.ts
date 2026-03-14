@@ -12,6 +12,79 @@ export interface ImageConfig {
   sizes?: string;
 }
 
+export interface CompressionOptions {
+  quality: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  format?: 'jpeg' | 'png' | 'webp';
+  maintainAspectRatio?: boolean;
+}
+
+export async function compressImage(
+  file: File,
+  quality = 0.8,
+  options: Partial<CompressionOptions> = {}
+): Promise<File> {
+  if (typeof window === 'undefined' || !file.type.startsWith('image/')) {
+    return file;
+  }
+
+  const {
+    maxWidth = 1920,
+    maxHeight = 1920,
+    format,
+    maintainAspectRatio = true,
+  } = options;
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const widthRatio = maxWidth / image.width;
+      const heightRatio = maxHeight / image.height;
+      const scale = maintainAspectRatio
+        ? Math.min(widthRatio, heightRatio, 1)
+        : 1;
+
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        URL.revokeObjectURL(objectUrl);
+        resolve(file);
+        return;
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const outputType = format ? `image/${format}` : (file.type || 'image/jpeg');
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+
+          resolve(new File([blob], file.name, { type: blob.type || outputType, lastModified: Date.now() }));
+        },
+        outputType,
+        quality
+      );
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+
+    image.src = objectUrl;
+  });
+}
+
 /**
  * Generate srcset for responsive images
  * @param src - Base image URL
