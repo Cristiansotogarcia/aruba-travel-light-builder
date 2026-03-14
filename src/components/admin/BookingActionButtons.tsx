@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Truck, CheckCircle, Edit, X, Trash2, AlertTriangle, Undo, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Booking, BookingStatus } from './calendar/types'; // Added BookingStatus import
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface BookingActionButtonsProps {
   booking: Booking;
@@ -24,7 +25,7 @@ export const BookingActionButtons = ({
   onClose 
 }: BookingActionButtonsProps) => {
   const { profile } = useAuth();
-  const isPaid = booking.payment_status === 'paid';
+  const isPaid = isSuccessfulBookingPaymentStatus(booking.payment_status);
   const isPaymentPending = booking.status === 'pending' && !isPaid;
 
   // Check if user can delete bookings

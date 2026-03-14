@@ -17,6 +17,11 @@ import AboutUsManagement from '@/components/admin/AboutUsManagement';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { InvoicesList } from '@/components/admin/InvoicesList';
 
+interface AdminNavigateEventDetail {
+  section: string;
+  bookingId?: string;
+}
+
 const Admin = () => {
   const [activeSection, setActiveSection] = useState(() => {
     // Initialize from sessionStorage if available
@@ -33,6 +38,28 @@ const Admin = () => {
     // Save current section to sessionStorage whenever it changes
     sessionStorage.setItem('admin:activeSection', activeSection);
   }, [activeSection]);
+
+  useEffect(() => {
+    const handleAdminNavigate = (event: Event) => {
+      const customEvent = event as CustomEvent<AdminNavigateEventDetail>;
+      const detail = customEvent.detail;
+      if (!detail?.section) {
+        return;
+      }
+
+      if (detail.bookingId) {
+        sessionStorage.setItem('admin:openBookingId', detail.bookingId);
+      }
+
+      handleSectionChange(detail.section);
+    };
+
+    window.addEventListener('admin:navigate', handleAdminNavigate as EventListener);
+
+    return () => {
+      window.removeEventListener('admin:navigate', handleAdminNavigate as EventListener);
+    };
+  }, []);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -61,9 +88,23 @@ const Admin = () => {
       case 'visibility':
         return <VisibilitySettings />;
       case 'tasks':
-        return <DriverTasks />;
+        return (
+          <DriverTasks
+            scope="current-user"
+            requiredPermission="DriverTasks"
+            title="My Tasks"
+            description="Your assigned deliveries and pickups"
+          />
+        );
       case 'taskmaster':
-        return <DriverTasks />;
+        return (
+          <DriverTasks
+            scope="all-assigned"
+            requiredPermission="TaskMaster"
+            title="Task Management"
+            description="Monitor and manage assigned delivery and pickup work"
+          />
+        );
       case 'seo':
         return <SeoManager />;
       case 'settings':

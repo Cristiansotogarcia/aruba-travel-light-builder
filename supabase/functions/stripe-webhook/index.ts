@@ -14,9 +14,30 @@ interface StripeEvent {
   id: string;
   type: string;
   data: {
-    object: any;
+    object: StripeWebhookObject;
   };
 }
+
+interface StripeMetadata {
+  booking_id?: string;
+  [key: string]: string | undefined;
+}
+
+interface StripeSession {
+  id: string;
+  client_reference_id?: string | null;
+  payment_intent?: string | null;
+  metadata?: StripeMetadata;
+  [key: string]: unknown;
+}
+
+interface StripePaymentIntent {
+  id: string;
+  metadata?: StripeMetadata;
+  [key: string]: unknown;
+}
+
+type StripeWebhookObject = StripeSession | StripePaymentIntent;
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -90,7 +111,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function handleCheckoutSessionCompleted(session: any) {
+async function handleCheckoutSessionCompleted(session: StripeSession) {
   const bookingId = session.metadata?.booking_id || session.client_reference_id;
   
   if (!bookingId) {
@@ -99,14 +120,16 @@ async function handleCheckoutSessionCompleted(session: any) {
   }
 
   try {
+    const processedAt = new Date().toISOString();
+
     // Update booking status to confirmed
     const { error: bookingError } = await supabase
       .from('bookings')
       .update({
         status: 'confirmed',
-        payment_status: 'completed',
+        payment_status: 'paid',
         stripe_payment_intent_id: session.payment_intent,
-        updated_at: new Date().toISOString(),
+        updated_at: processedAt,
       })
       .eq('id', bookingId);
 
@@ -115,22 +138,10 @@ async function handleCheckoutSessionCompleted(session: any) {
       return;
     }
 
-    // Update payment record
-    const { error: paymentError } = await supabase
-      .from('payment_records')
-      .update({
-        status: 'completed',
-        stripe_payment_intent_id: session.payment_intent,
-        processed_at: new Date().toISOString(),
-        stripe_metadata: {
-          ...session,
-          processed_at: new Date().toISOString(),
-        },
-      })
-      .eq('stripe_session_id', session.id);
+    const paymentRecordId = await ensureSuccessfulPaymentRecord(bookingId, session, processedAt);
 
-    if (paymentError) {
-      console.error('Error updating payment record:', paymentError);
+    if (!paymentRecordId) {
+      console.error(`Unable to resolve a payment record for booking ${bookingId}`);
     }
 
     // Reserve equipment stock
@@ -139,13 +150,18 @@ async function handleCheckoutSessionCompleted(session: any) {
     // Send confirmation email
     await sendBookingConfirmationEmail(bookingId);
 
+    const invoiceId = await issueInvoiceForBooking(bookingId, paymentRecordId);
+    if (invoiceId) {
+      await sendInvoiceEmail(invoiceId);
+    }
+
     console.log(`Successfully processed payment for booking ${bookingId}`);
   } catch (error) {
     console.error('Error handling checkout session completed:', error);
   }
 }
 
-async function handlePaymentIntentSucceeded(paymentIntent: any) {
+async function handlePaymentIntentSucceeded(paymentIntent: StripePaymentIntent) {
   const bookingId = paymentIntent.metadata?.booking_id;
   
   if (!bookingId) {
@@ -158,7 +174,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
     const { error: paymentError } = await supabase
       .from('payment_records')
       .update({
-        status: 'completed',
+        status: 'paid',
         processed_at: new Date().toISOString(),
         stripe_metadata: {
           ...paymentIntent,
@@ -177,7 +193,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
   }
 }
 
-async function handlePaymentIntentFailed(paymentIntent: any) {
+async function handlePaymentIntentFailed(paymentIntent: StripePaymentIntent) {
   const bookingId = paymentIntent.metadata?.booking_id;
   
   if (!bookingId) {
@@ -223,7 +239,7 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
   }
 }
 
-async function handleCheckoutSessionExpired(session: any) {
+async function handleCheckoutSessionExpired(session: StripeSession) {
   const bookingId = session.metadata?.booking_id || session.client_reference_id;
   
   if (!bookingId) {
@@ -263,6 +279,104 @@ async function handleCheckoutSessionExpired(session: any) {
     console.log(`Checkout session expired for booking ${bookingId}`);
   } catch (error) {
     console.error('Error handling checkout session expired:', error);
+  }
+}
+
+async function ensureSuccessfulPaymentRecord(
+  bookingId: string,
+  session: StripeSession,
+  processedAt: string,
+) {
+  const metadata = {
+    ...session,
+    processed_at: processedAt,
+  };
+
+  const { data: updatedPayment, error: updateError } = await supabase
+    .from('payment_records')
+    .update({
+      status: 'paid',
+      stripe_payment_intent_id: session.payment_intent,
+      processed_at: processedAt,
+      stripe_metadata: metadata,
+    })
+    .eq('stripe_session_id', session.id)
+    .select('id')
+    .maybeSingle();
+
+  if (updateError) {
+    console.error('Error updating payment record:', updateError);
+  }
+
+  if (updatedPayment?.id) {
+    return updatedPayment.id;
+  }
+
+  const { data: booking, error: bookingLookupError } = await supabase
+    .from('bookings')
+    .select('total_amount')
+    .eq('id', bookingId)
+    .single();
+
+  if (bookingLookupError || !booking) {
+    console.error('Error fetching booking total for fallback payment record:', bookingLookupError);
+    return null;
+  }
+
+  const { data: insertedPayment, error: insertError } = await supabase
+    .from('payment_records')
+    .insert({
+      booking_id: bookingId,
+      amount: booking.total_amount,
+      gross_amount: booking.total_amount,
+      currency_code: 'AWG',
+      stripe_session_id: session.id,
+      stripe_payment_intent_id: session.payment_intent,
+      status: 'paid',
+      processed_at: processedAt,
+      settlement_date: processedAt.split('T')[0],
+      stripe_metadata: metadata,
+    })
+    .select('id')
+    .single();
+
+  if (insertError) {
+    console.error('Error inserting fallback payment record:', insertError);
+    return null;
+  }
+
+  return insertedPayment.id;
+}
+
+async function issueInvoiceForBooking(bookingId: string, paymentRecordId: string | null) {
+  if (!paymentRecordId) {
+    return null;
+  }
+
+  const { data, error } = await supabase.rpc('issue_booking_invoice', {
+    p_booking_id: bookingId,
+    p_payment_record_id: paymentRecordId,
+  });
+
+  if (error) {
+    console.error('Error issuing invoice snapshot:', error);
+    return null;
+  }
+
+  return data;
+}
+
+async function sendInvoiceEmail(invoiceId: string) {
+  try {
+    const { error } = await supabase.functions.invoke('send-invoice-email', {
+      body: { invoice_id: invoiceId },
+    });
+
+    if (error) {
+      console.error('Error sending invoice email:', error);
+    }
+  } catch (error) {
+    console.error('Error invoking invoice email function:', error);
   }
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search, Info, Clock, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,10 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
     setCurrentSection(section);
     onSectionChange?.(section);
   };
+
+  useEffect(() => {
+    setCurrentSection(activeSection || 'dashboard');
+  }, [activeSection]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: null },

@@ -7,6 +7,7 @@ import { Calendar, DollarSign, Users, Package, FileText, Clock, ArrowUpRight } f
 import { supabase } from '@/integrations/supabase/client';
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import type { Database } from '@/types/supabase';
+import { getInvoiceDisplayNumber, isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface DashboardStats {
   totalBookings: number;
@@ -14,9 +15,14 @@ interface DashboardStats {
   pendingPayments: number;
   totalRevenue: number;
   uniqueCustomers: number;
+  totalInvoices: number;
 }
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
+type InvoiceRow = Pick<
+  Database['public']['Tables']['invoices']['Row'],
+  'customer_email' | 'id' | 'invoice_number' | 'issued_at' | 'total_amount'
+>;
 
 interface AdminDashboardProps {
   onNavigate?: (section: string) => void;
@@ -29,10 +35,11 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
     pendingPayments: 0,
     totalRevenue: 0,
     uniqueCustomers: 0,
+    totalInvoices: 0,
   });
   const [recentBookings, setRecentBookings] = useState<BookingRow[]>([]);
   const [pendingPayments, setPendingPayments] = useState<BookingRow[]>([]);
-  const [recentPaidBookings, setRecentPaidBookings] = useState<BookingRow[]>([]);
+  const [recentInvoices, setRecentInvoices] = useState<InvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -76,16 +83,23 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
 
       if (bookingsError) throw bookingsError;
 
+      const { data: invoices, error: invoicesError } = await supabase
+        .from('invoices')
+        .select('customer_email, id, invoice_number, issued_at, total_amount')
+        .order('issued_at', { ascending: false });
+
+      if (invoicesError) throw invoicesError;
+
       // Calculate stats
       const totalBookings = bookings?.length || 0;
       const pendingReviews = bookings?.filter(b => b.status === 'pending_admin_review').length || 0;
       const pendingPayments = bookings?.filter(
-        b => b.status === 'pending' && b.payment_status !== 'paid'
+        b => b.status === 'pending' && !isSuccessfulBookingPaymentStatus(b.payment_status)
       ).length || 0;
-      const totalRevenue = bookings
-        ?.filter(b => b.payment_status === 'paid')
-        .reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+      const totalRevenue = invoices
+        ?.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) || 0;
       const uniqueCustomers = new Set(bookings?.map(b => b.customer_email)).size || 0;
+      const totalInvoices = invoices?.length || 0;
 
       setStats({
         totalBookings,
@@ -93,6 +107,7 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
         pendingPayments,
         totalRevenue,
         uniqueCustomers,
+        totalInvoices,
       });
 
       // Get recent bookings
@@ -103,18 +118,17 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
       setRecentBookings(recentBookingsData);
 
       const pendingPaymentData = bookings
-        ?.filter(b => b.status === 'pending' && b.payment_status !== 'paid')
+        ?.filter(b => b.status === 'pending' && !isSuccessfulBookingPaymentStatus(b.payment_status))
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
         .slice(0, 5) || [];
 
       setPendingPayments(pendingPaymentData);
 
-      const paidBookings = bookings
-        ?.filter(b => b.payment_status === 'paid')
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      const invoiceRows = invoices
+        ?.sort((a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime())
         .slice(0, 5) || [];
 
-      setRecentPaidBookings(paidBookings);
+      setRecentInvoices(invoiceRows);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -273,7 +287,7 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Invoices</p>
-                <p className="text-xl font-semibold">{recentPaidBookings.length}</p>
+                <p className="text-xl font-semibold">{stats.totalInvoices}</p>
               </div>
               <FileText className="h-6 w-6 text-emerald-600" />
             </div>
@@ -382,19 +396,21 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
           <CardTitle>Recent Invoices</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {recentPaidBookings.length > 0 ? (
-            recentPaidBookings.map((booking) => (
-              <div key={booking.id} className="flex items-center justify-between p-4 border border-border/60 rounded-xl">
+          {recentInvoices.length > 0 ? (
+            recentInvoices.map((invoice) => (
+              <div key={invoice.id} className="flex items-center justify-between p-4 border border-border/60 rounded-xl">
                 <div>
-                  <p className="font-medium text-foreground">Invoice #{booking.id.substring(0, 8)}</p>
-                  <p className="text-sm text-muted-foreground">{booking.customer_email}</p>
+                  <p className="font-medium text-foreground">
+                    Invoice #{getInvoiceDisplayNumber(invoice.invoice_number, invoice.id)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{invoice.customer_email}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-foreground">${Number(booking.total_amount).toFixed(2)}</span>
+                  <span className="font-semibold text-foreground">${Number(invoice.total_amount).toFixed(2)}</span>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => window.open(`/invoice/${booking.id}`, '_blank')}
+                    onClick={() => window.open(`/invoice/${invoice.id}`, '_blank')}
                   >
                     View Invoice
                   </Button>

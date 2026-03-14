@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/layout/Header'; // Changed to named import
 import { useAuth } from '@/hooks/useAuth';
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 // Define interfaces for booking data
 interface CustomerBookingItem {
@@ -100,7 +101,7 @@ const CustomerDashboard = () => {
                     {booking.status || 'Unknown'}
                   </Badge>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Payment {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                    Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
@@ -133,7 +134,7 @@ const CustomerDashboard = () => {
                     </div>
                   )}
                 </CardContent>
-                {booking.payment_status === 'paid' && (
+                {isSuccessfulBookingPaymentStatus(booking.payment_status) && (
                   <div className="px-6 pb-6">
                     <Link
                       to={`/invoice/${booking.id}`}

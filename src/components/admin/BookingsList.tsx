@@ -13,6 +13,7 @@ import { BookingFilters } from './BookingFilters';
 import { BookingsListView } from './BookingsListView';
 import Spinner from '@/components/common/Spinner'; // Added Spinner import
 import { calculateProcessorFee, calculateNetAmount } from '@/utils/feeCalculator';
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 import { Booking, BookingStatus } from './calendar/types'; // Removed BookingItem, kept BookingStatus
 import { useQueryClient } from '@tanstack/react-query'; // Added import for useQueryClient
@@ -216,11 +217,40 @@ export const BookingsList = () => {
 
   const confirmPaymentReceived = async (booking: Booking) => {
     try {
+      if (isSuccessfulBookingPaymentStatus(booking.payment_status)) {
+        toast({
+          title: "Payment Already Recorded",
+          description: "This booking already has a successful payment status.",
+        });
+        return;
+      }
+
       const processedAt = new Date().toISOString();
       const processedDate = processedAt.split('T')[0];
       const grossAmount = Number(booking.total_amount);
       const feeAmount = calculateProcessorFee(grossAmount, processorFeePercent);
       const netAmount = calculateNetAmount(grossAmount, processorFeePercent);
+
+      const { data: paymentRecord, error: paymentRecordError } = await supabase
+        .from('payment_records')
+        .insert({
+          booking_id: booking.id,
+          amount: grossAmount,
+          gross_amount: grossAmount,
+          processor_fee_percent: processorFeePercent,
+          processor_fee_amount: feeAmount,
+          net_amount: netAmount,
+          currency_code: defaultCurrency,
+          status: 'paid',
+          processed_at: processedAt,
+          settlement_date: processedDate
+        })
+        .select('id')
+        .single();
+
+      if (paymentRecordError || !paymentRecord) {
+        throw paymentRecordError ?? new Error('Failed to create payment record.');
+      }
 
       const { error: updateError } = await supabase
         .from('bookings')
@@ -235,43 +265,26 @@ export const BookingsList = () => {
         throw updateError;
       }
 
-      const { error: paymentRecordError } = await supabase
-        .from('payment_records')
-        .insert({
-          booking_id: booking.id,
-          amount: grossAmount,
-          gross_amount: grossAmount,
-          processor_fee_percent: processorFeePercent,
-          processor_fee_amount: feeAmount,
-          net_amount: netAmount,
-          currency_code: defaultCurrency,
-          status: 'paid',
-          processed_at: processedAt,
-          settlement_date: processedDate
-        });
+      const { data: invoiceId, error: invoiceError } = await supabase.rpc('issue_booking_invoice', {
+        p_booking_id: booking.id,
+        p_payment_record_id: paymentRecord.id,
+      });
 
-      if (paymentRecordError) {
-        console.error('Error creating payment record:', paymentRecordError);
+      if (invoiceError || !invoiceId) {
+        throw invoiceError ?? new Error('Failed to issue invoice snapshot.');
       }
 
-      try {
-        await supabase.functions.invoke('send-invoice-email', {
-          body: {
-            booking_id: booking.id,
-            customer_name: booking.customer_name,
-            customer_email: booking.customer_email,
-            total_amount: booking.total_amount,
-            processed_at: processedAt,
-            items: booking.booking_items || []
-          }
-        });
-      } catch (emailError) {
-        console.error('Failed to send invoice email:', emailError);
-      }
+      const { error: emailError } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          invoice_id: invoiceId,
+        }
+      });
 
       toast({
         title: "Payment Confirmed",
-        description: "Invoice sent to the customer.",
+        description: emailError
+          ? "Payment recorded and invoice issued, but the invoice email could not be sent."
+          : "Payment recorded and invoice sent to the customer.",
       });
 
       fetchBookings();

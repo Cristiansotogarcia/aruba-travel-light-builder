@@ -17,6 +17,22 @@ interface StripeCheckoutSession {
   payment_intent?: string;
 }
 
+interface BookingEquipment {
+  name: string;
+  description?: string | null;
+}
+
+interface StripeBookingItem {
+  quantity: number;
+  price_at_booking: number;
+  equipment: BookingEquipment | null;
+}
+
+interface StripeBooking {
+  customer_name?: string | null;
+  booking_items: StripeBookingItem[];
+}
+
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -93,12 +109,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create line items for Stripe
-    const lineItems = booking.booking_items.map((item: any) => ({
+    const lineItems = (booking as StripeBooking).booking_items.map((item: StripeBookingItem) => ({
       price_data: {
         currency: 'usd',
         product_data: {
-          name: item.equipment.name,
-          description: item.equipment.description,
+          name: item.equipment?.name ?? 'Equipment',
+          description: item.equipment?.description ?? undefined,
         },
         unit_amount: Math.round(item.price_at_booking * 100), // Convert to cents
       },

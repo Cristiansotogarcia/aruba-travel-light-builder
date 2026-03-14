@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'; // Added Button import
 import { Edit2, CheckSquare } from 'lucide-react'; // Added icons
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import { Booking, BookingStatus } from './calendar/types';
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface BookingSquareCardProps {
   booking: Booking;
@@ -22,7 +23,7 @@ export const BookingSquareCard = ({ booking, onView, onStatusUpdate, onEdit }: B
     onStatusUpdate(booking.id, statuses[nextIndex]);
   };
 
-  const canCycleStatus = booking.status !== 'pending' || booking.payment_status === 'paid';
+  const canCycleStatus = booking.status !== 'pending' || isSuccessfulBookingPaymentStatus(booking.payment_status);
 
   return (
     <Card 
@@ -46,7 +47,7 @@ export const BookingSquareCard = ({ booking, onView, onStatusUpdate, onEdit }: B
           </Badge>
         </div>
         <div className="text-xs text-gray-500 text-center">
-          Payment {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+          Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
         </div>
       </CardContent>
       <div className="p-2 border-t flex justify-end space-x-2 bg-slate-50">

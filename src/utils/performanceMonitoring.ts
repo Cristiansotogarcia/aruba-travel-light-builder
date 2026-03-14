@@ -10,6 +10,15 @@ export interface PerformanceMetric {
   timestamp: number;
 }
 
+interface FirstInputEntry extends PerformanceEntry {
+  processingStart: number;
+}
+
+interface LayoutShiftEntry extends PerformanceEntry {
+  hadRecentInput: boolean;
+  value: number;
+}
+
 // Core Web Vitals thresholds
 const THRESHOLDS = {
   LCP: { good: 2500, poor: 4000 }, // Largest Contentful Paint
@@ -84,11 +93,12 @@ export function measureFID() {
   try {
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
-      entries.forEach((entry: any) => {
+      entries.forEach((entry) => {
+        const firstInputEntry = entry as FirstInputEntry;
         const metric: PerformanceMetric = {
           name: 'FID',
-          value: entry.processingStart - entry.startTime,
-          rating: getRating(entry.processingStart - entry.startTime, THRESHOLDS.FID),
+          value: firstInputEntry.processingStart - firstInputEntry.startTime,
+          rating: getRating(firstInputEntry.processingStart - firstInputEntry.startTime, THRESHOLDS.FID),
           timestamp: Date.now(),
         };
 
@@ -109,25 +119,26 @@ export function measureCLS() {
   if (typeof window === 'undefined' || !('PerformanceObserver' in window)) return;
 
   let clsValue = 0;
-  let clsEntries: any[] = [];
+  let clsEntries: LayoutShiftEntry[] = [];
 
   try {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (!(entry as any).hadRecentInput) {
+        const layoutShiftEntry = entry as LayoutShiftEntry;
+        if (!layoutShiftEntry.hadRecentInput) {
           const firstSessionEntry = clsEntries[0];
           const lastSessionEntry = clsEntries[clsEntries.length - 1];
 
           if (
             clsEntries.length === 0 ||
-            entry.startTime - lastSessionEntry.startTime < 1000 ||
-            entry.startTime - firstSessionEntry.startTime < 5000
+            layoutShiftEntry.startTime - lastSessionEntry.startTime < 1000 ||
+            layoutShiftEntry.startTime - firstSessionEntry.startTime < 5000
           ) {
-            clsEntries.push(entry);
-            clsValue += (entry as any).value;
+            clsEntries.push(layoutShiftEntry);
+            clsValue += layoutShiftEntry.value;
           } else {
-            clsEntries = [entry];
-            clsValue = (entry as any).value;
+            clsEntries = [layoutShiftEntry];
+            clsValue = layoutShiftEntry.value;
           }
         }
       }

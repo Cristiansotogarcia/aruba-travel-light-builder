@@ -62,7 +62,7 @@ const Login = () => {
         variant: "destructive",
       });
     }
-  }, [auth.user, auth.profile, auth.loading, navigate, toast]);
+  }, [auth.user, auth.profile, auth.loading, navigate, redirectUrl, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

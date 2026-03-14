@@ -3,7 +3,7 @@ import { updateBookingStatus } from './bookings';
 import type { BookingStatus } from '@/components/admin/calendar/types';
 
 // Mock the Supabase client used in the query utilities
-const { singleFn, selectFn, eqFn, updateFn, fromFn, invokeFn } = vi.hoisted(() => {
+const { singleFn, selectFn, fromFn, invokeFn } = vi.hoisted(() => {
   const singleFn = vi.fn();
   const selectFn = vi.fn(() => ({ single: singleFn }));
   const eqFn = vi.fn(() => ({ select: selectFn }));
@@ -11,7 +11,7 @@ const { singleFn, selectFn, eqFn, updateFn, fromFn, invokeFn } = vi.hoisted(() =
   const fromFn = vi.fn(() => ({ update: updateFn }));
   const invokeFn = vi.fn().mockResolvedValue({ error: null });
 
-  return { singleFn, selectFn, eqFn, updateFn, fromFn, invokeFn };
+  return { singleFn, selectFn, fromFn, invokeFn };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({

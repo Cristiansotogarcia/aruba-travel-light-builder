@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'; // Removed CardFooter,
 import { Booking } from './calendar/types'; // Removed BookingItem
 import { Eye, Edit, Mail, Phone, MapPin, CalendarDays, MessageSquare } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils'; // Added back getStatusColor import
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface BookingCardProps {
   booking: Booking;
@@ -144,7 +145,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
               {getStatusLabel(booking.status)}
             </Badge>
             <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Payment {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+              Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
             </span>
             <span className="font-bold text-xl text-gray-900">${Number(booking.total_amount).toFixed(2)}</span>
           </div>

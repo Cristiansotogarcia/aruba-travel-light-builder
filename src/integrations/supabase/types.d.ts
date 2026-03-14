@@ -170,6 +170,90 @@ export type Database = {
                     }
                 ];
             };
+            invoices: {
+                Row: {
+                    booking_id: string;
+                    created_at: string;
+                    currency_code: string;
+                    customer_address: string | null;
+                    customer_email: string;
+                    customer_name: string;
+                    customer_phone: string | null;
+                    delivery_fee: number;
+                    id: string;
+                    invoice_number: string;
+                    issued_at: string;
+                    items_total: number;
+                    line_items: Json;
+                    metadata: Json;
+                    payment_processed_at: string | null;
+                    payment_record_id: string | null;
+                    payment_status: string;
+                    rental_end_date: string;
+                    rental_start_date: string;
+                    total_amount: number;
+                };
+                Insert: {
+                    booking_id: string;
+                    created_at?: string;
+                    currency_code?: string;
+                    customer_address?: string | null;
+                    customer_email: string;
+                    customer_name: string;
+                    customer_phone?: string | null;
+                    delivery_fee?: number;
+                    id?: string;
+                    invoice_number: string;
+                    issued_at?: string;
+                    items_total?: number;
+                    line_items?: Json;
+                    metadata?: Json;
+                    payment_processed_at?: string | null;
+                    payment_record_id?: string | null;
+                    payment_status?: string;
+                    rental_end_date: string;
+                    rental_start_date: string;
+                    total_amount: number;
+                };
+                Update: {
+                    booking_id?: string;
+                    created_at?: string;
+                    currency_code?: string;
+                    customer_address?: string | null;
+                    customer_email?: string;
+                    customer_name?: string;
+                    customer_phone?: string | null;
+                    delivery_fee?: number;
+                    id?: string;
+                    invoice_number?: string;
+                    issued_at?: string;
+                    items_total?: number;
+                    line_items?: Json;
+                    metadata?: Json;
+                    payment_processed_at?: string | null;
+                    payment_record_id?: string | null;
+                    payment_status?: string;
+                    rental_end_date?: string;
+                    rental_start_date?: string;
+                    total_amount?: number;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: "invoices_booking_id_fkey";
+                        columns: ["booking_id"];
+                        isOneToOne: true;
+                        referencedRelation: "bookings";
+                        referencedColumns: ["id"];
+                    },
+                    {
+                        foreignKeyName: "invoices_payment_record_id_fkey";
+                        columns: ["payment_record_id"];
+                        isOneToOne: true;
+                        referencedRelation: "payment_records";
+                        referencedColumns: ["id"];
+                    }
+                ];
+            };
             component_visibility: {
                 Row: {
                     component_name: string;
@@ -444,6 +528,13 @@ export type Database = {
             cleanup_expired_temp_passwords: {
                 Args: Record<PropertyKey, never>;
                 Returns: undefined;
+            };
+            issue_booking_invoice: {
+                Args: {
+                    p_booking_id: string;
+                    p_payment_record_id?: string | null;
+                };
+                Returns: string;
             };
             get_delivery_slots_availability: {
                 Args: {
