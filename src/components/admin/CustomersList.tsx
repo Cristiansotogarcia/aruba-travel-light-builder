@@ -158,12 +158,16 @@ export const CustomersList = () => {
   };
 
   const handleNavigateToBooking = (bookingId: string) => {
-    // This would typically navigate to the bookings page with a filter or highlight
-    // For now, we'll show a toast indicating the functionality
-    toast({
-      title: "Navigate to Booking",
-      description: `Would navigate to booking ${bookingId} in the bookings list`,
-    });
+    sessionStorage.setItem('admin:activeSection', 'bookings');
+    sessionStorage.setItem('admin:openBookingId', bookingId);
+    window.dispatchEvent(
+      new CustomEvent('admin:navigate', {
+        detail: {
+          section: 'bookings',
+          bookingId,
+        },
+      })
+    );
   };
 
   if (loading) {

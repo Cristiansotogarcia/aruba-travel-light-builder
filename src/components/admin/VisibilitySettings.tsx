@@ -1,30 +1,103 @@
-
 import { useCallback, useEffect, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+type Role = 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
 
 interface ComponentVisibility {
-  id: string;
+  id?: string;
   component_name: string;
-  role: 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
+  role: Role;
   is_visible: boolean;
 }
 
-const components = [
-  'UserManagement',
-  'VisibilitySettings',
-  'ProductManagement',
-  'BookingManagement',
-  'BookingAssignment',
-  'DriverTasks',
-  'TaskMaster'
+interface VisibilityComponent {
+  component_name: string;
+  label: string;
+  defaults: Record<Role, boolean>;
+}
+
+const roles: Role[] = ['SuperUser', 'Admin', 'Booker', 'Customer', 'Driver'];
+
+const visibilityComponents: VisibilityComponent[] = [
+  {
+    component_name: 'ReportingAccess',
+    label: 'Analytics & Reports',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'BookingManagement',
+    label: 'Bookings & Customers',
+    defaults: { SuperUser: true, Admin: true, Booker: true, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'BookingAssignment',
+    label: 'Assignments',
+    defaults: { SuperUser: true, Admin: true, Booker: true, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'ProductManagement',
+    label: 'Equipment',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'CategoryManagement',
+    label: 'Categories & Order',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'SeoManager',
+    label: 'SEO Manager',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'UserManagement',
+    label: 'User Management',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'VisibilitySettings',
+    label: 'Visibility Settings',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'DriverTasks',
+    label: 'My Tasks',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: true },
+  },
+  {
+    component_name: 'TaskMaster',
+    label: 'Task Management',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
+  {
+    component_name: 'settings',
+    label: 'Settings',
+    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+  },
 ];
 
-const roles = ['SuperUser', 'Admin', 'Booker', 'Customer', 'Driver'] as const;
+const buildVisibilityMatrix = (existingSettings: ComponentVisibility[]) =>
+  visibilityComponents.flatMap((component) =>
+    roles.map((role) => {
+      const existing = existingSettings.find(
+        (setting) => setting.component_name === component.component_name && setting.role === role
+      );
+
+      return (
+        existing || {
+          component_name: component.component_name,
+          role,
+          is_visible: component.defaults[role],
+        }
+      );
+    })
+  );
 
 export const VisibilitySettings = () => {
   const [visibilitySettings, setVisibilitySettings] = useState<ComponentVisibility[]>([]);
@@ -38,16 +111,22 @@ export const VisibilitySettings = () => {
       const { data, error } = await supabase
         .from('component_visibility')
         .select('*')
-        .order('component_name');
+        .in(
+          'component_name',
+          visibilityComponents.map((component) => component.component_name)
+        );
 
-      if (error) throw error;
-      setVisibilitySettings(data || []);
+      if (error) {
+        throw error;
+      }
+
+      setVisibilitySettings(buildVisibilityMatrix((data || []) as ComponentVisibility[]));
     } catch (error) {
       console.error('Error fetching visibility settings:', error);
       toast({
-        title: "Error",
-        description: "Failed to load visibility settings",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load visibility settings',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -60,11 +139,11 @@ export const VisibilitySettings = () => {
     }
   }, [fetchVisibilitySettings, hasPermission]);
 
-  const handleVisibilityChange = (componentName: string, role: string, isVisible: boolean) => {
-    setVisibilitySettings(prev => 
-      prev.map(setting => 
+  const handleVisibilityChange = (componentName: string, role: Role, isVisible: boolean) => {
+    setVisibilitySettings((prev) =>
+      prev.map((setting) =>
         setting.component_name === componentName && setting.role === role
-          ? { ...setting, is_visible: isVisible }
+          ? { ...setting, is_visible: role === 'SuperUser' ? true : isVisible }
           : setting
       )
     );
@@ -74,24 +153,47 @@ export const VisibilitySettings = () => {
     setSaving(true);
     try {
       for (const setting of visibilitySettings) {
-        const { error } = await supabase
-          .from('component_visibility')
-          .update({ is_visible: setting.is_visible })
-          .eq('id', setting.id);
+        const payload = {
+          component_name: setting.component_name,
+          role: setting.role,
+          is_visible: setting.role === 'SuperUser' ? true : setting.is_visible,
+        };
 
-        if (error) throw error;
+        if (setting.id) {
+          const { error } = await supabase
+            .from('component_visibility')
+            .update({ is_visible: payload.is_visible })
+            .eq('id', setting.id);
+
+          if (error) {
+            throw error;
+          }
+        } else {
+          const { data, error } = await supabase
+            .from('component_visibility')
+            .insert(payload)
+            .select('id')
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          setting.id = data.id;
+        }
       }
 
       toast({
-        title: "Success",
-        description: "Visibility settings saved successfully",
+        title: 'Success',
+        description: 'Visibility settings saved successfully',
       });
+      await fetchVisibilitySettings();
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({
-        title: "Error",
-        description: "Failed to save visibility settings",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save visibility settings',
+        variant: 'destructive',
       });
     } finally {
       setSaving(false);
@@ -122,7 +224,7 @@ export const VisibilitySettings = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Visibility Settings</h1>
-          <p className="text-gray-600 mt-1">Control which components are visible to each user role</p>
+          <p className="text-gray-600 mt-1">Control which operational modules are available to each user role</p>
         </div>
         <Button onClick={saveSettings} disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
@@ -138,28 +240,29 @@ export const VisibilitySettings = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left p-4 font-medium">Component</th>
-                  {roles.map(role => (
+                  <th className="text-left p-4 font-medium">Module</th>
+                  {roles.map((role) => (
                     <th key={role} className="text-center p-4 font-medium">{role}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {components.map(component => (
-                  <tr key={component} className="border-b">
-                    <td className="p-4 font-medium">{component}</td>
-                    {roles.map(role => {
+                {visibilityComponents.map((component) => (
+                  <tr key={component.component_name} className="border-b">
+                    <td className="p-4 font-medium">{component.label}</td>
+                    {roles.map((role) => {
                       const setting = visibilitySettings.find(
-                        s => s.component_name === component && s.role === role
+                        (item) => item.component_name === component.component_name && item.role === role
                       );
+
                       return (
                         <td key={role} className="p-4 text-center">
                           <Switch
                             checked={setting?.is_visible || false}
-                            onCheckedChange={(checked) => 
-                              handleVisibilityChange(component, role, checked)
+                            onCheckedChange={(checked) =>
+                              handleVisibilityChange(component.component_name, role, checked)
                             }
-                            disabled={role === 'SuperUser'} // SuperUser always has access
+                            disabled={role === 'SuperUser'}
                           />
                         </td>
                       );
@@ -170,7 +273,7 @@ export const VisibilitySettings = () => {
             </table>
           </div>
           <div className="mt-4 text-sm text-gray-500">
-            <p>Note: SuperUser role always has access to all components and cannot be modified.</p>
+            <p>SuperUser access is always enabled. Missing permission rows are created automatically when you save.</p>
           </div>
         </CardContent>
       </Card>

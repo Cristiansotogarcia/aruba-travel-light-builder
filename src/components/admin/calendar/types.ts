@@ -40,6 +40,11 @@ export interface Booking {
   delivery_failure_reason: string | null;
   booking_items: BookingItem[];
   assigned_to: string | null;
+  assigned_driver_id?: string | null;
+  delivery_scheduled_at?: string | null;
+  delivered_at?: string | null;
+  pickup_scheduled_at?: string | null;
+  picked_up_at?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -55,6 +55,11 @@
 ⬜ Optimize Application Performance
 ⬜ Set Up Production Logging and Monitoring
 
+## Operational Notes
+
+- Resend production setup is still pending. Before release, configure `RESEND_API_KEY` in Supabase secrets, verify the sending domain/sender in Resend, and smoke test the booking-confirmation, payment-link, rejection, invoice, and driver-assignment email functions end to end.
+- Stripe webhooks are not part of the current production payment flow. The live process is manual payment-link based, so `create-payment-session` and `stripe-webhook` should remain unused unless Stripe is intentionally reintroduced.
+
 ## Update Rules
 1. Review plan weekly
 2. Mark completed items with ✅

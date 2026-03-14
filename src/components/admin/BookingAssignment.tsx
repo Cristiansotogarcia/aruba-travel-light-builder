@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LoadingState from '@/components/common/LoadingState';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,10 +9,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Booking } from './calendar/types';
 import { getStatusColor } from './calendar/statusUtils';
+import {
+  DRIVER_ASSIGNABLE_STATUSES,
+  buildDriverAssignmentUpdate,
+  getAssignedDriverId,
+} from '@/lib/operations/bookingOperations';
 
 interface Driver {
   id: string;
   name: string;
+  email: string | null;
 }
 
 export const BookingAssignment = () => {
@@ -31,7 +36,7 @@ export const BookingAssignment = () => {
           *,
           booking_items (*)
         `)
-        .in('status', ['confirmed'])
+        .in('status', DRIVER_ASSIGNABLE_STATUSES)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -53,7 +58,7 @@ export const BookingAssignment = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name')
+        .select('id, name, email')
         .eq('role', 'Driver');
 
       if (error) throw error;
@@ -72,24 +77,91 @@ export const BookingAssignment = () => {
 
   const assignBooking = async (bookingId: string, driverId: string) => {
     try {
+      const booking = bookings.find((item) => item.id === bookingId);
+      const driver = drivers.find((item) => item.id === driverId);
+
+      if (!booking || !driver) {
+        throw new Error('Booking or driver not found');
+      }
+
+      const assignmentUpdate = buildDriverAssignmentUpdate(driverId, {
+        deliveryScheduledAt: booking.delivery_scheduled_at ?? booking.start_date,
+        pickupScheduledAt: booking.pickup_scheduled_at ?? booking.end_date,
+      });
+
       const { error } = await supabase
         .from('bookings')
-        .update({ assigned_to: driverId })
+        .update(assignmentUpdate)
         .eq('id', bookingId);
 
       if (error) throw error;
 
+      if (profile?.id) {
+        const { error: auditError } = await supabase
+          .from('booking_audit_log')
+          .insert({
+            booking_id: bookingId,
+            user_id: profile.id,
+            action: 'ASSIGN_DRIVER',
+            old_status: booking.status,
+            new_status: booking.status,
+            notes: `Assigned booking to ${driver.name}`,
+            metadata: {
+              assigned_driver_id: driverId,
+              delivery_scheduled_at: assignmentUpdate.delivery_scheduled_at,
+              pickup_scheduled_at: assignmentUpdate.pickup_scheduled_at,
+            },
+          });
+
+        if (auditError) {
+          console.error('Error creating assignment audit log:', auditError);
+        }
+      }
+
+      let emailError: { message?: string } | null = null;
+      if (driver.email) {
+        const result = await supabase.functions.invoke('driver-assignment-email', {
+          body: {
+            driver: {
+              email: driver.email,
+              name: driver.name,
+            },
+            booking: {
+              id: booking.id,
+              customer_name: booking.customer_name,
+              customer_address: booking.customer_address,
+              start_date: booking.start_date,
+              end_date: booking.end_date,
+            },
+          },
+        });
+
+        emailError = result.error;
+        if (emailError) {
+          console.error('Error sending driver assignment email:', emailError);
+        }
+      }
+
       setBookings(prev =>
         prev.map(booking =>
           booking.id === bookingId
-            ? { ...booking, assigned_to: driverId, booking_items: booking.booking_items || [] }
+            ? {
+                ...booking,
+                assigned_driver_id: driverId,
+                assigned_to: driverId,
+                delivery_scheduled_at: assignmentUpdate.delivery_scheduled_at ?? booking.delivery_scheduled_at,
+                pickup_scheduled_at: assignmentUpdate.pickup_scheduled_at ?? booking.pickup_scheduled_at,
+                booking_items: booking.booking_items || [],
+              }
             : booking
         )
       );
 
       toast({
         title: "Success",
-        description: "Booking assigned successfully",
+        description: emailError
+          ? "Booking assigned, but the assignment email failed to send."
+          : "Booking assigned successfully",
       });
     } catch (error) {
       console.error('Error assigning booking:', error);
@@ -109,10 +181,13 @@ export const BookingAssignment = () => {
     );
   }
 
-  const unassignedBookings = bookings.filter(booking => !booking.assigned_to);
-  const myAssignments = profile?.role === 'Booker' 
-    ? bookings.filter(booking => booking.assigned_to === profile.id)
-    : [];
+  const unassignedBookings = bookings.filter(booking => !getAssignedDriverId(booking));
+  const assignedBookings = bookings.filter(booking => Boolean(getAssignedDriverId(booking)));
+
+  const getDriverName = (driverId?: string | null) => {
+    if (!driverId) return 'Unassigned';
+    return drivers.find((driver) => driver.id === driverId)?.name || 'Unknown driver';
+  };
 
   return (
     <LoadingState isLoading={loading} message="Loading bookings...">
@@ -177,48 +252,59 @@ export const BookingAssignment = () => {
         </CardContent>
       </Card>
 
-      {/* My Assignments (for Bookers) */}
-      {profile?.role === 'Booker' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Assignments ({myAssignments.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {myAssignments.length > 0 ? (
-                myAssignments.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-blue-50">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium text-gray-900">{booking.customer_name}</h3>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {booking.customer_address}
-                        </div>
-                        <span className="font-medium">${Number(booking.total_amount).toFixed(2)}</span>
-                      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Assigned Bookings ({assignedBookings.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {assignedBookings.length > 0 ? (
+              assignedBookings.map((booking) => (
+                <div key={booking.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-blue-50">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-medium text-gray-900">{booking.customer_name}</h3>
+                      <Badge className={getStatusColor(booking.status)}>
+                        {booking.status}
+                      </Badge>
+                      <Badge variant="secondary">
+                        {getDriverName(getAssignedDriverId(booking))}
+                      </Badge>
                     </div>
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {booking.customer_address}
+                      </div>
+                      <span className="font-medium">${Number(booking.total_amount).toFixed(2)}</span>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-8">No assignments yet</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  <div className="flex items-center gap-3">
+                    <Select onValueChange={(driverId) => assignBooking(booking.id, driverId)}>
+                      <SelectTrigger className="w-44">
+                        <SelectValue placeholder="Reassign driver" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drivers.map(driver => (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            {driver.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8">No assigned bookings yet</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
     </LoadingState>
   );

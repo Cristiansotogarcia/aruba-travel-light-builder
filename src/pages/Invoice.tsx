@@ -1,35 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
-interface InvoiceItem {
-  equipment_name: string;
-  quantity: number;
-  equipment_price: number;
-  subtotal: number;
-}
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  getInvoiceDisplayNumber,
+  isSuccessfulBookingPaymentStatus,
+  type InvoiceLineItem,
+  type InvoiceSnapshot,
+} from '@/lib/accounting/invoices';
 
-interface InvoiceBooking {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  start_date: string;
-  end_date: string;
-  total_amount: number;
-  payment_status: string | null;
-  created_at: string;
-  updated_at: string;
-  booking_items: InvoiceItem[];
-}
+const toInvoiceLineItems = (value: unknown): InvoiceLineItem[] =>
+  Array.isArray(value) ? (value as InvoiceLineItem[]) : [];
 
 const Invoice = () => {
   const { id } = useParams();
-  const [booking, setBooking] = useState<InvoiceBooking | null>(null);
-  const [paymentDate, setPaymentDate] = useState<string | null>(null);
+  const [invoice, setInvoice] = useState<InvoiceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -42,42 +29,45 @@ const Invoice = () => {
       }
 
       try {
-        const { data: bookingData, error } = await supabase
-          .from('bookings')
+        const { data, error } = await supabase
+          .from('invoices')
           .select(`
             id,
+            booking_id,
+            payment_record_id,
+            invoice_number,
             customer_name,
             customer_email,
             customer_phone,
             customer_address,
-            start_date,
-            end_date,
+            rental_start_date,
+            rental_end_date,
+            currency_code,
+            items_total,
+            delivery_fee,
             total_amount,
             payment_status,
-            created_at,
-            updated_at,
-            booking_items (
-              equipment_name,
-              quantity,
-              equipment_price,
-              subtotal
-            )
+            payment_processed_at,
+            issued_at,
+            line_items
           `)
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
-
-        const { data: paymentRecord } = await supabase
-          .from('payment_records')
-          .select('processed_at')
-          .eq('booking_id', id)
-          .order('processed_at', { ascending: false })
+          .or(`id.eq.${id},booking_id.eq.${id}`)
           .limit(1)
           .maybeSingle();
 
-        setBooking(bookingData as InvoiceBooking);
-        setPaymentDate(paymentRecord?.processed_at || bookingData.updated_at);
+        if (error) {
+          throw error;
+        }
+
+        if (!data) {
+          setErrorMessage('Invoice not found.');
+          return;
+        }
+
+        setInvoice({
+          ...data,
+          line_items: toInvoiceLineItems(data.line_items),
+        } as InvoiceSnapshot);
       } catch (error) {
         console.error('Error loading invoice:', error);
         setErrorMessage('Unable to load invoice details.');
@@ -89,17 +79,6 @@ const Invoice = () => {
     fetchInvoice();
   }, [id]);
 
-  const itemsTotal = useMemo(() => {
-    if (!booking?.booking_items) return 0;
-    return booking.booking_items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
-  }, [booking]);
-
-  const deliveryFee = useMemo(() => {
-    if (!booking) return 0;
-    const fee = Number(booking.total_amount) - itemsTotal;
-    return fee > 0 ? fee : 0;
-  }, [booking, itemsTotal]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -108,7 +87,7 @@ const Invoice = () => {
     );
   }
 
-  if (errorMessage || !booking) {
+  if (errorMessage || !invoice) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         {errorMessage || 'Invoice not found.'}
@@ -116,13 +95,14 @@ const Invoice = () => {
     );
   }
 
-  const invoiceNumber = booking.id.substring(0, 8).toUpperCase();
-  const invoiceDate = paymentDate ? new Date(paymentDate) : new Date(booking.updated_at);
+  const invoiceNumber = getInvoiceDisplayNumber(invoice.invoice_number, invoice.id);
+  const invoiceDate = new Date(invoice.payment_processed_at || invoice.issued_at);
   const formattedDate = invoiceDate.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
+  const paymentLabel = isSuccessfulBookingPaymentStatus(invoice.payment_status) ? 'Paid' : 'Pending';
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 print:bg-white print:py-0">
@@ -153,9 +133,7 @@ const Invoice = () => {
               <p className="text-sm text-muted-foreground">Invoice Date</p>
               <p className="text-base font-semibold text-foreground">{formattedDate}</p>
               <p className="text-sm text-muted-foreground mt-2">Payment Status</p>
-              <p className="text-base font-semibold text-foreground">
-                {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
-              </p>
+              <p className="text-base font-semibold text-foreground">{paymentLabel}</p>
             </div>
           </div>
 
@@ -163,18 +141,18 @@ const Invoice = () => {
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">Billed To</h3>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p className="font-medium text-foreground">{booking.customer_name}</p>
-                <p>{booking.customer_email}</p>
-                <p>{booking.customer_phone}</p>
-                <p>{booking.customer_address}</p>
+                <p className="font-medium text-foreground">{invoice.customer_name}</p>
+                <p>{invoice.customer_email}</p>
+                {invoice.customer_phone ? <p>{invoice.customer_phone}</p> : null}
+                {invoice.customer_address ? <p>{invoice.customer_address}</p> : null}
               </div>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">Rental Period</h3>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>
-                  {new Date(booking.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} -
-                  {` ${new Date(booking.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+                  {new Date(invoice.rental_start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} -
+                  {` ${new Date(invoice.rental_end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
                 </p>
               </div>
             </div>
@@ -189,7 +167,7 @@ const Invoice = () => {
                 <span className="text-right">Subtotal</span>
               </div>
               <div className="divide-y divide-border/60">
-                {booking.booking_items.map((item, index) => (
+                {invoice.line_items.map((item, index) => (
                   <div key={`${item.equipment_name}-${index}`} className="grid grid-cols-4 px-4 py-3 text-sm">
                     <div className="col-span-2">
                       <p className="font-medium text-foreground">{item.equipment_name}</p>
@@ -207,17 +185,17 @@ const Invoice = () => {
             <div className="w-full max-w-xs space-y-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Items Total</span>
-                <span className="font-medium text-foreground">${itemsTotal.toFixed(2)}</span>
+                <span className="font-medium text-foreground">${Number(invoice.items_total).toFixed(2)}</span>
               </div>
-              {deliveryFee > 0 && (
+              {Number(invoice.delivery_fee) > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Delivery Fee</span>
-                  <span className="font-medium text-foreground">${deliveryFee.toFixed(2)}</span>
+                  <span className="font-medium text-foreground">${Number(invoice.delivery_fee).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex items-center justify-between border-t border-border/60 pt-3">
                 <span className="font-semibold text-foreground">Total</span>
-                <span className="text-lg font-semibold text-foreground">${Number(booking.total_amount).toFixed(2)}</span>
+                <span className="text-lg font-semibold text-foreground">${Number(invoice.total_amount).toFixed(2)}</span>
               </div>
             </div>
           </div>

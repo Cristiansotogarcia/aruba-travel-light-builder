@@ -6,6 +6,7 @@ import { Calendar, User, Phone, MapPin, Package, AlertTriangle } from 'lucide-re
 import { format } from 'date-fns';
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import { Booking } from './calendar/types';
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface BookingDetailsCardProps {
   booking: Booking;
@@ -33,7 +34,7 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
             <div className="text-sm text-gray-500">Total Amount</div>
             <div className="mt-2 text-xs text-gray-500 uppercase tracking-wide">Payment Status</div>
             <div className="text-sm font-semibold text-gray-900">
-              {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+              {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
             </div>
           </div>
         </div>

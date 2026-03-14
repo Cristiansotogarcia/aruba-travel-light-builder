@@ -18,6 +18,43 @@ interface AuthContextType {
   setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
 }
 
+const DEFAULT_PERMISSION_MATRIX: Record<UserRole, Record<string, boolean>> = {
+  SuperUser: {
+    ReportingAccess: true,
+    BookingManagement: true,
+    BookingAssignment: true,
+    ProductManagement: true,
+    CategoryManagement: true,
+    SeoManager: true,
+    UserManagement: true,
+    VisibilitySettings: true,
+    DriverTasks: true,
+    TaskMaster: true,
+    settings: true,
+  },
+  Admin: {
+    ReportingAccess: true,
+    BookingManagement: true,
+    BookingAssignment: true,
+    ProductManagement: true,
+    CategoryManagement: true,
+    SeoManager: true,
+    UserManagement: true,
+    VisibilitySettings: true,
+    DriverTasks: true,
+    TaskMaster: true,
+    settings: true,
+  },
+  Booker: {
+    BookingManagement: true,
+    BookingAssignment: true,
+  },
+  Customer: {},
+  Driver: {
+    DriverTasks: true,
+  },
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -51,7 +88,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) throw error;
 
-      const permissionsMap: Record<string, boolean> = {};
+      const permissionsMap: Record<string, boolean> = {
+        ...(DEFAULT_PERMISSION_MATRIX[role] || {}),
+      };
       data?.forEach(({ component_name, is_visible }) => {
         permissionsMap[component_name] = is_visible;
       });

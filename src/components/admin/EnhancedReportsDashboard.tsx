@@ -93,6 +93,8 @@ interface EnhancedAnalyticsData {
     browsers: UmamiDeviceData[];
     referrers: UmamiGeoData[];
     topPages: UmamiTopPage[];
+    unavailable: boolean;
+    errorMessage: string | null;
   };
 }
 
@@ -107,6 +109,10 @@ type BookingRow = Pick<
     quantity: number | null;
   }> | null;
 };
+type InvoiceRow = Pick<
+  Database['public']['Tables']['invoices']['Row'],
+  'booking_id' | 'issued_at' | 'payment_processed_at' | 'total_amount'
+>;
 
 const processBookingDataForTrends = (bookings: BookingRow[]): BookingTrendData[] => {
   if (!bookings || bookings.length === 0) return [];
@@ -136,8 +142,8 @@ const processBookingDataForTrends = (bookings: BookingRow[]): BookingTrendData[]
     .sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)));
 };
 
-const processBookingDataForRevenue = (bookings: BookingRow[]): RevenueTrendData[] => {
-  if (!bookings || bookings.length === 0) return [];
+const processInvoiceDataForRevenue = (invoices: InvoiceRow[]): RevenueTrendData[] => {
+  if (!invoices || invoices.length === 0) return [];
 
   const monthlyRevenue: { [key: string]: number } = {};
   const today = new Date();
@@ -147,24 +153,52 @@ const processBookingDataForRevenue = (bookings: BookingRow[]): RevenueTrendData[
     monthlyRevenue[monthKey] = 0;
   }
 
-  bookings.forEach(booking => {
+  invoices.forEach(invoice => {
     try {
-      const bookingDate = parseISO(booking.start_date);
-      const monthKey = format(startOfMonth(bookingDate), 'yyyy-MM');
+      const invoiceDateValue = invoice.payment_processed_at || invoice.issued_at;
+      const invoiceDate = parseISO(invoiceDateValue);
+      const monthKey = format(startOfMonth(invoiceDate), 'yyyy-MM');
       if (Object.prototype.hasOwnProperty.call(monthlyRevenue, monthKey)) {
-        monthlyRevenue[monthKey] += booking.total_amount || 0;
+        monthlyRevenue[monthKey] += invoice.total_amount || 0;
       }
     } catch (e) {
-      console.error('Error parsing booking start_date:', booking.start_date, e);
+      console.error('Error parsing invoice payment date:', invoice.payment_processed_at || invoice.issued_at, e);
     }
   });
 
   return Object.entries(monthlyRevenue)
+    .sort(([monthA], [monthB]) => monthA.localeCompare(monthB))
     .map(([month, revenue]) => ({
       month: format(parseISO(month + '-01'), 'MMM yyyy'),
       revenue,
-    }))
-    .sort((a, b) => compareAsc(parseISO(a.month), parseISO(b.month)));
+    }));
+};
+
+const isWithinDateRange = (dateValue: string | null, dateRange?: DateRange) => {
+  if (!dateValue) return false;
+
+  const candidate = new Date(dateValue);
+  if (Number.isNaN(candidate.getTime())) {
+    return false;
+  }
+
+  if (dateRange?.from) {
+    const from = new Date(dateRange.from);
+    from.setHours(0, 0, 0, 0);
+    if (candidate < from) {
+      return false;
+    }
+  }
+
+  if (dateRange?.to) {
+    const to = new Date(dateRange.to);
+    to.setHours(23, 59, 59, 999);
+    if (candidate > to) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 const processDataForEquipmentUtilization = (bookings: BookingRow[], products: ProductRow[]): EquipmentUtilizationData[] => {
@@ -251,10 +285,36 @@ const fetchBusinessAnalytics = async (filters: { dateRange?: DateRange; productI
       .select('*');
     if (productsError) throw productsError;
 
+    let invoicesQuery = supabase
+      .from('invoices')
+      .select('booking_id, issued_at, payment_processed_at, total_amount');
+
+    if (filters.productId || filters.customerName) {
+      const bookingIds = filteredBookings.map((booking) => booking.id);
+      if (bookingIds.length === 0) {
+        return {
+          bookingTrends: processBookingDataForTrends(filteredBookings),
+          totalRevenue: 0,
+          revenueTrends: processInvoiceDataForRevenue([]),
+          equipmentUtilization: processDataForEquipmentUtilization(filteredBookings, productsData || []),
+          activityLog: processBookingsForActivityLog(filteredBookings),
+        };
+      }
+
+      invoicesQuery = invoicesQuery.in('booking_id', bookingIds);
+    }
+
+    const { data: invoicesData, error: invoicesError } = await invoicesQuery;
+    if (invoicesError) throw invoicesError;
+
+    const filteredInvoices = (invoicesData || []).filter((invoice) =>
+      isWithinDateRange(invoice.payment_processed_at || invoice.issued_at, filters.dateRange)
+    );
+
     return {
       bookingTrends: processBookingDataForTrends(filteredBookings),
-      totalRevenue: filteredBookings.reduce((sum, booking) => sum + (booking.total_amount || 0), 0),
-      revenueTrends: processBookingDataForRevenue(filteredBookings),
+      totalRevenue: filteredInvoices.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0),
+      revenueTrends: processInvoiceDataForRevenue(filteredInvoices),
       equipmentUtilization: processDataForEquipmentUtilization(filteredBookings, productsData || []),
       activityLog: processBookingsForActivityLog(filteredBookings),
     };
@@ -295,7 +355,9 @@ const fetchWebAnalytics = async (startDate?: Date, endDate?: Date) => {
       devices,
       browsers,
       referrers,
-      topPages
+      topPages,
+      unavailable: false,
+      errorMessage: null,
     };
   } catch (error) {
     console.error('Error fetching web analytics:', error);
@@ -311,6 +373,9 @@ const fetchWebAnalytics = async (startDate?: Date, endDate?: Date) => {
       browsers: [],
       referrers: [],
       topPages: []
+      ,
+      unavailable: true,
+      errorMessage: error instanceof Error ? error.message : 'Unable to load web analytics at the moment.',
     };
   }
 };
@@ -407,6 +472,15 @@ export const EnhancedReportsDashboard: React.FC = () => {
         </div>
       </div>
 
+      {data?.web.unavailable && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Web analytics are currently unavailable. Business reports below are still current.
+            {data.web.errorMessage ? ` Details: ${data.web.errorMessage}` : ''}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -499,7 +573,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">${(data?.business.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                <p className="text-xs text-muted-foreground">Last 30 days</p>
+                <p className="text-xs text-muted-foreground">Successful payments in the selected period</p>
               </CardContent>
             </Card>
 
@@ -510,7 +584,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{data?.business.bookingTrends.reduce((sum, trend) => sum + trend.count, 0) || 0}</div>
-                <p className="text-xs text-muted-foreground">Last 30 days</p>
+                <p className="text-xs text-muted-foreground">Bookings in the selected period</p>
               </CardContent>
             </Card>
 
@@ -521,7 +595,7 @@ export const EnhancedReportsDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{data?.web.pageviews.toLocaleString() || 0}</div>
-                <p className="text-xs text-muted-foreground">Last 30 days</p>
+                <p className="text-xs text-muted-foreground">Web analytics for the selected period</p>
               </CardContent>
             </Card>
 
@@ -586,9 +660,9 @@ export const EnhancedReportsDashboard: React.FC = () => {
 
         <TabsContent value="business" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Total revenue: ${(
+              <CardHeader>
+                <CardTitle>Revenue Overview</CardTitle>
+                <CardDescription>Successful-payment revenue: ${(
                 data?.business.totalRevenue ?? 0
               ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</CardDescription>
             </CardHeader>

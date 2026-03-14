@@ -37,10 +37,12 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone authenticated to read settings
+DROP POLICY IF EXISTS "Anyone authenticated can read system settings" ON public.system_settings;
 CREATE POLICY "Anyone authenticated can read system settings" 
 ON public.system_settings FOR SELECT USING (true);
 
 -- Allow admins to insert/update/delete settings (handled by application logic)
+DROP POLICY IF EXISTS "Admins can manage system settings" ON public.system_settings;
 CREATE POLICY "Admins can manage system settings" 
 ON public.system_settings FOR ALL USING (
     EXISTS (

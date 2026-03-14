@@ -16,6 +16,31 @@ interface EmailRequest {
   type?: 'confirmation' | 'status_update' | 'reminder';
 }
 
+interface BookingEquipment {
+  name: string;
+  description?: string | null;
+  category?: string | null;
+}
+
+interface BookingEmailItem {
+  quantity: number;
+  price_at_booking: number;
+  equipment: BookingEquipment | null;
+}
+
+interface BookingEmailData {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string | null;
+  start_date: string;
+  end_date: string;
+  delivery_address?: string | null;
+  customer_comment?: string | null;
+  status: string;
+  booking_items: BookingEmailItem[];
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -180,7 +205,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-function generateConfirmationEmail(booking: any): string {
+function generateConfirmationEmail(booking: BookingEmailData): string {
   const startDate = new Date(booking.start_date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -196,9 +221,9 @@ function generateConfirmationEmail(booking: any): string {
   });
 
   const equipmentList = booking.booking_items
-    .map((item: any) => `
+    .map((item: BookingEmailItem) => `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.equipment.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.equipment?.name ?? 'Equipment'}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${item.price_at_booking.toFixed(2)}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${(item.quantity * item.price_at_booking).toFixed(2)}</td>
@@ -207,7 +232,7 @@ function generateConfirmationEmail(booking: any): string {
     .join('');
 
   const totalAmount = booking.booking_items
-    .reduce((sum: number, item: any) => sum + (item.quantity * item.price_at_booking), 0);
+    .reduce((sum: number, item: BookingEmailItem) => sum + (item.quantity * item.price_at_booking), 0);
 
   return `
     <!DOCTYPE html>
@@ -301,7 +326,7 @@ function generateConfirmationEmail(booking: any): string {
   `;
 }
 
-function generateStatusUpdateEmail(booking: any): string {
+function generateStatusUpdateEmail(booking: BookingEmailData): string {
   const statusColors: Record<string, string> = {
     confirmed: '#28a745',
     processing: '#ffc107',
@@ -366,7 +391,7 @@ function generateStatusUpdateEmail(booking: any): string {
   `;
 }
 
-function generateReminderEmail(booking: any): string {
+function generateReminderEmail(booking: BookingEmailData): string {
   const startDate = new Date(booking.start_date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',

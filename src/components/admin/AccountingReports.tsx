@@ -12,6 +12,7 @@ import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
+import { isSuccessfulPaymentRecordStatus } from '@/lib/accounting/invoices';
 
 interface PaymentRecord {
   id: string;
@@ -93,6 +94,9 @@ export const AccountingReports: React.FC = () => {
       if (paymentsError) throw paymentsError;
 
       const typedPayments = (paymentsData || []) as PaymentRecord[];
+      const settledPayments = typedPayments.filter((payment) =>
+        isSuccessfulPaymentRecordStatus(payment.status) || Boolean(payment.is_refund)
+      );
 
       // Calculate summary
       let totalGross = 0;
@@ -100,7 +104,7 @@ export const AccountingReports: React.FC = () => {
       let totalNet = 0;
       let totalRefunds = 0;
 
-      typedPayments.forEach(p => {
+      settledPayments.forEach(p => {
         const gross = p.gross_amount ?? p.amount;
         const fee = p.processor_fee_amount ?? (gross * processorFeePercent / 100);
         const net = p.net_amount ?? (gross - fee);
@@ -112,7 +116,7 @@ export const AccountingReports: React.FC = () => {
         totalRefunds += refund;
       });
 
-      const count = typedPayments.length;
+      const count = settledPayments.length;
       setSummary({
         totalGross: Math.round(totalGross * 100) / 100,
         totalFees: Math.round(totalFees * 100) / 100,
@@ -124,7 +128,7 @@ export const AccountingReports: React.FC = () => {
       });
 
       // Fetch bookings with payment info
-      const bookingIds = [...new Set(typedPayments.map(p => p.booking_id))];
+      const bookingIds = [...new Set(settledPayments.map(p => p.booking_id))];
       if (bookingIds.length > 0) {
         const { data: bookingsData } = await supabase
           .from('bookings')
@@ -137,10 +141,12 @@ export const AccountingReports: React.FC = () => {
           customer_email: b.customer_email,
           start_date: b.start_date,
           total_amount: b.total_amount,
-          payment: typedPayments.find(p => p.booking_id === b.id) || null
+          payment: settledPayments.find(p => p.booking_id === b.id) || null
         }));
 
         setBookings(bookingsWithPayments);
+      } else {
+        setBookings([]);
       }
 
     } catch (error) {
@@ -492,7 +498,7 @@ export const AccountingReports: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded text-xs ${
-                          p?.status === 'paid' 
+                          isSuccessfulPaymentRecordStatus(p?.status) 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
