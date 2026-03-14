@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import {
   getInvoiceDisplayNumber,
@@ -16,9 +17,12 @@ const toInvoiceLineItems = (value: unknown): InvoiceLineItem[] =>
 
 const Invoice = () => {
   const { id } = useParams();
+  const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
   const [invoice, setInvoice] = useState<InvoiceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const shouldAutoPrint = searchParams.get('download') === '1';
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -79,6 +83,18 @@ const Invoice = () => {
     fetchInvoice();
   }, [id]);
 
+  useEffect(() => {
+    if (!invoice || !shouldAutoPrint) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.print();
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [invoice, shouldAutoPrint]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,6 +119,8 @@ const Invoice = () => {
     year: 'numeric',
   });
   const paymentLabel = isSuccessfulBookingPaymentStatus(invoice.payment_status) ? 'Paid' : 'Pending';
+  const backTarget = profile?.role === 'Accounting' ? '/accounting' : '/admin';
+  const backLabel = profile?.role === 'Accounting' ? 'Back to accounting' : 'Back to dashboard';
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 print:bg-white print:py-0">
@@ -117,7 +135,7 @@ const Invoice = () => {
               Download PDF
             </Button>
             <Button asChild variant="ghost">
-              <Link to="/admin">Back to dashboard</Link>
+              <Link to={backTarget}>{backLabel}</Link>
             </Button>
           </div>
         </div>

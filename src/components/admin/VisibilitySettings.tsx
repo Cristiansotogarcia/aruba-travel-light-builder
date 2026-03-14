@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-type Role = 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
+type Role = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Customer' | 'Driver';
 
 interface ComponentVisibility {
   id?: string;
@@ -22,63 +22,63 @@ interface VisibilityComponent {
   defaults: Record<Role, boolean>;
 }
 
-const roles: Role[] = ['SuperUser', 'Admin', 'Booker', 'Customer', 'Driver'];
+const roles: Role[] = ['SuperUser', 'Admin', 'Accounting', 'Booker', 'Customer', 'Driver'];
 
 const visibilityComponents: VisibilityComponent[] = [
   {
     component_name: 'ReportingAccess',
     label: 'Analytics & Reports',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: true, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'BookingManagement',
     label: 'Bookings & Customers',
-    defaults: { SuperUser: true, Admin: true, Booker: true, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: true, Customer: false, Driver: false },
   },
   {
     component_name: 'BookingAssignment',
     label: 'Assignments',
-    defaults: { SuperUser: true, Admin: true, Booker: true, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: true, Customer: false, Driver: false },
   },
   {
     component_name: 'ProductManagement',
     label: 'Equipment',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'CategoryManagement',
     label: 'Categories & Order',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'SeoManager',
     label: 'SEO Manager',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'UserManagement',
     label: 'User Management',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'VisibilitySettings',
     label: 'Visibility Settings',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'DriverTasks',
     label: 'My Tasks',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: true },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: true },
   },
   {
     component_name: 'TaskMaster',
     label: 'Task Management',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
   {
     component_name: 'settings',
     label: 'Settings',
-    defaults: { SuperUser: true, Admin: true, Booker: false, Customer: false, Driver: false },
+    defaults: { SuperUser: true, Admin: true, Accounting: false, Booker: false, Customer: false, Driver: false },
   },
 ];
 

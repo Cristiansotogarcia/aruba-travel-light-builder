@@ -143,16 +143,81 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
     onNavigate?.(section);
   };
 
+  const overviewCards = [
+    {
+      title: 'Bookings',
+      value: stats.totalBookings.toLocaleString(),
+      description: 'All reservations across every status',
+      actionLabel: 'Open Bookings',
+      section: 'bookings',
+      icon: Calendar,
+      iconWrapperClassName: 'bg-blue-100',
+      iconClassName: 'text-blue-600',
+    },
+    {
+      title: 'Pending Reviews',
+      value: stats.pendingReviews.toLocaleString(),
+      description: 'Reservations waiting for approval',
+      actionLabel: 'Review Requests',
+      section: 'pending-reservations',
+      icon: Clock,
+      iconWrapperClassName: 'bg-amber-100',
+      iconClassName: 'text-amber-600',
+    },
+    {
+      title: 'Pending Payments',
+      value: stats.pendingPayments.toLocaleString(),
+      description: 'Bookings that still need payment',
+      actionLabel: 'Open Bookings',
+      section: 'bookings',
+      icon: Package,
+      iconWrapperClassName: 'bg-orange-100',
+      iconClassName: 'text-orange-600',
+    },
+    {
+      title: 'Invoices',
+      value: stats.totalInvoices.toLocaleString(),
+      description: 'Issued invoices ready to review',
+      actionLabel: 'Open Invoices',
+      section: 'invoices',
+      icon: FileText,
+      iconWrapperClassName: 'bg-emerald-100',
+      iconClassName: 'text-emerald-600',
+    },
+    {
+      title: 'Revenue',
+      value: `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      description: 'Total invoiced revenue collected',
+      actionLabel: 'View Reports',
+      section: 'reports',
+      icon: DollarSign,
+      iconWrapperClassName: 'bg-green-100',
+      iconClassName: 'text-green-600',
+    },
+    {
+      title: 'Customers',
+      value: stats.uniqueCustomers.toLocaleString(),
+      description: 'Unique customers with bookings',
+      actionLabel: 'Open Customers',
+      section: 'customers',
+      icon: Users,
+      iconWrapperClassName: 'bg-purple-100',
+      iconClassName: 'text-purple-600',
+    },
+  ];
+
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
-                  <div className="animate-pulse">
+                <div className="animate-pulse space-y-3">
                   <div className="h-4 bg-muted/60 rounded w-1/2 mb-2"></div>
                   <div className="h-8 bg-muted/60 rounded w-3/4"></div>
+                  <div className="h-3 bg-muted/60 rounded w-full"></div>
+                  <div className="h-8 bg-muted/60 rounded w-full"></div>
                 </div>
               </CardContent>
             </Card>
@@ -169,156 +234,36 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
         <p className="text-muted-foreground mt-1">Welcome back! Here's what's happening with your rentals.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
-                <p className="text-2xl font-bold text-foreground">{stats.totalBookings}</p>
-              </div>
-              <div className="h-9 w-9 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Calendar className="h-4.5 w-4.5 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
+        {overviewCards.map((card) => {
+          const Icon = card.icon;
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Reviews</p>
-                <p className="text-2xl font-bold text-foreground">{stats.pendingReviews}</p>
-              </div>
-              <div className="h-9 w-9 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Clock className="h-4.5 w-4.5 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          return (
+            <Card key={card.title} className="border-border/60">
+              <CardContent className="flex h-full flex-col gap-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                    <p className="text-2xl font-semibold text-foreground">{card.value}</p>
+                    <p className="text-xs text-muted-foreground">{card.description}</p>
+                  </div>
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconWrapperClassName}`}>
+                    <Icon className={`h-5 w-5 ${card.iconClassName}`} />
+                  </div>
+                </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
-                <p className="text-2xl font-bold text-foreground">{stats.pendingPayments}</p>
-              </div>
-              <div className="h-9 w-9 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Package className="h-4.5 w-4.5 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold text-foreground">${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              </div>
-              <div className="h-9 w-9 bg-green-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-4.5 w-4.5 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Customers</p>
-                <p className="text-2xl font-bold text-foreground">{stats.uniqueCustomers}</p>
-              </div>
-              <div className="h-9 w-9 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="h-4.5 w-4.5 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Navigation */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Bookings</p>
-                <p className="text-xl font-semibold">{stats.totalBookings}</p>
-              </div>
-              <Calendar className="h-6 w-6 text-blue-600" />
-            </div>
-            <Button
-              onClick={() => handleNavigate('bookings')}
-              className="w-full h-7 text-xs font-semibold"
-              variant="secondary"
-            >
-              View Bookings
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Reviews</p>
-                <p className="text-xl font-semibold">{stats.pendingReviews}</p>
-              </div>
-              <Clock className="h-6 w-6 text-amber-600" />
-            </div>
-            <Button
-              onClick={() => handleNavigate('pending-reservations')}
-              className="w-full h-7 text-xs font-semibold"
-              variant="secondary"
-            >
-              Review Requests
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Invoices</p>
-                <p className="text-xl font-semibold">{stats.totalInvoices}</p>
-              </div>
-              <FileText className="h-6 w-6 text-emerald-600" />
-            </div>
-            <Button
-              onClick={() => handleNavigate('invoices')}
-              className="w-full h-7 text-xs font-semibold"
-              variant="secondary"
-            >
-              Open Invoices
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Analytics</p>
-                <p className="text-xl font-semibold">Reports</p>
-              </div>
-              <ArrowUpRight className="h-6 w-6 text-indigo-600" />
-            </div>
-            <Button
-              onClick={() => handleNavigate('reports')}
-              className="w-full h-7 text-xs font-semibold"
-              variant="secondary"
-            >
-              View Reports
-            </Button>
-          </CardContent>
-        </Card>
+                <Button
+                  onClick={() => handleNavigate(card.section)}
+                  className="mt-auto h-8 w-full justify-between text-xs font-semibold"
+                  variant="secondary"
+                >
+                  {card.actionLabel}
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

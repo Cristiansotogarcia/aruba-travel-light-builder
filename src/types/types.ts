@@ -84,6 +84,6 @@ export interface Profile {
 }
 
 // Define UserRole based on the roles in Profile
-export type UserRole = 'SuperUser' | 'Admin' | 'Booker' | 'Customer' | 'Driver';
+export type UserRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Customer' | 'Driver';
 
 // You can add other shared types here as your project grows.

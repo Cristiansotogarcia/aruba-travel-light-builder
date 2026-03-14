@@ -485,7 +485,7 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
         };
     };
     Enums: {
-        app_role: "SuperUser" | "Admin" | "Booker" | "Driver";
+        app_role: "SuperUser" | "Admin" | "Accounting" | "Booker" | "Customer" | "Driver";
     };
     CompositeTypes: { [_ in never]: never; };
 }>;

@@ -53,7 +53,8 @@ serve(async (req) => {
       email,
       password: userPassword,
       user_metadata: {
-        name: name
+        name: name,
+        role: role,
       },
       email_confirm: true // Auto-confirm email for admin-created users
     });
@@ -71,18 +72,31 @@ serve(async (req) => {
 
     console.log('User created successfully:', authData.user.id);
 
-    // Update the user's profile with role and password change requirement
+    // Ensure the profile exists and includes the latest admin-supplied data.
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({ 
+      .upsert({
+        id: authData.user.id,
+        name: name,
+        email: authData.user.email ?? email,
         role: role,
-        needs_password_change: true 
-      })
-      .eq('id', authData.user.id);
+        needs_password_change: true,
+        is_deactivated: false,
+      }, {
+        onConflict: 'id'
+      });
 
     if (profileError) {
       console.error('Error updating profile:', profileError);
-      // Don't fail the entire operation, but log the error
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+
+      return new Response(
+        JSON.stringify({ success: false, error: `Failed to create profile: ${profileError.message}` }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // Store the temporary password record for tracking

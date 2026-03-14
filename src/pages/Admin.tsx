@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AdminMobileNav } from '@/components/admin/AdminMobileNav';
 import { DashboardLayout } from '@/components/admin/DashboardLayout';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -116,7 +117,8 @@ const Admin = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex flex-col lg:flex-row w-full">
+        <AdminMobileNav activeSection={activeSection} onSectionChange={handleSectionChange} />
         <AdminSidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
         <main className="flex-1 p-4 sm:p-6">
           {renderActiveSection()}
