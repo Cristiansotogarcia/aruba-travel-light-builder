@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => ({
             "dompurify": path.resolve(__dirname, "./src/lib/dompurify.ts"),
         },
     },
+    build: {
+        chunkSizeWarningLimit: 5000,
+    },
     test: {
         globals: true,
         environment: 'jsdom',

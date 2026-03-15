@@ -69,6 +69,26 @@ export default defineConfig(async ({ mode }) => {
               return 'lucide-icons';
             }
 
+            // Recharts - charting library is heavy
+            if (normalizedId.includes('recharts')) {
+              return 'recharts-vendor';
+            }
+
+            // Leaflet/React-Leaflet - map libraries
+            if (normalizedId.includes('leaflet') || normalizedId.includes('react-leaflet')) {
+              return 'maps-lib';
+            }
+
+            // MD Editor - rich text editor
+            if (normalizedId.includes('@uiw/react-md-editor') || normalizedId.includes('@mdxeditor')) {
+              return 'md-editor';
+            }
+
+            // DnD Kit - drag and drop
+            if (normalizedId.includes('@dnd-kit')) {
+              return 'dnd-kit';
+            }
+
             // Data management - split further
             if (normalizedId.includes('@tanstack/react-query')) {
               return 'react-query';
@@ -122,7 +142,7 @@ export default defineConfig(async ({ mode }) => {
           }
         }
       },
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 5000,
     },
     test: {
       globals: true,
