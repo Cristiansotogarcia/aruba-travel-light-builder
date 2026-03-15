@@ -1,11 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path(.*)",
-      "destination": "/api/:path(.*)"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "source": "/:path(.*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -20,7 +20,7 @@
       ]
     },
     {
-      "source": "/(.*\\.(jpg|jpeg|png|gif|ico|svg|webp))",
+      "source": "/.*\\.(jpg|jpeg|png|gif|ico|svg|webp)",
       "headers": [
         {
           "key": "Cache-Control",
