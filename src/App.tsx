@@ -32,8 +32,6 @@ const Login = lazy(() => import("./pages/Login"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
-const SeoDemo = lazy(() => import("./pages/SeoDemo"));
-const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Invoice = lazy(() => import("./pages/Invoice"));
 const DeliverySlip = lazy(() => import("./pages/DeliverySlip"));
@@ -209,8 +207,6 @@ const App = () => {
                         </Route>
 
                         <Route path="/contact" element={<Contact />} />
-                        <Route path="/seo-demo" element={<SeoDemo />} />
-                        <Route path="/seo-test" element={<SeoTest />} />
                         <Route path="/invoice/:id" element={<Invoice />} />
                         <Route path="/track/:token" element={<DeliveryTracking />} />
 
