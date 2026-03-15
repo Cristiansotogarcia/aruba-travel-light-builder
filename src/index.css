@@ -90,16 +90,15 @@
     @apply border-border;
   }
 
-  html, body {
+  html {
     @apply bg-background text-foreground font-sans antialiased;
-    min-height: 100%;
     overflow-x: hidden; /* Prevent horizontal scrolling */
   }
 
-  /* Ensure proper mobile scrolling */
   body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100%;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: none;
     background-image:
       radial-gradient(1200px 800px at 10% -10%, hsl(var(--accent) / 0.5), transparent 60%),
       radial-gradient(900px 600px at 90% 0%, hsl(var(--secondary) / 0.6), transparent 55%);
