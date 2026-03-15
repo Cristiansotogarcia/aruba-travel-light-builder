@@ -57,112 +57,38 @@ const ScrollLockGuard = () => {
       return;
     }
 
-    const releaseScrollLock = () => {
-      // Check for any open dialog/sheet/drawer overlays or content
-      // Radix Dialog and Sheet put data-state="open" on Overlay and Content
-      // AlertDialog uses react-alert-dialog
-      // Drawer uses vaul
-      const hasOpenDialog = document.querySelector(
-        // Radix Dialog/Sheet Overlay (data-state on overlay element)
-        '[data-state="open"][role="dialog"], ' +
-        '[data-state="open"][role="alertdialog"], ' +
-        // Radix Dialog/Sheet Content (these have specific attributes)
-        '[data-radix-dialog-content][data-state="open"], ' +
-        // Any open overlay from Radix-based components
-        '[data-state="open"].fixed.inset-0.z-50, ' +
-        // Sheet overlays (vaul)
-        '[data-state="open"][class*="SheetOverlay"], ' +
-        // Drawer overlays (vaul)
-        '[data-state="open"][class*="DrawerOverlay"]'
-      );
-
-      if (hasOpenDialog) {
-        return;
-      }
-
-      const body = document.body;
-      const html = document.documentElement;
-      if (!body || !html) {
-        return;
-      }
-
-      const cleanupStyle = (element: HTMLElement) => {
-        element.style.removeProperty("overflow");
-        element.style.removeProperty("padding-right");
-        element.style.removeProperty("position");
-        element.style.removeProperty("top");
-        element.style.removeProperty("left");
-        element.style.removeProperty("right");
-        element.style.removeProperty("width");
-        element.style.removeProperty("height");
-        element.style.removeProperty("touch-action");
-        element.style.removeProperty("transform");
-      };
-
-      cleanupStyle(body);
-      cleanupStyle(html);
+    // Clean up scroll lock when navigating to a new page
+    // This ensures scroll is restored after closing dialogs
+    const body = document.body;
+    const html = document.documentElement;
+    
+    if (body && html) {
+      // Remove all inline styles that could lock scroll
+      body.style.removeProperty("overflow");
+      body.style.removeProperty("padding-right");
+      body.style.removeProperty("position");
+      body.style.removeProperty("top");
+      body.style.removeProperty("left");
+      body.style.removeProperty("right");
+      body.style.removeProperty("width");
+      body.style.removeProperty("height");
+      body.style.removeProperty("touch-action");
+      body.style.removeProperty("transform");
+      
+      html.style.removeProperty("overflow");
+      html.style.removeProperty("padding-right");
+      html.style.removeProperty("position");
+      html.style.removeProperty("top");
+      html.style.removeProperty("left");
+      html.style.removeProperty("right");
+      html.style.removeProperty("width");
+      html.style.removeProperty("height");
+      html.style.removeProperty("touch-action");
+      html.style.removeProperty("transform");
+      
       body.removeAttribute("data-scroll-locked");
       html.removeAttribute("data-scroll-locked");
-    };
-
-    const timeouts: number[] = [];
-    const isScrollLocked = () => {
-      const body = document.body;
-      const html = document.documentElement;
-      if (!body || !html) {
-        return false;
-      }
-
-      return (
-        body.hasAttribute("data-scroll-locked") ||
-        html.hasAttribute("data-scroll-locked") ||
-        body.style.overflow === "hidden" ||
-        html.style.overflow === "hidden" ||
-        body.style.position === "fixed"
-      );
-    };
-
-    const scheduleRelease = () => {
-      if (!isScrollLocked()) {
-        return;
-      }
-
-      // Clear any existing timeouts before adding new ones
-      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      timeouts.length = 0;
-
-      // Use a single timeout to release scroll lock
-      // The dialog state change should be complete by then
-      timeouts.push(window.setTimeout(releaseScrollLock, 100));
-    };
-
-    scheduleRelease();
-    window.addEventListener("resize", scheduleRelease);
-    window.addEventListener("orientationchange", scheduleRelease);
-    
-    // Observe for dialog/sheet/drawer open state changes
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === "attributes" && mutation.attributeName) {
-          const attrName = mutation.attributeName;
-          // Check if this is a dialog-related attribute change
-          if (attrName === "data-state" || attrName === "style" || attrName === "data-scroll-locked") {
-            scheduleRelease();
-            break;
-          }
-        }
-      }
-    });
-    
-    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked", "data-state"] });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-scroll-locked", "data-state"] });
-
-    return () => {
-      window.removeEventListener("resize", scheduleRelease);
-      window.removeEventListener("orientationchange", scheduleRelease);
-      observer.disconnect();
-      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
-    };
+    }
   }, [location.pathname]);
 
   return null;
