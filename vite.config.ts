@@ -3,7 +3,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { Buffer } from 'buffer';
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => {
@@ -13,25 +12,9 @@ export default defineConfig(async ({ mode }) => {
     plugins.push(componentTagger());
   }
 
-  if (mode === 'production') {
-    try {
-      const { visualizer } = await import('rollup-plugin-visualizer');
-      plugins.push(
-        visualizer({
-          open: true,
-          filename: 'dist/stats.html',
-          gzipSize: true,
-          brotliSize: true,
-        })
-      );
-    } catch {
-      // Allow tests and local builds to run even if the optional analyzer package is missing.
-    }
-  }
-
   return {
     server: {
-      host: "127.0.0.1",
+      host: "::",
       port: 8080,
     },
     plugins,
@@ -39,19 +22,14 @@ export default defineConfig(async ({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
         "dompurify": path.resolve(__dirname, "./src/lib/dompurify.ts"),
-        'crypto': 'crypto-browserify',
-        'buffer': 'buffer/',
       },
-    },
-    define: {
-      'globalThis.Buffer': Buffer,
     },
     build: {
       modulePreload: {
-        resolveDependencies: (url, deps, { hostType }) => {
-          if (hostType === "html") {
+        resolveDependencies: (url: string, deps: string[], context: { hostType: string }) => {
+          if (context.hostType === "html") {
             return deps.filter(
-              (dep) =>
+              (dep: string) =>
                 !/admin-(core|reports)/.test(dep) &&
                 !/editor-lib/.test(dep) &&
                 !/charts-lib/.test(dep) &&
@@ -63,10 +41,11 @@ export default defineConfig(async ({ mode }) => {
       },
       rollupOptions: {
         output: {
-          manualChunks: (id) => {
+          manualChunks: (id: string) => {
             const normalizedId = id.replace(/\\/g, "/");
             const isNodeModule = normalizedId.includes("/node_modules/");
-            // React core (avoid circular chunking)
+            
+            // React core - bundle with Radix to avoid forwardRef issues
             if (
               isNodeModule &&
               (normalizedId.includes("/node_modules/react/") ||
@@ -80,31 +59,9 @@ export default defineConfig(async ({ mode }) => {
               return 'react-router';
             }
 
-            // Radix UI components - split into very small chunks to avoid large bundles
+            // Radix UI - bundle ALL radix packages with React vendor
             if (normalizedId.includes('@radix-ui')) {
-              if (normalizedId.includes('react-dialog') || normalizedId.includes('react-dropdown-menu') ||
-                  normalizedId.includes('react-popover') || normalizedId.includes('react-tooltip')) {
-                return 'radix-overlays';
-              }
-              if (normalizedId.includes('react-select') || normalizedId.includes('react-accordion') ||
-                  normalizedId.includes('react-tabs') || normalizedId.includes('react-navigation-menu')) {
-                return 'radix-navigation';
-              }
-              if (normalizedId.includes('react-checkbox') || normalizedId.includes('react-radio') ||
-                  normalizedId.includes('react-switch') || normalizedId.includes('react-slider') ||
-                  normalizedId.includes('react-progress')) {
-                return 'radix-form-controls';
-              }
-              if (normalizedId.includes('react-separator') || normalizedId.includes('react-scroll-area') ||
-                  normalizedId.includes('react-aspect-ratio') || normalizedId.includes('react-collapsible')) {
-                return 'radix-layout';
-              }
-              if (normalizedId.includes('react-toast') || normalizedId.includes('react-alert-dialog') ||
-                  normalizedId.includes('react-hover-card')) {
-                return 'radix-feedback';
-              }
-              // Core primitives - split smaller
-              return 'radix-core';
+              return 'radix-ui';
             }
 
             // Icons - split lucide icons into smaller chunks
@@ -128,10 +85,7 @@ export default defineConfig(async ({ mode }) => {
               return 'forms-validation';
             }
 
-            // Heavy libraries are already dynamically imported; let Rollup decide chunking.
-
             // Date utilities - split date-fns more aggressively
-            // This will help with the locale issue
             if (normalizedId.includes('date-fns')) {
               if (normalizedId.includes('locale')) {
                 return 'date-locales';
@@ -168,8 +122,6 @@ export default defineConfig(async ({ mode }) => {
           }
         }
       },
-      // Increase chunk size warning limit to 1MB for this feature-rich application
-      // Modern web applications commonly have bundles this size with many features
       chunkSizeWarningLimit: 1000,
     },
     test: {

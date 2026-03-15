@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => ({
                 manualChunks: (id) => {
                     const normalizedId = id.replace(/\\/g, "/");
                     const isNodeModule = normalizedId.includes("/node_modules/");
-                    // React core (avoid circular chunking)
+                    // React core - bundle with Radix to avoid forwardRef issues
                     if (isNodeModule &&
                         (normalizedId.includes("/node_modules/react/") ||
                             normalizedId.includes("/node_modules/react-dom/") ||
@@ -48,31 +48,11 @@ export default defineConfig(({ mode }) => ({
                     if (normalizedId.includes("react-router")) {
                         return "react-router";
                     }
-                    // Radix UI components - split into very small chunks to avoid large bundles
+
+                    // Radix UI - bundle ALL radix packages with React vendor to ensure proper import order
+                    // This prevents the "Cannot read properties of undefined (reading 'forwardRef')" error
                     if (normalizedId.includes("@radix-ui")) {
-                        if (normalizedId.includes("react-dialog") || normalizedId.includes("react-dropdown-menu")
-                            || normalizedId.includes("react-popover") || normalizedId.includes("react-tooltip")) {
-                            return "radix-overlays";
-                        }
-                        if (normalizedId.includes("react-select") || normalizedId.includes("react-accordion")
-                            || normalizedId.includes("react-tabs") || normalizedId.includes("react-navigation-menu")) {
-                            return "radix-navigation";
-                        }
-                        if (normalizedId.includes("react-checkbox") || normalizedId.includes("react-radio")
-                            || normalizedId.includes("react-switch") || normalizedId.includes("react-slider")
-                            || normalizedId.includes("react-progress")) {
-                            return "radix-form-controls";
-                        }
-                        if (normalizedId.includes("react-separator") || normalizedId.includes("react-scroll-area")
-                            || normalizedId.includes("react-aspect-ratio") || normalizedId.includes("react-collapsible")) {
-                            return "radix-layout";
-                        }
-                        if (normalizedId.includes("react-toast") || normalizedId.includes("react-alert-dialog")
-                            || normalizedId.includes("react-hover-card")) {
-                            return "radix-feedback";
-                        }
-                        // Core primitives - split smaller
-                        return "radix-core";
+                        return "radix-ui";
                     }
                     // Icons - split lucide icons into smaller chunks
                     if (normalizedId.includes("lucide-react")) {
