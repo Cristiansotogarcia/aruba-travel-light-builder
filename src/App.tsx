@@ -58,8 +58,22 @@ const ScrollLockGuard = () => {
     }
 
     const releaseScrollLock = () => {
+      // Check for any open dialog/sheet/drawer overlays or content
+      // Radix Dialog and Sheet put data-state="open" on Overlay and Content
+      // AlertDialog uses react-alert-dialog
+      // Drawer uses vaul
       const hasOpenDialog = document.querySelector(
-        '[data-state="open"][data-radix-dialog-content], [data-state="open"][data-radix-dialog-overlay]'
+        // Radix Dialog/Sheet Overlay (data-state on overlay element)
+        '[data-state="open"][role="dialog"], ' +
+        '[data-state="open"][role="alertdialog"], ' +
+        // Radix Dialog/Sheet Content (these have specific attributes)
+        '[data-radix-dialog-content][data-state="open"], ' +
+        // Any open overlay from Radix-based components
+        '[data-state="open"].fixed.inset-0.z-50, ' +
+        // Sheet overlays (vaul)
+        '[data-state="open"][class*="SheetOverlay"], ' +
+        // Drawer overlays (vaul)
+        '[data-state="open"][class*="DrawerOverlay"]'
       );
 
       if (hasOpenDialog) {
@@ -113,17 +127,35 @@ const ScrollLockGuard = () => {
         return;
       }
 
-      releaseScrollLock();
-      timeouts.push(window.setTimeout(releaseScrollLock, 150));
-      timeouts.push(window.setTimeout(releaseScrollLock, 600));
+      // Clear any existing timeouts before adding new ones
+      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      timeouts.length = 0;
+
+      // Use a single timeout to release scroll lock
+      // The dialog state change should be complete by then
+      timeouts.push(window.setTimeout(releaseScrollLock, 100));
     };
 
     scheduleRelease();
     window.addEventListener("resize", scheduleRelease);
     window.addEventListener("orientationchange", scheduleRelease);
-    const observer = new MutationObserver(scheduleRelease);
-    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
+    
+    // Observe for dialog/sheet/drawer open state changes
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName) {
+          const attrName = mutation.attributeName;
+          // Check if this is a dialog-related attribute change
+          if (attrName === "data-state" || attrName === "style" || attrName === "data-scroll-locked") {
+            scheduleRelease();
+            break;
+          }
+        }
+      }
+    });
+    
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked", "data-state"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-scroll-locked", "data-state"] });
 
     return () => {
       window.removeEventListener("resize", scheduleRelease);

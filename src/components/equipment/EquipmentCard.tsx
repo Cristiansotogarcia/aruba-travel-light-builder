@@ -241,8 +241,8 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
 
       {/* Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto [&>button]:h-11 [&>button]:w-11 [&>button]:min-h-[44px] [&>button]:min-w-[44px] [&>button]:top-2 [&>button]:right-2 [&>button]:z-10 w-[95vw] sm:w-auto h-[95vh] sm:h-auto border border-border/60 bg-card/95 shadow-2xl">
-          <div className="sticky top-0 bg-card/95 border-b border-border/60 -mx-6 -mt-6 px-6 py-4 z-30 flex items-center justify-between backdrop-blur">
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col [&>button]:h-11 [&>button]:w-11 [&>button]:min-h-[44px] [&>button]:min-w-[44px] [&>button]:top-2 [&>button]:right-2 [&>button]:z-10 w-[95vw] sm:w-auto h-[95vh] sm:h-auto border border-border/60 bg-card/95 shadow-2xl overflow-hidden">
+          <div className="flex-shrink-0 bg-card/95 border-b border-border/60 -mx-6 -mt-6 px-6 py-4 z-30 flex items-center justify-between backdrop-blur">
             <DialogTitle className="text-base sm:text-lg font-semibold truncate pr-4">
               {equipment.name}
             </DialogTitle>
@@ -258,7 +258,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto pt-4">
+          <div className="flex-1 overflow-y-auto pt-4 px-0 sm:px-0 -mx-6 px-6">
             {equipment.images.length > 0 ? (
               <Carousel className="w-full mb-4">
                 <CarouselContent>
