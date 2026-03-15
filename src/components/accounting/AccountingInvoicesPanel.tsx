@@ -33,7 +33,7 @@ type InvoiceRow = Pick<
 >;
 
 const buildCsvValue = (value: string | number | null | undefined) =>
-  `"${String(value ?? '').replaceAll('"', '""')}"`;
+  `"${String(value ?? '').replace(/"/g, '""')}"`;
 
 export const AccountingInvoicesPanel = () => {
   const { toast } = useToast();

@@ -90,7 +90,7 @@ const DeliverySlip = () => {
   const slipNumber = getDeliverySlipDisplayNumber(deliverySlip.slip_number, deliverySlip.id);
   const deliveredAt = new Date(deliverySlip.delivered_at);
   const lineItems = Array.isArray(deliverySlip.line_items)
-    ? deliverySlip.line_items as DeliverySlipLineItem[]
+    ? (deliverySlip.line_items as unknown as DeliverySlipLineItem[])
     : [];
 
   return (

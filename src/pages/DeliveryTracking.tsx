@@ -62,7 +62,7 @@ const DeliveryTracking = () => {
           throw error || new Error('Tracking details not found.');
         }
 
-        setPayload(data as TrackingPayload);
+        setPayload(data as unknown as TrackingPayload);
       } catch (error) {
         console.error('Error loading delivery tracking:', error);
         setErrorMessage('Unable to load delivery tracking details.');

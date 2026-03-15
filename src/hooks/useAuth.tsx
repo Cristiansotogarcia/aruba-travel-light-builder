@@ -6,6 +6,12 @@ import { User, Session } from '@supabase/supabase-js';
 import type { Profile, UserRole } from '@/types/types';
 import { useInactivityLogout } from './useInactivityLogout';
 
+// Define the allowed roles for database queries (excludes Customer which isn't stored in component_visibility)
+type DbRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
+
+// Define the allowed roles for profile creation (excludes Customer)
+type ProfileRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -82,12 +88,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 
   const loadPermissions = useCallback(async (role: UserRole) => {
+    // Skip loading permissions for Customer role (they don't have component visibility settings)
+    if (role === 'Customer') {
+      setPermissions(DEFAULT_PERMISSION_MATRIX.Customer || {});
+      return;
+    }
+
     try {
       console.log('Loading permissions for role:', role);
       const { data, error } = await supabase
         .from('component_visibility')
         .select('component_name, is_visible')
-        .eq('role', role);
+        .eq('role', role as DbRole);
 
       if (error) throw error;
 
@@ -235,7 +247,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             id: data.user.id,
             email: data.user.email,
             name: name,
-            role: role,
+            role: role as ProfileRole,
           });
 
         if (profileError) {

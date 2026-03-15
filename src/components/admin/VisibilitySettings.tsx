@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 type Role = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Customer' | 'Driver';
 
+// Role type for database operations (excludes Customer which isn't stored in component_visibility)
+type DbRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
+
 interface ComponentVisibility {
   id?: string;
   component_name: string;
@@ -171,7 +174,11 @@ export const VisibilitySettings = () => {
         } else {
           const { data, error } = await supabase
             .from('component_visibility')
-            .insert(payload)
+            .insert({
+              component_name: payload.component_name,
+              role: payload.role as DbRole,
+              is_visible: payload.is_visible,
+            })
             .select('id')
             .single();
 

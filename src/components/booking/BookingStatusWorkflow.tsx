@@ -125,9 +125,10 @@ export const BookingStatusWorkflow: React.FC<BookingStatusWorkflowProps> = ({ bo
 
       if (currentBooking.customer_email) {
         const equipmentDetails = currentBooking.booking_items?.map(item => {
-          // Type guard to ensure item.equipment is not an error and has a name property
-          if (item.equipment && typeof item.equipment === 'object' && 'name' in item.equipment) {
-            return `${(item.equipment as Product).name} (x${item.quantity})`;
+          // Type guard to ensure item.equipment is not null and has a name property
+          const equipment = item.equipment as unknown as Product | null | undefined;
+          if (equipment && typeof equipment === 'object' && 'name' in equipment) {
+            return `${equipment.name} (x${item.quantity})`;
           }
           return `Unknown Equipment (x${item.quantity})`;
         }).join(', ') || 'N/A';

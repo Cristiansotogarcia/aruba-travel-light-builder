@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Profile, UserRole } from '@/types/types';
 
+// Define the allowed roles for the profiles table (excludes Customer)
+type ProfileRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
+
 interface EditUserModalProps {
   open: boolean;
   onClose: () => void;
@@ -49,7 +52,7 @@ export const EditUserModal = ({ open, onClose, user, onUserUpdated }: EditUserMo
         .from('profiles')
         .update({
           name: name.trim(),
-          role: role,
+          role: role as ProfileRole,
           is_deactivated: isDeactivated
         })
         .eq('id', user.id);
