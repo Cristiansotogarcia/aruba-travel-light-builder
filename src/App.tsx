@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
@@ -49,51 +49,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const ScrollLockGuard = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    // Clean up scroll lock when navigating to a new page
-    // This ensures scroll is restored after closing dialogs
-    const body = document.body;
-    const html = document.documentElement;
-    
-    if (body && html) {
-      // Remove all inline styles that could lock scroll
-      body.style.removeProperty("overflow");
-      body.style.removeProperty("padding-right");
-      body.style.removeProperty("position");
-      body.style.removeProperty("top");
-      body.style.removeProperty("left");
-      body.style.removeProperty("right");
-      body.style.removeProperty("width");
-      body.style.removeProperty("height");
-      body.style.removeProperty("touch-action");
-      body.style.removeProperty("transform");
-      
-      html.style.removeProperty("overflow");
-      html.style.removeProperty("padding-right");
-      html.style.removeProperty("position");
-      html.style.removeProperty("top");
-      html.style.removeProperty("left");
-      html.style.removeProperty("right");
-      html.style.removeProperty("width");
-      html.style.removeProperty("height");
-      html.style.removeProperty("touch-action");
-      html.style.removeProperty("transform");
-      
-      body.removeAttribute("data-scroll-locked");
-      html.removeAttribute("data-scroll-locked");
-    }
-  }, [location.pathname]);
-
-  return null;
-};
-
 const App = () => {
   // Initialize performance monitoring on mount
   useEffect(() => {
@@ -118,7 +73,6 @@ const App = () => {
                         v7_relativeSplatPath: true,
                       }}
                     >
-                      <ScrollLockGuard />
                       <PasswordChangeGate />
                       <Suspense fallback={<PageLoader />}>
                       <Routes>
