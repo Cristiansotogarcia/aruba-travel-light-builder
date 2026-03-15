@@ -3,6 +3,7 @@ import { ClipboardCheck, CreditCard, PackageCheck, UserCheck } from 'lucide-reac
 
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { PendingReservations } from '@/components/admin/PendingReservations';
+import { NotificationBell } from '@/components/admin/NotificationBell';
 import { Header } from '@/components/layout/Header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,9 +85,12 @@ const BookerDashboard = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-8 space-y-6">
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">Booker Workspace</h1>
-          <p className="text-muted-foreground mt-1">Review new reservations, track payment handoffs, and assign drivers.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground">Booker Workspace</h1>
+            <p className="text-muted-foreground mt-1">Review new reservations, track payment handoffs, and assign drivers.</p>
+          </div>
+          <NotificationBell />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

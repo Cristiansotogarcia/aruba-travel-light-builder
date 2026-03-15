@@ -13,6 +13,7 @@ import { initPerformanceMonitoring } from "@/utils/performanceMonitoring";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import { CartProvider } from "@/hooks/useCart";
+import { NotificationProvider } from "@/hooks/useNotifications";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
 import { PageSkeleton } from "@/components/common/SkeletonLoader";
@@ -148,87 +149,89 @@ const App = () => {
       <AppPrefetch /> {/* ✅ altijd prefetch de equipment producten */}
       <TooltipProvider>
         <AuthProvider>
-          <SiteAssetsProvider>
-            <CartProvider>
-              <Toaster />
-              <Sonner />
-              <ErrorBoundary>
-                <HelmetProvider>
-                  <BrowserRouter
-                    future={{
-                      v7_startTransition: true,
-                      v7_relativeSplatPath: true,
-                    }}
-                  >
-                    <ScrollLockGuard />
-                    <PasswordChangeGate />
-                    <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/about-us" element={<About />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/equipment" element={<Equipment />} />
-                      <Route path="/equipment/:slug" element={<EquipmentItem />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/book" element={<Book />} />
-                      <Route path="/cart" element={<Cart />} />
+          <NotificationProvider>
+            <SiteAssetsProvider>
+              <CartProvider>
+                <Toaster />
+                <Sonner />
+                <ErrorBoundary>
+                  <HelmetProvider>
+                    <BrowserRouter
+                      future={{
+                        v7_startTransition: true,
+                        v7_relativeSplatPath: true,
+                      }}
+                    >
+                      <ScrollLockGuard />
+                      <PasswordChangeGate />
+                      <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/about-us" element={<About />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/equipment" element={<Equipment />} />
+                        <Route path="/equipment/:slug" element={<EquipmentItem />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/book" element={<Book />} />
+                        <Route path="/cart" element={<Cart />} />
 
-                      {/* Protected Routes */}
-                      <Route
-                        element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
-                      >
-                        <Route path="/admin" element={<Admin />} />
-                      </Route>
+                        {/* Protected Routes */}
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
+                        >
+                          <Route path="/admin" element={<Admin />} />
+                        </Route>
 
-                      <Route
-                        element={<ProtectedRoute allowedRoles={["Accounting", "Admin", "SuperUser"]} />}
-                      >
-                        <Route path="/accounting" element={<Accounting />} />
-                      </Route>
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Accounting", "Admin", "SuperUser"]} />}
+                        >
+                          <Route path="/accounting" element={<Accounting />} />
+                        </Route>
 
-                      <Route
-                        element={<ProtectedRoute allowedRoles={["Driver"]} />}
-                      >
-                        <Route path="/driver-dashboard" element={<DriverDashboard />} />
-                      </Route>
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Driver"]} />}
+                        >
+                          <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                        </Route>
 
-                      <Route
-                        element={<ProtectedRoute allowedRoles={["Customer"]} />}
-                      >
-                        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-                      </Route>
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Customer"]} />}
+                        >
+                          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                        </Route>
 
-                      <Route
-                        element={
-                          <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
-                        }
-                      >
-                        <Route path="/booker" element={<BookerDashboard />} />
-                      </Route>
+                        <Route
+                          element={
+                            <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
+                          }
+                        >
+                          <Route path="/booker" element={<BookerDashboard />} />
+                        </Route>
 
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/seo-demo" element={<SeoDemo />} />
-                      <Route path="/seo-test" element={<SeoTest />} />
-                      <Route path="/invoice/:id" element={<Invoice />} />
-                      <Route path="/track/:token" element={<DeliveryTracking />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/seo-demo" element={<SeoDemo />} />
+                        <Route path="/seo-test" element={<SeoTest />} />
+                        <Route path="/invoice/:id" element={<Invoice />} />
+                        <Route path="/track/:token" element={<DeliveryTracking />} />
 
-                      <Route
-                        element={
-                          <ProtectedRoute allowedRoles={["Admin", "SuperUser", "Accounting", "Booker", "Customer", "Driver"]} />
-                        }
-                      >
-                        <Route path="/delivery-slip/:id" element={<DeliverySlip />} />
-                      </Route>
+                        <Route
+                          element={
+                            <ProtectedRoute allowedRoles={["Admin", "SuperUser", "Accounting", "Booker", "Customer", "Driver"]} />
+                          }
+                        >
+                          <Route path="/delivery-slip/:id" element={<DeliverySlip />} />
+                        </Route>
 
-                      {/* Catch all */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    </Suspense>
-                  </BrowserRouter>
-                </HelmetProvider>
-              </ErrorBoundary>
-            </CartProvider>
-          </SiteAssetsProvider>
+                        {/* Catch all */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                      </Suspense>
+                    </BrowserRouter>
+                  </HelmetProvider>
+                </ErrorBoundary>
+              </CartProvider>
+            </SiteAssetsProvider>
+          </NotificationProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

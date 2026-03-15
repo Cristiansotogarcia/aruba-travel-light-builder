@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
+import { NotificationBell } from './NotificationBell';
 
 interface AdminSidebarProps {
   activeSection?: string;
@@ -59,14 +60,17 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
   return (
     <aside className="hidden lg:flex w-72 bg-background/80 border-r border-border/60 flex-col h-screen backdrop-blur">
       <div className="p-6">
-        <div className="flex items-center mb-4">
-          <img
-            src={assets.logo || '/placeholder.svg'}
-            alt="Travel Light Aruba"
-            className="h-8 w-auto mr-3"
-            style={{ transform: 'scale(3)', transformOrigin: 'left center' }}
-          />
-          <h2 className="text-xl font-semibold text-foreground">Admin Panel</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <img
+              src={assets.logo || '/placeholder.svg'}
+              alt="Travel Light Aruba"
+              className="h-8 w-auto mr-3"
+              style={{ transform: 'scale(3)', transformOrigin: 'left center' }}
+            />
+            <h2 className="text-xl font-semibold text-foreground">Admin Panel</h2>
+          </div>
+          <NotificationBell />
         </div>
         <p className="text-sm text-muted-foreground mt-1">
           {profile?.name} ({profile?.role})

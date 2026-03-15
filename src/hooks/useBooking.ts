@@ -392,7 +392,31 @@ const useBooking = () => {
           throw new Error(`Failed to create booking items: ${itemsError.message}`);
         }
 
-        // Step 3: Send reservation confirmation email
+        // Step 3: Create in-app notification for admin/booker
+        try {
+          const itemSummary = bookingData.items
+            .map(item => `${item.quantity}x ${item.equipment_name}`)
+            .join(', ');
+
+          await supabase.from('admin_notifications').insert({
+            title: 'New Reservation',
+            message: `${bookingData.customerInfo.name} - $${calculateTotal().toFixed(2)} (${itemSummary})`,
+            notification_type: 'new_booking',
+            priority: 'high',
+            booking_id: booking.id,
+            is_read: false,
+            metadata: {
+              customer_name: bookingData.customerInfo.name,
+              customer_email: bookingData.customerInfo.email,
+              total_amount: calculateTotal(),
+              item_count: bookingData.items.length
+            }
+          });
+        } catch (notifErr) {
+          console.warn('Failed to create notification:', notifErr);
+        }
+
+        // Step 4: Send reservation confirmation email
         try {
           const { error: emailError } = await supabase.functions.invoke('send-reservation-email', {
             body: {
