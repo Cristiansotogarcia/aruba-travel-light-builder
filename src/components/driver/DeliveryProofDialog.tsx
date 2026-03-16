@@ -90,7 +90,7 @@ export const DeliveryProofDialog = ({
         p_task_id: taskId,
         p_signed_by_name: signedByName.trim(),
         p_signature_path: uploadResult.data.path,
-        p_notes: notes.trim() || null,
+        p_notes: notes.trim() || undefined,
       });
 
       if (completionResult.error) {

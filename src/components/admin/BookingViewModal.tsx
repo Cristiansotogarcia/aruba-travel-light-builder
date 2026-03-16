@@ -83,7 +83,13 @@ export const BookingViewModal = ({
           </DialogHeader>
           
           <div className="space-y-6 px-6 py-4 overflow-y-auto flex-1 min-h-0">
-            <BookingDetailsCard booking={booking} />
+            <BookingDetailsCard 
+              booking={booking} 
+              onDriverAssigned={() => {
+                // Refresh the booking data in parent
+                onClose();
+              }}
+            />
 
             <BookingActionButtons
               booking={booking}

@@ -526,7 +526,7 @@ export const DriverTasks = ({
     await invokeTaskRpc(`${task.taskId}:complete`, async () => {
       const result = await supabase.rpc('complete_pickup_task', {
         p_task_id: task.taskId,
-        p_notes: task.notes,
+        p_notes: task.notes ?? undefined,
       });
 
       if (result.error) throw result.error;

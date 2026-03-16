@@ -1,18 +1,102 @@
-
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calendar, User, Phone, MapPin, Package, AlertTriangle } from 'lucide-react';
+import { Calendar, User, Phone, MapPin, Package, AlertTriangle, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import { Booking } from './calendar/types';
 import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
+import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { buildDriverAssignmentUpdate } from '@/lib/operations/bookingOperations';
+
+interface Driver {
+  id: string;
+  name: string;
+  email: string | null;
+}
 
 interface BookingDetailsCardProps {
   booking: Booking;
+  onDriverAssigned?: () => void;
 }
 
-export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
+export const BookingDetailsCard = ({ booking, onDriverAssigned }: BookingDetailsCardProps) => {
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      setLoadingDrivers(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .eq('role', 'Driver')
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching drivers:', error);
+        } else {
+          setDrivers(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching drivers:', error);
+      } finally {
+        setLoadingDrivers(false);
+      }
+    };
+
+    fetchDrivers();
+  }, []);
+
+  const handleDriverChange = async (driverId: string) => {
+    if (!driverId || driverId === 'unassign') {
+      return;
+    }
+
+    try {
+      const driver = drivers.find(d => d.id === driverId);
+      if (!driver) {
+        throw new Error('Driver not found');
+      }
+
+      const assignmentUpdate = buildDriverAssignmentUpdate(driverId, {
+        deliveryScheduledAt: booking.delivery_scheduled_at ?? booking.start_date,
+        pickupScheduledAt: booking.pickup_scheduled_at ?? booking.end_date,
+      });
+
+      const { error } = await supabase
+        .from('bookings')
+        .update(assignmentUpdate)
+        .eq('id', booking.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Driver Assigned',
+        description: `Booking assigned to ${driver.name}`,
+      });
+
+      onDriverAssigned?.();
+    } catch (error) {
+      console.error('Error assigning driver:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign driver',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const currentDriverId = booking.assigned_driver_id ?? booking.assigned_to;
+  const currentDriverName = currentDriverId 
+    ? drivers.find(d => d.id === currentDriverId)?.name 
+    : null;
+
   return (
     <Card>
       <CardContent className="p-6 space-y-6">
@@ -92,6 +176,40 @@ export const BookingDetailsCard = ({ booking }: BookingDetailsCardProps) => {
             <p className="text-sm text-gray-700 whitespace-pre-wrap">{booking.customer_comment}</p>
           </div>
         )}
+
+        {/* Driver Assignment */}
+        <div>
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Truck className="h-4 w-4" />
+            Driver Assignment
+          </h3>
+          <div className="flex items-center gap-4">
+            <Select 
+              value={currentDriverId || ''} 
+              onValueChange={handleDriverChange}
+              disabled={loadingDrivers}
+            >
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder={loadingDrivers ? "Loading drivers..." : "Select a driver"} />
+              </SelectTrigger>
+              <SelectContent>
+                {drivers.length === 0 && !loadingDrivers && (
+                  <div className="p-2 text-sm text-gray-500 text-center">No drivers available</div>
+                )}
+                {drivers.map((driver) => (
+                  <SelectItem key={driver.id} value={driver.id}>
+                    {driver.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {currentDriverName && (
+              <Badge variant="outline" className="bg-blue-50">
+                Currently assigned: {currentDriverName}
+              </Badge>
+            )}
+          </div>
+        </div>
 
         {/* Equipment Items */}
         {booking.booking_items && booking.booking_items.length > 0 && (
