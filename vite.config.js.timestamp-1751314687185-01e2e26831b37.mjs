@@ -2,7 +2,6 @@
 import { defineConfig } from "file:///C:/Users/Hype%20Consultancy/aruba-travel-light-builder/node_modules/vite/dist/node/index.js";
 import react from "file:///C:/Users/Hype%20Consultancy/aruba-travel-light-builder/node_modules/@vitejs/plugin-react-swc/index.mjs";
 import path from "path";
-import { componentTagger } from "file:///C:/Users/Hype%20Consultancy/aruba-travel-light-builder/node_modules/lovable-tagger/dist/index.js";
 var __vite_injected_original_dirname = "C:\\Users\\Hype Consultancy\\aruba-travel-light-builder";
 var vite_config_default = defineConfig(({ mode }) => ({
   server: {
@@ -10,8 +9,7 @@ var vite_config_default = defineConfig(({ mode }) => ({
     port: 8080
   },
   plugins: [
-    react(),
-    mode === "development" && componentTagger()
+    react()
   ].filter(Boolean),
   resolve: {
     alias: {
