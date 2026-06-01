@@ -36,7 +36,7 @@ AS $$
     SELECT b.start_date, b.end_date, bi.quantity
     FROM public.bookings b
     JOIN public.booking_items bi ON bi.booking_id = b.id
-    WHERE bi.equipment_id = p_equipment_id
+    WHERE bi.equipment_id = p_equipment_id::text
       AND (p_exclude_booking_id IS NULL OR b.id <> p_exclude_booking_id)
       AND b.status IN ('pending', 'pending_admin_review', 'confirmed', 'out_for_delivery', 'in_transit', 'delivered')
       AND (b.status NOT IN ('pending', 'pending_admin_review') OR b.hold_expires_at IS NULL OR b.hold_expires_at > now())
@@ -173,7 +173,7 @@ BEGIN
   RETURNING id INTO v_booking_id;
 
   INSERT INTO public.booking_items (booking_id, equipment_id, equipment_name, equipment_price, quantity, subtotal)
-  SELECT v_booking_id, (i->>'equipment_id')::uuid, i->>'equipment_name',
+  SELECT v_booking_id, (i->>'equipment_id'), i->>'equipment_name',
          (i->>'equipment_price')::numeric, (i->>'quantity')::int, (i->>'subtotal')::numeric
   FROM jsonb_array_elements(p_items) i;
 
