@@ -14,6 +14,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
 import { CartProvider } from "@/hooks/useCart";
 import { NotificationProvider } from "@/hooks/useNotifications";
+import { RentalDatesProvider } from "@/hooks/useRentalDates";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
 import { PageSkeleton } from "@/components/common/SkeletonLoader";
@@ -73,6 +74,7 @@ const App = () => {
                         v7_relativeSplatPath: true,
                       }}
                     >
+                      <RentalDatesProvider>
                       <PasswordChangeGate />
                       <Suspense fallback={<PageLoader />}>
                       <Routes>
@@ -134,6 +136,7 @@ const App = () => {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                       </Suspense>
+                      </RentalDatesProvider>
                     </BrowserRouter>
                   </HelmetProvider>
                 </ErrorBoundary>
