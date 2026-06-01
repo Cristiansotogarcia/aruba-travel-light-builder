@@ -41,8 +41,8 @@ Per-unit / serialized asset tracking; damage / condition reports; a full visual 
 
 **Occupancy.** A booking `B` for equipment `E` occupies calendar days `[B.start_date, B.end_date + buffer(E)]` inclusive, where `buffer(E)` is the per-category override or the global default.
 
-**Committed statuses** (consume inventory): `pending` and `pending_admin_review` *(both only while `now() < hold_expires_at`)*, `confirmed`, `out_for_delivery`, `in_transit`, `delivered`. (`pending` and `pending_admin_review` are treated identically for holds; the live flow uses `pending_admin_review`.)
-**Released statuses** (free inventory): `completed`, `cancelled`, `rejected`, `undeliverable`, `expired`, and any pending request past its `hold_expires_at`.
+**Committed statuses** (consume inventory): `pending_admin_review` *(the transient request hold — counts only while `now() < hold_expires_at`)*, `pending` *(admin-approved / awaiting payment — a committed hold that does NOT auto-expire)*, `confirmed`, `out_for_delivery`, `in_transit`, `delivered`. **Only `pending_admin_review` is subject to auto-expiry.** On admin confirm the booking moves to `pending` and its `hold_expires_at` is cleared, so an approved reservation is never auto-expired.
+**Released statuses** (free inventory): `completed`, `cancelled`, `rejected`, `undeliverable`, `expired`, and any `pending_admin_review` past its `hold_expires_at`.
 
 **Availability for a requested window.** For equipment `E`, requested window `[start, end]`, the occupancy days are `D = [start, end + buffer(E)]`. For each day `d ∈ D`, `committed(E,d)` = sum of `booking_items.quantity` over all committed bookings of `E` whose occupancy includes `d` (excluding the booking being edited, when applicable).
 

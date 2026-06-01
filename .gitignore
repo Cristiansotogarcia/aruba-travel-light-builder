@@ -32,3 +32,6 @@ src/components/**/*.js
 src/components/**/*.d.ts
 *.tsbuildinfo
 
+# Supabase CLI cache (regenerated locally; must not be tracked)
+supabase/.temp/
+
