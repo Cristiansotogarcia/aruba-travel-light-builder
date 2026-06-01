@@ -1,4 +1,5 @@
 ﻿import { useCart } from '@/hooks/useCart';
+import { useRentalDates } from '@/hooks/useRentalDates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Trash2, ShoppingCart } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 
 const Cart = () => {
   const { items, removeItem, updateItemQuantity } = useCart();
+  const { startDate, endDate } = useRentalDates();
   const navigate = useNavigate();
 
   if (items.length === 0) {
@@ -104,6 +106,27 @@ const Cart = () => {
                 <p className="text-xs text-gray-500 mt-1">
                   * Final price will be calculated based on rental duration
                 </p>
+              </div>
+              <div className="border-t pt-2 mt-2 text-xs text-gray-600">
+                {startDate && endDate ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <span>
+                      Rental dates: {startDate} &rarr; {endDate}
+                    </span>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto text-xs text-primary"
+                      onClick={() => navigate('/equipment')}
+                    >
+                      Change
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic">
+                    Select your rental dates on the catalog to check availability.
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

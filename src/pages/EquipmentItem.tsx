@@ -14,6 +14,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { SEO } from '@/components/common/SEO';
 import { useSEO } from '@/hooks/useSEO';
 import { useCart } from '@/hooks/useCart';
+import { useRentalDates } from '@/hooks/useRentalDates';
+import { useAvailability } from '@/hooks/useAvailability';
 import type { AvailabilityStatus, Product } from '@/types/types';
 
 const availabilityStatuses: AvailabilityStatus[] = [
@@ -39,6 +41,8 @@ const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
   const { generateProductSEO } = useSEO();
   const { addItem } = useCart();
+  const { startDate, endDate } = useRentalDates();
+  const { data: availabilityMap } = useAvailability(startDate, endDate);
   const [quantity, setQuantity] = useState(1);
 
   const { data: products = [], isLoading } = useQuery({
@@ -109,6 +113,11 @@ const EquipmentItem = () => {
     productData: undefined,
   };
 
+  const dateAvailable =
+    equipment && startDate && endDate
+      ? (availabilityMap?.[equipment.id] ?? null)
+      : null;
+
   const handleShare = async () => {
     if (!equipment) return;
     const url = `${window.location.origin}/equipment/${equipment.slug}`;
@@ -135,7 +144,8 @@ const EquipmentItem = () => {
       setQuantity(1);
       return;
     }
-    const clamped = Math.min(Math.max(parsed, 1), equipment.stock_quantity || 1);
+    const ceiling = dateAvailable != null ? Math.max(0, dateAvailable) : (equipment.stock_quantity || 1);
+    const clamped = Math.min(Math.max(parsed, 1), ceiling);
     setQuantity(clamped);
   };
 
@@ -252,19 +262,27 @@ const EquipmentItem = () => {
                     id="equipment-qty"
                     type="number"
                     min={1}
-                    max={equipment.stock_quantity || 1}
+                    max={dateAvailable != null ? Math.max(0, dateAvailable) : (equipment.stock_quantity || 1)}
                     value={quantity}
                     onChange={(e) => handleQuantityChange(e.target.value)}
                     className="w-24"
-                    disabled={equipment.availability === 'unavailable'}
+                    disabled={equipment.availability === 'unavailable' || dateAvailable === 0}
                   />
                   <span className="text-xs text-muted-foreground">
-                    {equipment.stock_quantity} in stock
+                    {dateAvailable != null
+                      ? (dateAvailable > 0
+                          ? `${dateAvailable} available for your dates`
+                          : 'Not available for these dates')
+                      : `${equipment.stock_quantity} in stock`}
                   </span>
                 </div>
                 <Button
                   onClick={handleAddToCart}
-                  disabled={equipment.availability === 'unavailable' || equipment.stock_quantity <= 0}
+                  disabled={
+                    equipment.availability === 'unavailable' ||
+                    equipment.stock_quantity <= 0 ||
+                    dateAvailable === 0
+                  }
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart

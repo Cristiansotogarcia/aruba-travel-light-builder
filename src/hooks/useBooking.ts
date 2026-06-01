@@ -6,6 +6,7 @@ import { createBookingWithItems, parseAvailabilityConflict } from '@/lib/queries
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
+import { useRentalDates } from '@/hooks/useRentalDates';
 
 // All interfaces like Product, BookingFormData, BookingItem, CustomerInfo, 
 // SupabaseBookingData, SupabaseBookingItemData are now imported from '../types/types'.
@@ -36,10 +37,20 @@ const useBooking = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { items: cartItems, clearCart } = useCart();
+  const { startDate: rdStart, endDate: rdEnd } = useRentalDates();
 
   useEffect(() => {
     setBookingData(prev => ({ ...prev, items: cartItems }));
   }, [cartItems]);
+
+  useEffect(() => {
+    if (rdStart && rdEnd) {
+      setBookingData(prev =>
+        prev.startDate || prev.endDate ? prev : { ...prev, startDate: rdStart, endDate: rdEnd },
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rdStart, rdEnd]);
 
   useEffect(() => {
     const fetchProducts = async () => {
