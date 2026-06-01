@@ -168,6 +168,7 @@ export const BookingConfirmationModal = ({
         .update({
           status: 'pending',
           payment_status: 'pending',
+          hold_expires_at: null, // clear the transient request-hold; an approved reservation must not auto-expire
           admin_confirmed_at: new Date().toISOString(),
           admin_confirmed_by: user.id,
           payment_link_url: paymentLink.trim(),

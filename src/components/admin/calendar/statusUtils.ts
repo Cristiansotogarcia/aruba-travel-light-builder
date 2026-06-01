@@ -21,6 +21,8 @@ export const getStatusColor = (status: string) => {
       return 'bg-red-100 text-red-800 border-red-200';
     case 'undeliverable':
       return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'expired':
+      return 'bg-slate-100 text-slate-700 border-slate-200';
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200';
   }
@@ -48,6 +50,8 @@ export const getStatusLabel = (status: string) => {
       return 'Rejected';
     case 'undeliverable':
       return 'Undeliverable';
+    case 'expired':
+      return 'Expired';
     default:
       return status;
   }

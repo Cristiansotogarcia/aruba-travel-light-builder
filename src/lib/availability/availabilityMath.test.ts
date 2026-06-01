@@ -10,7 +10,7 @@ const b = (over: Partial<CommittingBooking>): CommittingBooking => ({
 
 describe('consumesInventory', () => {
   it('counts active committed statuses', () => {
-    const pending = new Set(['pending', 'pending_admin_review']);
+    const pending = new Set(['pending_admin_review']);
     for (const s of ['pending', 'pending_admin_review', 'confirmed', 'out_for_delivery', 'in_transit', 'delivered']) {
       const booking = pending.has(s)
         ? { status: s, hold_expires_at: '2026-06-11T00:00:00.000Z' } // future relative to NOW
@@ -27,6 +27,11 @@ describe('consumesInventory', () => {
   it('counts a live hold but not an expired one', () => {
     expect(consumesInventory({ status: 'pending_admin_review', hold_expires_at: '2026-06-11T00:00:00.000Z' }, NOW)).toBe(true);
     expect(consumesInventory({ status: 'pending_admin_review', hold_expires_at: '2026-06-10T00:00:00.000Z' }, NOW)).toBe(false);
+  });
+  it('treats pending (awaiting payment) as a non-expiring committed hold', () => {
+    // 'pending' = admin-approved / awaiting payment; it must keep holding stock even past the original window
+    expect(consumesInventory({ status: 'pending', hold_expires_at: '2026-06-10T00:00:00.000Z' }, NOW)).toBe(true);
+    expect(consumesInventory({ status: 'pending' }, NOW)).toBe(true);
   });
 });
 

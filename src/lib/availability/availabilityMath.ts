@@ -5,8 +5,9 @@ export const COMMITTED_STATUSES = [
   'pending', 'pending_admin_review', 'confirmed', 'out_for_delivery', 'in_transit', 'delivered',
 ] as const;
 
-// Pending-style statuses only hold while their hold_expires_at is in the future.
-const PENDING_STATUSES = new Set(['pending', 'pending_admin_review']);
+// Only a fresh unconfirmed request ('pending_admin_review') is a transient hold that auto-expires.
+// 'pending' = admin-approved / awaiting payment — a committed hold that must NOT auto-expire.
+const PENDING_STATUSES = new Set(['pending_admin_review']);
 
 export interface CommittingBooking {
   id: string;
