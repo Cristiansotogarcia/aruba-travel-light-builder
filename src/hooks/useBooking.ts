@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, BookingFormData, CustomerInfo, AvailabilityStatus } from '../types/types';
+import { createBookingWithItems, parseAvailabilityConflict } from '@/lib/queries/booking-create';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -344,53 +345,17 @@ const useBooking = () => {
       let bookingId: string | null = null;
       
       try {
-        // Step 1: Create guest booking record (no payment, no stock reservation yet)
-        const bookingPayload = {
-          user_id: user?.id || null, // Allow null for guest bookings
-          start_date: bookingData.startDate,
-          end_date: bookingData.endDate,
-          total_amount: calculateTotal(),
-          status: 'pending_admin_review', // New status for guest bookings
-          customer_name: bookingData.customerInfo.name.trim(),
-          customer_email: bookingData.customerInfo.email.trim().toLowerCase(),
-          customer_phone: bookingData.customerInfo.phone?.trim() || '',
-          customer_address: bookingData.customerInfo.address?.trim() || '',
-          room_number: bookingData.customerInfo.room_number?.trim() || null,
-          customer_comment: bookingData.customerInfo.comment?.trim() || null,
-          delivery_slot: bookingData.deliverySlot,
-          pickup_slot: bookingData.pickupSlot,
-          payment_status: 'pending'
-        };
-
-        const { data: booking, error: bookingError } = await supabase
-          .from('bookings')
-          .insert(bookingPayload)
-          .select()
-          .single();
-
-        if (bookingError || !booking) {
-          throw new Error(`Failed to create reservation: ${bookingError?.message || 'Unknown error'}`);
-        }
-        
-        bookingId = booking.id;
-
-        // Step 2: Create booking items
-        const bookingItems = bookingData.items.map(item => ({
-          booking_id: booking.id,
-          equipment_id: item.equipment_id,
-          equipment_name: item.equipment_name,
-          equipment_price: item.equipment_price,
-          quantity: item.quantity,
-          subtotal: item.subtotal
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('booking_items')
-          .insert(bookingItems);
-
-        if (itemsError) {
-          throw new Error(`Failed to create booking items: ${itemsError.message}`);
-        }
+        const { bookingId: createdId } = await createBookingWithItems({
+          startDate: bookingData.startDate,
+          endDate: bookingData.endDate,
+          totalAmount: calculateTotal(),
+          customerInfo: bookingData.customerInfo,
+          deliverySlot: bookingData.deliverySlot,
+          pickupSlot: bookingData.pickupSlot,
+          items: bookingData.items,
+        });
+        bookingId = createdId;
+        const booking = { id: createdId };
 
         // Step 3: Create in-app notification for admin/booker
         try {
@@ -471,12 +436,12 @@ const useBooking = () => {
         }
         
         // Show user-friendly error message
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-        toast({ 
-          title: 'Reservation Failed', 
-          description: errorMessage, 
-          variant: 'destructive' 
-        });
+        const rawMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        const conflicts = parseAvailabilityConflict(rawMessage);
+        const errorMessage = conflicts
+          ? `Some items are no longer available for your dates: ${conflicts.map((c) => `${c.requested} requested, ${c.available} left`).join('; ')}`
+          : rawMessage;
+        toast({ title: 'Reservation Failed', description: errorMessage, variant: 'destructive' });
       }
     } catch (error: unknown) {
       console.error('Unexpected error during reservation submission:', error);
