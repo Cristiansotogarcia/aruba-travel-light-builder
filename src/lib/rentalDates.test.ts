@@ -11,6 +11,10 @@ describe('parseRangeFromParams', () => {
     expect(parseRangeFromParams(new URLSearchParams(''))).toEqual({ startDate: null, endDate: null });
     expect(parseRangeFromParams(new URLSearchParams('start=nope'))).toEqual({ startDate: null, endDate: null });
   });
+  it('rejects impossible dates', () => {
+    expect(parseRangeFromParams(new URLSearchParams('start=2027-01-10&end=bad'))).toEqual({ startDate: '2027-01-10', endDate: null });
+    expect(parseRangeFromParams(new URLSearchParams('start=2027-13-01'))).toEqual({ startDate: null, endDate: null });
+  });
 });
 
 describe('isValidRange', () => {
@@ -23,5 +27,9 @@ describe('isValidRange', () => {
   });
   it('MIN_NIGHTS matches the booking rule (3)', () => {
     expect(MIN_NIGHTS).toBe(3);
+  });
+  it('rejects null end date and impossible calendar days', () => {
+    expect(isValidRange('2027-01-10', null, today)).toBe(false);
+    expect(isValidRange('2027-02-30', '2027-03-10', today)).toBe(false);
   });
 });

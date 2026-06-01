@@ -14,7 +14,7 @@ export async function getEquipmentAvailability(
     p_end: end,
     p_equipment_ids: equipmentIds,
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.message || 'get_equipment_availability RPC failed');
   const rows = (data ?? []) as Array<{ equipment_id: string; available_units: number }>;
   return rows.reduce<AvailabilityMap>((acc, r) => {
     acc[r.equipment_id] = r.available_units;

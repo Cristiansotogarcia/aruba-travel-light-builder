@@ -17,6 +17,9 @@ export const RentalDatesProvider = ({ children }: { children: ReactNode }) => {
   const [range, setRangeState] = useState<RentalRange>(() => {
     const fromUrl = parseRangeFromParams(searchParams);
     if (fromUrl.startDate && fromUrl.endDate) return fromUrl;
+    if (searchParams.has('start') || searchParams.has('end')) {
+      return { startDate: null, endDate: null };
+    }
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) return JSON.parse(stored) as RentalRange;
