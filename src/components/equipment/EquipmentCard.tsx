@@ -31,9 +31,10 @@ interface Equipment {
 
 interface EquipmentCardProps {
   equipment: Equipment;
+  availableUnits?: number | null;
 }
 
-export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
+export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps) => {
   const [open, setOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
@@ -93,7 +94,9 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
       setQuantity(1);
       return;
     }
-    const clamped = Math.min(Math.max(parsed, 1), equipment.stock_quantity || 1);
+    const stockMax = equipment.stock_quantity || 1;
+    const maxAllowed = availableUnits != null ? Math.min(stockMax, availableUnits) : stockMax;
+    const clamped = Math.min(Math.max(parsed, 1), maxAllowed);
     setQuantity(clamped);
   };
 
@@ -216,19 +219,23 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
                   id={`qty-${equipment.id}`}
                   type="number"
                   min={1}
-                  max={equipment.stock_quantity || 1}
+                  max={availableUnits != null ? Math.min(equipment.stock_quantity || 1, availableUnits) : (equipment.stock_quantity || 1)}
                   value={quantity}
                   onChange={(e) => handleQuantityChange(e.target.value)}
                   className="w-20"
-                  disabled={equipment.availability === 'unavailable'}
+                  disabled={equipment.availability === 'unavailable' || (availableUnits != null && availableUnits <= 0)}
                 />
                 <span className="text-xs text-muted-foreground">
-                  {equipment.stock_quantity} in stock
+                  {availableUnits != null
+                    ? (availableUnits > 0
+                      ? `${availableUnits} available for your dates`
+                      : 'Not available for these dates')
+                    : `${equipment.stock_quantity} in stock`}
                 </span>
               </div>
               <Button
                 className="w-full"
-                disabled={equipment.availability === 'unavailable' || equipment.stock_quantity <= 0}
+                disabled={equipment.availability === 'unavailable' || equipment.stock_quantity <= 0 || (availableUnits != null && availableUnits <= 0)}
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />

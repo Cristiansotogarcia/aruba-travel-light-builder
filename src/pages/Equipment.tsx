@@ -3,6 +3,9 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
+import { RentalDateRangePicker } from '@/components/equipment/RentalDateRangePicker';
+import { useRentalDates } from '@/hooks/useRentalDates';
+import { useAvailability } from '@/hooks/useAvailability';
 import { FaqAccordion } from '@/components/common/FaqAccordion';
 import { EquipmentGridSkeleton } from '@/components/common/SkeletonLoader';
 import { getProducts } from '@/lib/queries/products';
@@ -80,6 +83,9 @@ const Equipment = () => {
       subcategory: subcategoryParam || ''
     }));
   }, [categoryParam, subcategoryParam]);
+
+  const { startDate, endDate } = useRentalDates();
+  const { data: availabilityMap } = useAvailability(startDate, endDate);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['equipment-products'],
@@ -261,6 +267,13 @@ const Equipment = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-10">
+            <div className="mb-6 rounded-lg border bg-card p-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-medium">Renting for specific dates?</p>
+                <p className="text-sm text-muted-foreground">Pick your dates to see real-time availability.</p>
+              </div>
+              <RentalDateRangePicker />
+            </div>
             {Object.entries(groupedEquipment).map(([category, subCategories]) => (
               <div key={category}>
                 <h2 className="text-2xl font-semibold text-foreground mb-4">{category}</h2>
@@ -269,7 +282,7 @@ const Equipment = () => {
                     <h3 className="text-lg font-semibold text-muted-foreground mb-3">{subCategory}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                       {items.map(equipment => (
-                        <EquipmentCard key={equipment.id} equipment={equipment} />
+                        <EquipmentCard key={equipment.id} equipment={equipment} availableUnits={startDate && endDate ? (availabilityMap?.[equipment.id] ?? null) : null} />
                       ))}
                     </div>
                   </div>
