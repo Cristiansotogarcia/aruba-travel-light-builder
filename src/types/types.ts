@@ -52,7 +52,7 @@ export interface SupabaseBookingData {
   end_date: string;
   total_price: number;
   total_amount: number;
-  status: 'pending' | 'pending_admin_review' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'in_transit' | 'delivered' | 'undeliverable' | 'rejected';
+  status: 'pending' | 'pending_admin_review' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'in_transit' | 'delivered' | 'undeliverable' | 'rejected' | 'expired';
   delivery_slot?: 'morning' | 'afternoon';
   pickup_slot?: 'morning' | 'afternoon';
   created_at?: string;

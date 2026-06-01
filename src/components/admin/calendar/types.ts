@@ -20,7 +20,8 @@ export type BookingStatus =
   | 'in_transit'
   | 'delivered'
   | 'undeliverable'
-  | 'rejected';
+  | 'rejected'
+  | 'expired';
 
 export interface Booking {
   id: string;
