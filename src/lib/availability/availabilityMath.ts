@@ -10,7 +10,7 @@ const PENDING_STATUSES = new Set(['pending', 'pending_admin_review']);
 
 export interface CommittingBooking {
   id: string;
-  status: string;
+  status: string; // intentionally wide — avoids a UI-type import; validated at runtime via COMMITTED_STATUSES
   start_date: string; // 'YYYY-MM-DD'
   end_date: string;   // 'YYYY-MM-DD'
   hold_expires_at?: string | null;
@@ -48,6 +48,7 @@ export interface AvailabilityParams {
 }
 
 // available = stock - peak committed quantity over the requested occupancy window [reqStart, reqEnd + buffer].
+// Precondition: reqStart <= reqEnd (callers validate dates first).
 export function computeAvailableUnits(params: AvailabilityParams): number {
   const now = params.now ?? new Date();
   const windowStart = dayEpoch(params.reqStart);
@@ -57,13 +58,19 @@ export function computeAvailableUnits(params: AvailabilityParams): number {
     (cb) => cb.id !== params.excludeBookingId && consumesInventory(cb, now),
   );
 
+  const activeWithRange = active.map((cb) => ({
+    quantity: cb.quantity,
+    occStart: dayEpoch(cb.start_date),
+    // Both the scan window and each booking's occupancy extend bufferDays past end_date:
+    // a unit stays unavailable for bufferDays after return (turnaround gap).
+    occEnd: dayEpoch(cb.end_date) + params.bufferDays * MS_PER_DAY,
+  }));
+
   let peak = 0;
   for (let day = windowStart; day <= windowEnd; day += MS_PER_DAY) {
     let onDay = 0;
-    for (const cb of active) {
-      const occStart = dayEpoch(cb.start_date);
-      const occEnd = dayEpoch(cb.end_date) + params.bufferDays * MS_PER_DAY;
-      if (day >= occStart && day <= occEnd) onDay += cb.quantity;
+    for (const r of activeWithRange) {
+      if (day >= r.occStart && day <= r.occEnd) onDay += r.quantity;
     }
     if (onDay > peak) peak = onDay;
   }

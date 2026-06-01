@@ -10,10 +10,16 @@ const b = (over: Partial<CommittingBooking>): CommittingBooking => ({
 
 describe('consumesInventory', () => {
   it('counts active committed statuses', () => {
-    expect(consumesInventory({ status: 'confirmed' }, NOW)).toBe(true);
-    expect(consumesInventory({ status: 'delivered' }, NOW)).toBe(true);
+    const pending = new Set(['pending', 'pending_admin_review']);
+    for (const s of ['pending', 'pending_admin_review', 'confirmed', 'out_for_delivery', 'in_transit', 'delivered']) {
+      const booking = pending.has(s)
+        ? { status: s, hold_expires_at: '2026-06-11T00:00:00.000Z' } // future relative to NOW
+        : { status: s };
+      expect(consumesInventory(booking, NOW)).toBe(true);
+    }
   });
   it('ignores released statuses', () => {
+    // 'expired' is part of spec §5/§8 — the math handles it before the DB/type union does.
     for (const s of ['completed', 'cancelled', 'rejected', 'undeliverable', 'expired']) {
       expect(consumesInventory({ status: s }, NOW)).toBe(false);
     }
