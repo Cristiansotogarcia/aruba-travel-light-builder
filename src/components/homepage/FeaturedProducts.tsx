@@ -17,8 +17,8 @@ export const FeaturedProducts = () => {
     if (products.length === 0) return null;
 
     // Products are already sorted by sort_order in the query
-    // Limit to exactly 6 products for the grid layout
-    const featuredProducts = products.slice(0, 6);
+    // Limit to exactly 8 products for the 4-wide grid layout (2 rows of 4)
+    const featuredProducts = products.slice(0, 8);
 
     if (featuredProducts.length === 0) return null;
 
@@ -33,7 +33,7 @@ export const FeaturedProducts = () => {
                         Discover our most popular rental items for easy island days.
                     </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {featuredProducts.map((product) => (
                         <Card
                             key={product.id}

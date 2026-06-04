@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,7 +7,8 @@ import { useCart } from '@/hooks/useCart';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
 import { useCategories } from '@/hooks/useCategories';
 import MobileNav from './MobileNav';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ChevronDown, ChevronRight } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -22,6 +24,14 @@ export const Header = () => {
   const { assets } = useSiteAssets();
   const { categories, loading: categoriesLoading } = useCategories();
   const navigate = useNavigate();
+  const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>({});
+
+  const toggleCategory = (categoryId: string) => {
+    setCategoryStates(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -85,32 +95,53 @@ export const Header = () => {
                       </NavigationMenuLink>
 
                       {!categoriesLoading && categories.map((category) => (
-                        <div key={category.id} className="space-y-2">
-                          <NavigationMenuLink asChild>
-                            <Link
-                              to={`/equipment?category=${encodeURIComponent(category.name)}`}
-                              className="block select-none space-y-1 rounded-xl border border-transparent p-3 leading-none no-underline outline-none transition-colors hover:border-border/60 hover:bg-accent/60 focus:border-border/60 focus:bg-accent/60"
+                        <div key={category.id} className="space-y-1">
+                          {category.sub_categories.length > 0 ? (
+                            <Collapsible
+                              open={categoryStates[category.id] || false}
+                              onOpenChange={() => toggleCategory(category.id)}
                             >
-                              <div className="text-sm font-semibold leading-none">{category.name}</div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                {category.description || `Browse all ${category.name.toLowerCase()}`}
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-
-                          {category.sub_categories.length > 0 && (
-                            <div className="ml-4 space-y-1">
-                              {category.sub_categories.map((subCategory) => (
-                                <NavigationMenuLink key={subCategory.id} asChild>
-                                  <Link
-                                    to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
-                                    className="block select-none rounded-lg p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus:bg-accent/50 focus:text-foreground text-muted-foreground"
-                                  >
-                                    {subCategory.name}
-                                  </Link>
-                                </NavigationMenuLink>
-                              ))}
-                            </div>
+                              <CollapsibleTrigger className="flex w-full items-center justify-between select-none rounded-xl border border-transparent p-3 text-sm font-semibold leading-none no-underline outline-none transition-colors hover:border-border/60 hover:bg-accent/60 focus:border-border/60 focus:bg-accent/60">
+                                <span>{category.name}</span>
+                                {categoryStates[category.id]
+                                  ? <ChevronDown className="h-4 w-4 shrink-0" />
+                                  : <ChevronRight className="h-4 w-4 shrink-0" />}
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="ml-4 space-y-1 mt-1">
+                                  <NavigationMenuLink asChild>
+                                    <Link
+                                      to={`/equipment?category=${encodeURIComponent(category.name)}`}
+                                      className="block select-none rounded-lg p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus:bg-accent/50 focus:text-foreground text-muted-foreground"
+                                    >
+                                      All {category.name}
+                                    </Link>
+                                  </NavigationMenuLink>
+                                  {category.sub_categories.map((subCategory) => (
+                                    <NavigationMenuLink key={subCategory.id} asChild>
+                                      <Link
+                                        to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
+                                        className="block select-none rounded-lg p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus:bg-accent/50 focus:text-foreground text-muted-foreground"
+                                      >
+                                        {subCategory.name}
+                                      </Link>
+                                    </NavigationMenuLink>
+                                  ))}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          ) : (
+                            <NavigationMenuLink asChild>
+                              <Link
+                                to={`/equipment?category=${encodeURIComponent(category.name)}`}
+                                className="block select-none space-y-1 rounded-xl border border-transparent p-3 leading-none no-underline outline-none transition-colors hover:border-border/60 hover:bg-accent/60 focus:border-border/60 focus:bg-accent/60"
+                              >
+                                <div className="text-sm font-semibold leading-none">{category.name}</div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                  {category.description || `Browse all ${category.name.toLowerCase()}`}
+                                </p>
+                              </Link>
+                            </NavigationMenuLink>
                           )}
                         </div>
                       ))}
@@ -124,6 +155,9 @@ export const Header = () => {
             </Link>
             <Link to="/contact" className="font-semibold text-muted-foreground hover:text-foreground transition-colors">
               Contact
+            </Link>
+            <Link to="/policies" className="font-semibold text-muted-foreground hover:text-foreground transition-colors">
+              Policies
             </Link>
           </nav>
 
