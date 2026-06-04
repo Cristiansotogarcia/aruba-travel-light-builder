@@ -55,6 +55,8 @@ export interface SupabaseBookingData {
   status: 'pending' | 'pending_admin_review' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'in_transit' | 'delivered' | 'undeliverable' | 'rejected' | 'expired';
   delivery_slot?: 'morning' | 'afternoon';
   pickup_slot?: 'morning' | 'afternoon';
+  fulfillment_method?: 'delivery' | 'pickup';
+  pickup_code?: string | null;
   created_at?: string;
 }
 

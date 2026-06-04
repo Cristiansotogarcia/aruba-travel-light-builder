@@ -13,6 +13,16 @@ describe('buildCreateBookingArgs', () => {
     expect(args.p_items).toHaveLength(1);
     expect(args.p_items[0]).toMatchObject({ equipment_id: 'eq1', quantity: 2 });
   });
+
+  it('defaults fulfillment_method to delivery and passes pickup through', () => {
+    const base = {
+      startDate: '2026-12-01', endDate: '2026-12-05', totalAmount: 100,
+      customerInfo: { name: 'Jane', email: 'j@x.com', phone: '297', address: 'Hotel', room_number: '', comment: '' },
+      items: [{ equipment_id: 'eq1', equipment_name: 'Chair', equipment_price: 10, quantity: 2, subtotal: 80 }],
+    };
+    expect(buildCreateBookingArgs(base).p_booking.fulfillment_method).toBe('delivery');
+    expect(buildCreateBookingArgs({ ...base, fulfillmentMethod: 'pickup' }).p_booking.fulfillment_method).toBe('pickup');
+  });
 });
 
 describe('parseAvailabilityConflict', () => {

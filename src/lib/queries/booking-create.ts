@@ -9,6 +9,7 @@ export interface CreateBookingInput {
   deliverySlot?: 'morning' | 'afternoon';
   pickupSlot?: 'morning' | 'afternoon';
   items: BookingItem[];
+  fulfillmentMethod?: 'delivery' | 'pickup';
 }
 
 export interface AvailabilityConflict {
@@ -31,6 +32,7 @@ export function buildCreateBookingArgs(input: CreateBookingInput) {
       customer_comment: input.customerInfo.comment?.trim() || '',
       delivery_slot: input.deliverySlot,
       pickup_slot: input.pickupSlot,
+      fulfillment_method: input.fulfillmentMethod ?? 'delivery',
     },
     p_items: input.items.map((i) => ({
       equipment_id: i.equipment_id,
@@ -53,10 +55,13 @@ export function parseAvailabilityConflict(message: string): AvailabilityConflict
   }
 }
 
-export async function createBookingWithItems(input: CreateBookingInput): Promise<{ bookingId: string }> {
+export async function createBookingWithItems(input: CreateBookingInput): Promise<{ bookingId: string; pickupCode: string | null }> {
   const args = buildCreateBookingArgs(input);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc('create_booking_with_items', args);
   if (error) throw error;
-  return { bookingId: (data as { booking_id: string }).booking_id };
+  return {
+    bookingId: (data as { booking_id: string }).booking_id,
+    pickupCode: (data as { pickup_code: string | null }).pickup_code ?? null,
+  };
 }
