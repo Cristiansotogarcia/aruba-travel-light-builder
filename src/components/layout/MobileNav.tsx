@@ -131,6 +131,7 @@ const MobileNav = () => {
           </Collapsible>
           <NavLink to="/about">About</NavLink>
           <NavLink to="/contact">Contact</NavLink>
+          <NavLink to="/policies">Policies</NavLink>
           {(loading || (user && profile)) && (
             <div className="mt-4 pt-4 border-t">
               {loading ? (

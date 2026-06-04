@@ -28,6 +28,7 @@ const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
 const SeoDemo = lazy(() => import("./pages/SeoDemo"));
 const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Policies = lazy(() => import("./pages/Policies"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -102,6 +103,7 @@ const App = () => {
                     </Route>
 
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/policies" element={<Policies />} />
                     <Route path="/seo-demo" element={<SeoDemo />} />
                     <Route path="/seo-test" element={<SeoTest />} />
 
