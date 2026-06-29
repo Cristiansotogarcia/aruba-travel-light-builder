@@ -1,5 +1,6 @@
 ﻿
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, BookingFormData, CustomerInfo, AvailabilityStatus } from '../types/types';
 import { createBookingWithItems, parseAvailabilityConflict } from '@/lib/queries/booking-create';
@@ -36,6 +37,7 @@ const useBooking = () => {
   const [selectedEquipment, setSelectedEquipment] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { items: cartItems, clearCart } = useCart();
@@ -348,9 +350,9 @@ const useBooking = () => {
       }
 
       let bookingId: string | null = null;
-      
+
       try {
-        const { bookingId: createdId } = await createBookingWithItems({
+        const { bookingId: createdId, pickupCode } = await createBookingWithItems({
           startDate: bookingData.startDate,
           endDate: bookingData.endDate,
           totalAmount: calculateTotal(),
@@ -410,21 +412,18 @@ const useBooking = () => {
           console.warn('Error sending reservation email:', emailErr);
         }
 
-        // Success: Reset booking data
+        // Success: Reset booking data and navigate to confirmation page
         setBookingData(initialBookingData);
         clearCart();
-        
-        toast({ 
-          title: 'Reservation Received!', 
-          description: 'Your reservation has been submitted. You will receive a confirmation email shortly. Our team will review your reservation and send you a payment link within 24 hours.', 
-          variant: 'default',
-          duration: 8000
+
+        navigate('/reservation/confirmed', {
+          state: {
+            bookingId: createdId,
+            pickupCode,
+            fulfillmentMethod: bookingData.fulfillmentMethod ?? 'delivery',
+            customerName: bookingData.customerInfo.name,
+          },
         });
-        
-        // Redirect to home page after short delay
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 3000);
 
       } catch (error: unknown) {
         console.error('Error during reservation submission:', error);

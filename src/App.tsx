@@ -35,6 +35,7 @@ const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ReservationConfirmation = lazy(() => import("./pages/ReservationConfirmation"));
 const Invoice = lazy(() => import("./pages/Invoice"));
 const DeliverySlip = lazy(() => import("./pages/DeliverySlip"));
 const DeliveryTracking = lazy(() => import("./pages/DeliveryTracking"));
@@ -122,6 +123,7 @@ const App = () => {
                         </Route>
 
                         <Route path="/contact" element={<Contact />} />
+                        <Route path="/reservation/confirmed" element={<ReservationConfirmation />} />
                         <Route path="/policies" element={<Policies />} />
                         <Route path="/invoice/:id" element={<Invoice />} />
                         <Route path="/track/:token" element={<DeliveryTracking />} />
