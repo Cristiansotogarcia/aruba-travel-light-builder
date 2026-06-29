@@ -16,7 +16,7 @@ export const Footer = () => {
             </p>
             <div className="text-sm text-gray-400">
               <p style={{ display: 'none' }}>📞 +297 593-2028</p>
-              <p>📧 info@travelightaruba.com</p>
+              <p>📧 <a href="mailto:info@travelightaruba.com" className="hover:text-white transition-colors">info@travelightaruba.com</a></p>
             </div>
           </div>
 

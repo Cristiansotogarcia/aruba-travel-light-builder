@@ -1,6 +1,23 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+const CONTACT_EMAIL = 'info@travelightaruba.com';
+
+// Render a step description, turning the contact email into a clickable mailto link.
+const renderWithEmailLink = (text: string) => {
+  if (!text.includes(CONTACT_EMAIL)) return text;
+  const [before, after] = text.split(CONTACT_EMAIL);
+  return (
+    <>
+      {before}
+      <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">
+        {CONTACT_EMAIL}
+      </a>
+      {after}
+    </>
+  );
+};
+
 const steps = [
   {
     step: "1",
@@ -52,7 +69,7 @@ export const HowItWorks = () => {
                 <CardTitle className="text-lg">{step.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">{step.description}</p>
+                <p className="text-gray-600 whitespace-pre-line">{renderWithEmailLink(step.description)}</p>
               </CardContent>
             </Card>
           ))}
