@@ -8,14 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/layout/Header';
 import { HandoverDialog } from '@/components/depot/HandoverDialog';
 import { ReturnDialog } from '@/components/depot/ReturnDialog';
+import QrScanner from '@/components/depot/QrScanner';
 import type { DepotPickup } from '@/components/depot/HandoverDialog';
-import { Package, Phone, Calendar, Search, AlertCircle } from 'lucide-react';
+import { Package, Phone, Calendar, Search, AlertCircle, QrCode } from 'lucide-react';
 
 const Depot = () => {
   const [pickups, setPickups] = useState<DepotPickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [codeFilter, setCodeFilter] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
   const [handoverTarget, setHandoverTarget] = useState<DepotPickup | null>(null);
   const [returnTarget, setReturnTarget] = useState<DepotPickup | null>(null);
   const { toast } = useToast();
@@ -58,6 +60,24 @@ const Depot = () => {
     toast({ title: 'Refreshing…' });
     await fetchPickups();
   }, [fetchPickups, toast]);
+
+  const handleQrScan = useCallback(
+    (text: string) => {
+      const code = text.trim().toUpperCase();
+      setCodeFilter(code);
+      // Check if there is a matching active pickup
+      const match = pickups.find(
+        (p) => p.pickup_code.toUpperCase() === code,
+      );
+      if (!match) {
+        toast({
+          title: `No active pickup found for ${code}`,
+          variant: 'destructive',
+        });
+      }
+    },
+    [pickups, toast],
+  );
 
   const formatDate = (dateStr: string) => {
     try {
@@ -172,22 +192,45 @@ const Depot = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Input
                 value={codeFilter}
                 onChange={(e) => setCodeFilter(e.target.value)}
                 placeholder="Enter pickup code…"
                 className="max-w-xs font-mono"
               />
+              {!showScanner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowScanner(true)}
+                  className="flex items-center gap-1.5"
+                >
+                  <QrCode className="h-4 w-4" />
+                  Scan QR
+                </Button>
+              )}
               {codeFilter && (
-                <Button variant="ghost" size="sm" onClick={() => setCodeFilter('')}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCodeFilter('')}
+                >
                   Clear
                 </Button>
               )}
             </div>
+
+            {showScanner && (
+              <QrScanner
+                onScan={handleQrScan}
+                onClose={() => setShowScanner(false)}
+              />
+            )}
+
             {codeFilter && filteredPickups.length === 0 && !loading && (
               <p className="mt-2 text-sm text-muted-foreground">
-                No active pickup found for code "{codeFilter}".
+                No active pickup found for code &ldquo;{codeFilter}&rdquo;.
               </p>
             )}
           </CardContent>
