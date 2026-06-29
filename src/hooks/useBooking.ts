@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, BookingFormData, CustomerInfo, AvailabilityStatus } from '../types/types';
 import { createBookingWithItems, parseAvailabilityConflict } from '@/lib/queries/booking-create';
+import { computeDeliveryFee } from '@/lib/pricing/deliveryFee';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -25,7 +26,8 @@ const initialBookingData: BookingFormData = {
     comment: ''
   },
   deliverySlot: undefined,
-  pickupSlot: undefined
+  pickupSlot: undefined,
+  fulfillmentMethod: 'delivery'
 };
 
 const useBooking = () => {
@@ -149,18 +151,6 @@ const useBooking = () => {
     });
   };
 
-  // Helper function to calculate delivery fee
-  const calculateDeliveryFee = (startDate: string, days: number): number => {
-    // Sunday bookings: $20 fee
-    if (isSunday(startDate)) return 20;
-    
-    // Rentals < 5 days: $10 fee (1-4 days get charged)
-    if (days < 5) return 10;
-    
-    // Weekly rentals (5-7 days) or longer: FREE
-    return 0;
-  };
-
   const calculateDays = () => {
     if (!bookingData.startDate || !bookingData.endDate) return 0;
     const start = new Date(bookingData.startDate);
@@ -222,9 +212,9 @@ const useBooking = () => {
       return total + itemTotal;
     }, 0);
     
-    // Add delivery fee
-    const deliveryFee = calculateDeliveryFee(bookingData.startDate, days);
-    
+    // Add delivery fee (pickup = $0, delivery = fee based on date/days)
+    const deliveryFee = computeDeliveryFee(bookingData.fulfillmentMethod ?? 'delivery', bookingData.startDate, days);
+
     return equipmentTotal + deliveryFee;
   };
 
@@ -316,41 +306,45 @@ const useBooking = () => {
         return;
       }
 
-      // Validate delivery slot
-      if (!bookingData.deliverySlot) {
-        toast({ 
-          title: 'Validation Error', 
-          description: 'Please select a delivery time slot.', 
-          variant: 'destructive' 
-        });
-        return;
-      }
+      const isPickup = (bookingData.fulfillmentMethod ?? 'delivery') === 'pickup';
 
-      if (!bookingData.pickupSlot) {
-        toast({
-          title: 'Validation Error',
-          description: 'Please select a pickup time slot.',
-          variant: 'destructive'
-        });
-        return;
-      }
+      // Validate delivery/pickup slots (only required for delivery method)
+      if (!isPickup) {
+        if (!bookingData.deliverySlot) {
+          toast({
+            title: 'Validation Error',
+            description: 'Please select a delivery time slot.',
+            variant: 'destructive'
+          });
+          return;
+        }
 
-      if (bookingData.startDate && isSunday(bookingData.startDate) && bookingData.deliverySlot !== 'afternoon') {
-        toast({
-          title: 'Validation Error',
-          description: 'Sunday deliveries are only available in the afternoon.',
-          variant: 'destructive'
-        });
-        return;
-      }
+        if (!bookingData.pickupSlot) {
+          toast({
+            title: 'Validation Error',
+            description: 'Please select a pickup time slot.',
+            variant: 'destructive'
+          });
+          return;
+        }
 
-      if (bookingData.endDate && isSunday(bookingData.endDate) && bookingData.pickupSlot !== 'morning') {
-        toast({
-          title: 'Validation Error',
-          description: 'Sunday pickups are only available in the morning.',
-          variant: 'destructive'
-        });
-        return;
+        if (bookingData.startDate && isSunday(bookingData.startDate) && bookingData.deliverySlot !== 'afternoon') {
+          toast({
+            title: 'Validation Error',
+            description: 'Sunday deliveries are only available in the afternoon.',
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        if (bookingData.endDate && isSunday(bookingData.endDate) && bookingData.pickupSlot !== 'morning') {
+          toast({
+            title: 'Validation Error',
+            description: 'Sunday pickups are only available in the morning.',
+            variant: 'destructive'
+          });
+          return;
+        }
       }
 
       let bookingId: string | null = null;
@@ -364,6 +358,7 @@ const useBooking = () => {
           deliverySlot: bookingData.deliverySlot,
           pickupSlot: bookingData.pickupSlot,
           items: bookingData.items,
+          fulfillmentMethod: bookingData.fulfillmentMethod ?? 'delivery',
         });
         bookingId = createdId;
         const booking = { id: createdId };

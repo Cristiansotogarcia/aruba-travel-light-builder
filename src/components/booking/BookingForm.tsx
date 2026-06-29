@@ -1,12 +1,13 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DateSelection } from './DateSelection';
-import EquipmentSelection from './EquipmentSelection';
 import { DeliverySlotSelector } from './DeliverySlotSelector';
 import { PickupSlotSelector } from './PickupSlotSelector';
 import { CustomerInformation } from './CustomerInformation';
 import { BookingSummary } from './BookingSummary';
+import { FulfillmentSelector } from './FulfillmentSelector';
+import { StoreLocationCard } from './StoreLocationCard';
 import useBooking from '@/hooks/useBooking';
 import { useCart } from '@/hooks/useCart';
 import { AlertCircle, Loader2, Calendar } from 'lucide-react';
@@ -25,11 +26,7 @@ export const BookingForm = () => {
   const {
     bookingData,
     products,
-    selectedEquipment,
-    quantity,
     isSubmitting,
-    setSelectedEquipment,
-    setQuantity,
     updateCustomerInfo,
     updateDates,
     calculateDays,
@@ -37,18 +34,20 @@ export const BookingForm = () => {
     submitBooking,
     setBookingData
   } = useBooking();
-  
+
   const { items } = useCart();
   const [formErrors, setFormErrors] = useState<FormValidationErrors>({});
   const [isValidating, setIsValidating] = useState(false);
-  
+
+  const isPickup = (bookingData.fulfillmentMethod ?? 'delivery') === 'pickup';
+
   // Helper functions
   const isSunday = useCallback((dateString: string): boolean => {
     if (!dateString) return false;
     const date = new Date(dateString);
     return date.getDay() === 0;
   }, []);
-  
+
   const hasCribOrPackAndPlay = useCallback((): boolean => {
     return items.some(item => {
       const name = item.equipment_name.toLowerCase();
@@ -59,7 +58,7 @@ export const BookingForm = () => {
   // Validate form before submission
   const validateForm = (): FormValidationErrors => {
     const errors: FormValidationErrors = {};
-    
+
     // Date validation
     if (!bookingData.startDate || !bookingData.endDate) {
       errors.dates = 'Please select both start and end dates';
@@ -68,24 +67,26 @@ export const BookingForm = () => {
     } else if (new Date(bookingData.startDate) < new Date()) {
       errors.dates = 'Start date cannot be in the past';
     }
-    
+
     // Sunday validation
     if (bookingData.startDate && isSunday(bookingData.startDate)) {
       if (!hasCribOrPackAndPlay()) {
         errors.sunday = 'Sunday bookings require a crib or pack and play.';
       }
     }
-    
-    // Delivery slot validation
-    if (!bookingData.deliverySlot) {
-      errors.deliverySlot = 'Please select a delivery time slot';
+
+    // Delivery slot validation — only required for delivery method
+    if (!isPickup) {
+      if (!bookingData.deliverySlot) {
+        errors.deliverySlot = 'Please select a delivery time slot';
+      }
+
+      // Pickup slot validation
+      if (!bookingData.pickupSlot) {
+        errors.pickupSlot = 'Please select a pickup time slot';
+      }
     }
-    
-    // Pickup slot validation
-    if (!bookingData.pickupSlot) {
-      errors.pickupSlot = 'Please select a pickup time slot';
-    }
-    
+
     // Equipment validation
     if (items.length === 0) {
       errors.equipment = 'Your cart is empty. Please add items before booking.';
@@ -95,13 +96,13 @@ export const BookingForm = () => {
         const product = products.find(p => p.id === item.equipment_id);
         return !product || product.stock_quantity < item.quantity;
       });
-      
+
       if (stockIssues.length > 0) {
         errors.equipment = 'Some selected items exceed available stock';
       }
     }
-    
-    // Customer information validation
+
+    // Customer information validation (name/email/phone always required; address only for delivery)
     const { customerInfo } = bookingData;
     if (!customerInfo.name?.trim()) {
       errors.customer = 'Customer name is required';
@@ -111,23 +112,25 @@ export const BookingForm = () => {
       errors.customer = 'Please enter a valid email address';
     } else if (!customerInfo.phone?.trim()) {
       errors.customer = 'Phone number is required';
+    } else if (!isPickup && !customerInfo.address?.trim()) {
+      errors.customer = 'Accommodation name is required for delivery';
     }
-    
+
     return errors;
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setIsValidating(true);
     const errors = validateForm();
     setFormErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       setIsValidating(false);
       return;
     }
-    
+
     try {
       await submitBooking(e);
       setFormErrors({});
@@ -137,52 +140,53 @@ export const BookingForm = () => {
       setIsValidating(false);
     }
   };
-  
+
   // Clear errors when relevant data changes
   useEffect(() => {
     if (formErrors.dates && bookingData.startDate && bookingData.endDate) {
       setFormErrors(prev => ({ ...prev, dates: undefined }));
     }
   }, [bookingData.startDate, bookingData.endDate, formErrors.dates]);
-  
+
   useEffect(() => {
     if (formErrors.deliverySlot && bookingData.deliverySlot) {
       setFormErrors(prev => ({ ...prev, deliverySlot: undefined }));
     }
   }, [bookingData.deliverySlot, formErrors.deliverySlot]);
-  
+
   useEffect(() => {
     if (formErrors.pickupSlot && bookingData.pickupSlot) {
       setFormErrors(prev => ({ ...prev, pickupSlot: undefined }));
     }
   }, [bookingData.pickupSlot, formErrors.pickupSlot]);
-  
+
   useEffect(() => {
     // Clear Sunday error if conditions change
-    if (formErrors.sunday && 
+    if (formErrors.sunday &&
         ((!bookingData.startDate || !isSunday(bookingData.startDate)) || hasCribOrPackAndPlay())) {
       setFormErrors(prev => ({ ...prev, sunday: undefined }));
     }
   }, [bookingData.startDate, formErrors.sunday, hasCribOrPackAndPlay, isSunday]);
-  
+
   useEffect(() => {
     if (formErrors.equipment && items.length > 0) {
       setFormErrors(prev => ({ ...prev, equipment: undefined }));
     }
   }, [items.length, formErrors.equipment]);
-  
+
   useEffect(() => {
     if (formErrors.customer && bookingData.customerInfo.name && bookingData.customerInfo.email) {
       setFormErrors(prev => ({ ...prev, customer: undefined }));
     }
   }, [bookingData.customerInfo, formErrors.customer]);
 
-  const showSummary = items.length > 0 && bookingData.startDate && bookingData.endDate;
+  const slotsReady = isPickup || (!!bookingData.deliverySlot && !!bookingData.pickupSlot);
+  const showSummary = items.length > 0 && !!bookingData.startDate && !!bookingData.endDate && slotsReady;
   const hasErrors = Object.values(formErrors).some(error => error);
   const isSundayStart = bookingData.startDate && isSunday(bookingData.startDate);
   const hasSundayRequirement = isSundayStart && !hasCribOrPackAndPlay();
-  const isFormDisabled = items.length === 0 || !bookingData.startDate || !bookingData.endDate || 
-                         !bookingData.deliverySlot || !bookingData.pickupSlot || 
+  const isFormDisabled = items.length === 0 || !bookingData.startDate || !bookingData.endDate ||
+                         (!isPickup && (!bookingData.deliverySlot || !bookingData.pickupSlot)) ||
                          hasSundayRequirement || isSubmitting || isValidating;
 
   return (
@@ -195,7 +199,7 @@ export const BookingForm = () => {
             <AlertDescription>{formErrors.general}</AlertDescription>
           </Alert>
         )}
-        
+
         {/* Sunday Booking Alert */}
         {isSundayStart && !hasCribOrPackAndPlay() && (
           <Alert variant="destructive">
@@ -205,7 +209,7 @@ export const BookingForm = () => {
             </AlertDescription>
           </Alert>
         )}
-        
+
         {/* Sunday Booking Success Info */}
         {isSundayStart && hasCribOrPackAndPlay() && (
           <Alert className="bg-blue-50 border-blue-200">
@@ -215,6 +219,12 @@ export const BookingForm = () => {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Fulfillment Method Selector (only renders when pickup_enabled = 'true') */}
+        <FulfillmentSelector
+          value={bookingData.fulfillmentMethod ?? 'delivery'}
+          onChange={(method) => setBookingData(prev => ({ ...prev, fulfillmentMethod: method }))}
+        />
 
         {/* Date Selection */}
         <div className="space-y-2">
@@ -232,18 +242,11 @@ export const BookingForm = () => {
           )}
         </div>
 
-        {/* Equipment Selection */}
-        <EquipmentSelection
-          products={products}
-          selectedEquipment={selectedEquipment}
-          quantity={quantity}
-          setSelectedEquipment={setSelectedEquipment}
-          setQuantity={setQuantity}
-          currentSelectedDate={bookingData.startDate ? new Date(bookingData.startDate) : undefined}
-        />
+        {/* Store Location (pickup only) */}
+        {isPickup && <StoreLocationCard />}
 
-        {/* Delivery Slot Selection */}
-        {bookingData.startDate && (
+        {/* Delivery & Pickup Slot Selection (delivery only) */}
+        {!isPickup && bookingData.startDate && (
           <div className="space-y-2">
             <DeliverySlotSelector
               selectedDate={bookingData.startDate}
@@ -261,9 +264,8 @@ export const BookingForm = () => {
             )}
           </div>
         )}
-        
-        {/* Pickup Slot Selection */}
-        {bookingData.endDate && (
+
+        {!isPickup && bookingData.endDate && (
           <div className="space-y-2">
             <PickupSlotSelector
               selectedDate={bookingData.endDate}
@@ -297,7 +299,7 @@ export const BookingForm = () => {
         </div>
 
         {/* Booking Summary */}
-        {showSummary && bookingData.deliverySlot && bookingData.pickupSlot && (
+        {showSummary && (
           <BookingSummary
             days={calculateDays()}
             itemsCount={items.length}
@@ -305,6 +307,7 @@ export const BookingForm = () => {
             startDate={bookingData.startDate}
             deliverySlot={bookingData.deliverySlot}
             pickupSlot={bookingData.pickupSlot}
+            fulfillmentMethod={bookingData.fulfillmentMethod ?? 'delivery'}
           />
         )}
 
@@ -319,9 +322,9 @@ export const BookingForm = () => {
         )}
 
         {/* Submit Button */}
-        <Button 
-          type="submit" 
-          className="w-full" 
+        <Button
+          type="submit"
+          className="w-full"
           size="lg"
           disabled={isFormDisabled}
           variant={hasErrors ? "secondary" : "default"}
@@ -337,9 +340,9 @@ export const BookingForm = () => {
             </>
           )}
         </Button>
-        
+
         {/* Form Status Indicator */}
-        {!hasErrors && showSummary && bookingData.deliverySlot && bookingData.pickupSlot && !hasSundayRequirement && (
+        {!hasErrors && showSummary && !hasSundayRequirement && (
           <div className="text-center text-sm text-muted-foreground">
             All information is valid. Ready to submit your reservation.
           </div>

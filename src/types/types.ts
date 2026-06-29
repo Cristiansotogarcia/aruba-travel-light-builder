@@ -37,6 +37,7 @@ export interface BookingFormData {
   customerInfo: CustomerInfo;
   deliverySlot?: 'morning' | 'afternoon';
   pickupSlot?: 'morning' | 'afternoon';
+  fulfillmentMethod?: 'delivery' | 'pickup';
 }
 
 // Defines the structure for data submitted to Supabase 'bookings' table
