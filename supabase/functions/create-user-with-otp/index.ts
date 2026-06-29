@@ -24,23 +24,73 @@ serve(async (req) => {
   }
 
   try {
+    // --- AuthZ gate: only an authenticated Admin/SuperUser may create users ---
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Caller-scoped client (validates the caller's JWT).
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      }
+    );
+
+    // Admin client (service role) — only used AFTER the caller is verified.
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { data: authUserData, error: authUserError } = await supabaseUser.auth.getUser();
+    if (authUserError || !authUserData.user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', authUserData.user.id)
+      .single();
+
+    if (callerProfileError || !callerProfile || !['Admin', 'SuperUser'].includes(callerProfile.role)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { name, email, role, password } = await req.json();
 
     if (!name || !email || !role) {
       return new Response(
         JSON.stringify({ success: false, error: 'Name, email, and role are required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Create Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Whitelist assignable roles so the endpoint can never mint an unexpected role.
+    const ALLOWED_ROLES = ['Customer', 'Driver', 'Booker', 'Accounting', 'StoreStaff', 'Admin', 'SuperUser'];
+    if (!ALLOWED_ROLES.includes(role)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid role' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('Creating user with email:', email);
 

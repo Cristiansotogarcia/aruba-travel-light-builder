@@ -39,6 +39,61 @@ interface StripePaymentIntent {
 
 type StripeWebhookObject = StripeSession | StripePaymentIntent;
 
+// --- Stripe webhook signature verification (dependency-free, Web Crypto) ---
+// Implements the scheme documented at
+// https://stripe.com/docs/webhooks/signatures so we do not have to pull the
+// full Stripe SDK into the edge runtime.
+const sigEncoder = new TextEncoder();
+
+async function hmacSha256Hex(secret: string, data: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    sigEncoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, sigEncoder.encode(data));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+async function verifyStripeSignature(
+  payload: string,
+  sigHeader: string,
+  secret: string,
+  toleranceSeconds = 300,
+): Promise<boolean> {
+  let timestamp = '';
+  const v1Signatures: string[] = [];
+  for (const part of sigHeader.split(',')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    const key = part.slice(0, idx);
+    const value = part.slice(idx + 1);
+    if (key === 't') timestamp = value;
+    else if (key === 'v1') v1Signatures.push(value);
+  }
+
+  if (!timestamp || v1Signatures.length === 0) return false;
+
+  // Reject replays / forged timestamps outside the tolerance window.
+  const now = Math.floor(Date.now() / 1000);
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts) || Math.abs(now - ts) > toleranceSeconds) return false;
+
+  const expected = await hmacSha256Hex(secret, `${timestamp}.${payload}`);
+  return v1Signatures.some((sig) => timingSafeEqual(sig, expected));
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -69,8 +124,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Verify webhook signature (simplified version)
-    // In production, you should use the official Stripe library for proper verification
+    // Verify the webhook signature with the endpoint's signing secret.
+    // This is the ONLY authentication for this endpoint (it is invoked
+    // machine-to-machine by Stripe), so a failure must reject the request.
+    const signatureValid = await verifyStripeSignature(body, signature, STRIPE_WEBHOOK_SECRET);
+    if (!signatureValid) {
+      console.error('Stripe webhook signature verification failed');
+      return new Response(
+        JSON.stringify({ error: 'Webhook signature verification failed' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
     const event: StripeEvent = JSON.parse(body);
 
     console.log(`Processing Stripe webhook: ${event.type}`);

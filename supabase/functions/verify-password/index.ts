@@ -14,73 +14,68 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
+    // This endpoint only re-confirms the CALLER's OWN password (a
+    // "confirm your password before a destructive action" gate). It must
+    // not be usable as an open credential-checking oracle, so it requires
+    // the caller's JWT and ignores any client-supplied email.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Email and password are required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ success: false, error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create Supabase client for authentication
-    const supabaseAdmin = createClient(
+    const { password } = await req.json();
+    if (!password) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Password is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Resolve the caller's identity from their JWT (never from the body).
+    const supabaseUser = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      }
     );
 
-    console.log('Attempting to verify password for email:', email);
+    const { data: callerData, error: callerError } = await supabaseUser.auth.getUser();
+    if (callerError || !callerData.user?.email) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Try to sign in with the provided credentials to verify the password
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
-      email,
-      password
-    });
+    // Verify the password against the caller's OWN email only, using an
+    // isolated client so no session is persisted.
+    const verifyClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
-    console.log('Authentication result:', { 
-      success: !!authData.user, 
-      error: authError?.message 
+    const { data: authData, error: authError } = await verifyClient.auth.signInWithPassword({
+      email: callerData.user.email,
+      password,
     });
 
     if (authError || !authData.user) {
-      console.log('Authentication failed:', authError?.message);
       return new Response(
-        JSON.stringify({ success: false, error: 'Invalid email or password' }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ success: false, error: 'Invalid password' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get user profile information
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', authData.user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error('Profile lookup error:', profileError);
-    }
-
-    // Return success with user data
+    // Success — return ONLY a boolean, never profile/PII.
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        user: {
-          id: authData.user.id,
-          email: authData.user.email,
-          profile: profile
-        }
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Password verification error:', error);
