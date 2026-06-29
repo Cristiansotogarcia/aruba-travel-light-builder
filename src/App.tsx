@@ -39,6 +39,7 @@ const ReservationConfirmation = lazy(() => import("./pages/ReservationConfirmati
 const Invoice = lazy(() => import("./pages/Invoice"));
 const DeliverySlip = lazy(() => import("./pages/DeliverySlip"));
 const DeliveryTracking = lazy(() => import("./pages/DeliveryTracking"));
+const Depot = lazy(() => import("./pages/Depot"));
 
 // Loading fallback with skeleton
 const PageLoader = () => <PageSkeleton />;
@@ -120,6 +121,14 @@ const App = () => {
                           }
                         >
                           <Route path="/booker" element={<BookerDashboard />} />
+                        </Route>
+
+                        <Route
+                          element={
+                            <ProtectedRoute allowedRoles={["StoreStaff", "Booker", "Admin", "SuperUser"]} />
+                          }
+                        >
+                          <Route path="/depot" element={<Depot />} />
                         </Route>
 
                         <Route path="/contact" element={<Contact />} />

@@ -55,6 +55,8 @@ const MobileNav = () => {
         return { path: '/booker', label: 'Booker Dashboard' };
       case 'Customer':
         return { path: '/customer-dashboard', label: 'My Dashboard' };
+      case 'StoreStaff':
+        return { path: '/depot', label: 'Depot' };
       default:
         return null;
     }

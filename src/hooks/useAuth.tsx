@@ -6,10 +6,10 @@ import { User, Session } from '@supabase/supabase-js';
 import type { Profile, UserRole } from '@/types/types';
 import { useInactivityLogout } from './useInactivityLogout';
 
-// Define the allowed roles for database queries (excludes Customer which isn't stored in component_visibility)
+// Define the allowed roles for database queries (must match Supabase-generated app_role enum)
 type DbRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
 
-// Define the allowed roles for profile creation (excludes Customer)
+// Define the allowed roles for profile creation (must match Supabase-generated app_role enum)
 type ProfileRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
 
 interface AuthContextType {
@@ -62,6 +62,9 @@ const DEFAULT_PERMISSION_MATRIX: Record<UserRole, Record<string, boolean>> = {
   Driver: {
     DriverTasks: true,
   },
+  StoreStaff: {
+    DepotPickups: true,
+  },
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,9 +91,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 
   const loadPermissions = useCallback(async (role: UserRole) => {
-    // Skip loading permissions for Customer role (they don't have component visibility settings)
-    if (role === 'Customer') {
-      setPermissions(DEFAULT_PERMISSION_MATRIX.Customer || {});
+    // Skip loading permissions for roles not stored in component_visibility
+    if (role === 'Customer' || role === 'StoreStaff') {
+      setPermissions(DEFAULT_PERMISSION_MATRIX[role] || {});
       return;
     }
 
@@ -247,7 +250,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             id: data.user.id,
             email: data.user.email,
             name: name,
-            role: role as ProfileRole,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            role: role as any as ProfileRole,
           });
 
         if (profileError) {
