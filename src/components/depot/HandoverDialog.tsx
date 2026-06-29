@@ -15,6 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { SignaturePad, type SignaturePadHandle } from '@/components/driver/SignaturePad';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { queueAction } from '@/lib/offline/depotDb';
 
 export interface DepotPickup {
   booking_id: string;
@@ -46,6 +48,7 @@ export const HandoverDialog = ({
   const [submitting, setSubmitting] = useState(false);
   const signatureRef = useRef<SignaturePadHandle | null>(null);
   const { toast } = useToast();
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     if (!open) {
@@ -67,51 +70,95 @@ export const HandoverDialog = ({
 
     setSubmitting(true);
     try {
+      // Signature upload requires a live connection — skip when offline and
+      // note it in the queued payload so the operator can re-capture it later
+      // if needed.
       let signaturePath: string | null = null;
 
-      const signaturePad = signatureRef.current;
-      if (signaturePad && !signaturePad.isEmpty()) {
-        const signatureBlob = await signaturePad.toBlob();
-        if (signatureBlob) {
-          const filePath = `bookings/${pickup.booking_id}/depot/handover-signature-${Date.now()}.png`;
-          const signatureFile = new File([signatureBlob], 'handover-signature.png', {
-            type: 'image/png',
-          });
-
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('delivery-proofs')
-            .upload(filePath, signatureFile, {
-              contentType: 'image/png',
-              upsert: true,
+      if (isOnline) {
+        const signaturePad = signatureRef.current;
+        if (signaturePad && !signaturePad.isEmpty()) {
+          const signatureBlob = await signaturePad.toBlob();
+          if (signatureBlob) {
+            const filePath = `bookings/${pickup.booking_id}/depot/handover-signature-${Date.now()}.png`;
+            const signatureFile = new File([signatureBlob], 'handover-signature.png', {
+              type: 'image/png',
             });
 
-          if (uploadError) throw uploadError;
-          signaturePath = uploadData.path;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('delivery-proofs')
+              .upload(filePath, signatureFile, {
+                contentType: 'image/png',
+                upsert: true,
+              });
+
+            if (uploadError) throw uploadError;
+            signaturePath = uploadData.path;
+          }
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc('complete_depot_handover', {
+      const rpcArgs = {
         p_booking_id: pickup.booking_id,
         p_collected_by_name: collectedByName.trim(),
         p_signature_path: signaturePath,
         p_notes: notes.trim() || null,
-      });
+      };
 
-      if (error) throw error;
+      if (isOnline) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).rpc('complete_depot_handover', rpcArgs);
+        if (error) {
+          // Check if it's a network failure — fall through to the offline queue.
+          const msg: string =
+            error instanceof Error ? error.message : String(error.message ?? error);
+          const isNetworkError =
+            msg.toLowerCase().includes('failed to fetch') ||
+            msg.toLowerCase().includes('network') ||
+            msg.toLowerCase().includes('load failed');
 
-      toast({
-        title: 'Hand-over Complete',
-        description: `Equipment handed over to ${collectedByName.trim()}.`,
-      });
+          if (!isNetworkError) throw error;
+
+          // Network failure despite navigator.onLine — queue it.
+          await queueAction({
+            type: 'handover',
+            rpcName: 'complete_depot_handover',
+            args: rpcArgs,
+            createdAt: Date.now(),
+          });
+
+          toast({
+            title: 'Saved offline',
+            description: 'Will sync automatically when back online.',
+          });
+        } else {
+          toast({
+            title: 'Hand-over Complete',
+            description: `Equipment handed over to ${collectedByName.trim()}.`,
+          });
+        }
+      } else {
+        // Offline — queue the action.
+        await queueAction({
+          type: 'handover',
+          rpcName: 'complete_depot_handover',
+          args: rpcArgs,
+          createdAt: Date.now(),
+        });
+
+        toast({
+          title: 'Saved offline',
+          description: 'Will sync automatically when back online.',
+        });
+      }
 
       onCompleted();
       onClose();
-    } catch (error) {
-      console.error('Error completing depot handover:', error);
+    } catch (err) {
+      console.error('Error completing depot handover:', err);
       toast({
         title: 'Hand-over Failed',
-        description: error instanceof Error ? error.message : 'The hand-over could not be completed.',
+        description: err instanceof Error ? err.message : 'The hand-over could not be completed.',
         variant: 'destructive',
       });
     } finally {
@@ -128,6 +175,9 @@ export const HandoverDialog = ({
             Record who is collecting the equipment for booking{' '}
             <span className="font-mono font-semibold">{pickup.pickup_code}</span>.
             A signature is optional but recommended.
+            {!isOnline && (
+              <span className="ml-1 text-amber-600">(Offline — action will be queued.)</span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +194,7 @@ export const HandoverDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Signature (optional)</Label>
+            <Label>Signature (optional{!isOnline ? ' — skipped offline' : ''})</Label>
             <SignaturePad ref={signatureRef} />
           </div>
 

@@ -15,6 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { DepotPickup } from './HandoverDialog';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { queueAction } from '@/lib/offline/depotDb';
 
 interface ReturnDialogProps {
   pickup: DepotPickup;
@@ -33,6 +35,7 @@ export const ReturnDialog = ({
   const [conditionNote, setConditionNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     if (!open) {
@@ -44,27 +47,66 @@ export const ReturnDialog = ({
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc('complete_depot_return', {
+      const rpcArgs = {
         p_booking_id: pickup.booking_id,
         p_returned_by_name: returnedByName.trim() || null,
         p_condition_note: conditionNote.trim() || null,
-      });
+      };
 
-      if (error) throw error;
+      if (isOnline) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).rpc('complete_depot_return', rpcArgs);
+        if (error) {
+          // Check if it's a network failure — fall through to the offline queue.
+          const msg: string =
+            error instanceof Error ? error.message : String(error.message ?? error);
+          const isNetworkError =
+            msg.toLowerCase().includes('failed to fetch') ||
+            msg.toLowerCase().includes('network') ||
+            msg.toLowerCase().includes('load failed');
 
-      toast({
-        title: 'Return Checked In',
-        description: `Equipment for booking ${pickup.pickup_code} has been checked in.`,
-      });
+          if (!isNetworkError) throw error;
+
+          // Network failure despite navigator.onLine — queue it.
+          await queueAction({
+            type: 'return',
+            rpcName: 'complete_depot_return',
+            args: rpcArgs,
+            createdAt: Date.now(),
+          });
+
+          toast({
+            title: 'Saved offline',
+            description: 'Will sync automatically when back online.',
+          });
+        } else {
+          toast({
+            title: 'Return Checked In',
+            description: `Equipment for booking ${pickup.pickup_code} has been checked in.`,
+          });
+        }
+      } else {
+        // Offline — queue the action.
+        await queueAction({
+          type: 'return',
+          rpcName: 'complete_depot_return',
+          args: rpcArgs,
+          createdAt: Date.now(),
+        });
+
+        toast({
+          title: 'Saved offline',
+          description: 'Will sync automatically when back online.',
+        });
+      }
 
       onCompleted();
       onClose();
-    } catch (error) {
-      console.error('Error completing depot return:', error);
+    } catch (err) {
+      console.error('Error completing depot return:', err);
       toast({
         title: 'Return Failed',
-        description: error instanceof Error ? error.message : 'The return could not be checked in.',
+        description: err instanceof Error ? err.message : 'The return could not be checked in.',
         variant: 'destructive',
       });
     } finally {
@@ -80,6 +122,9 @@ export const ReturnDialog = ({
           <DialogDescription>
             Record the return of equipment for booking{' '}
             <span className="font-mono font-semibold">{pickup.pickup_code}</span>.
+            {!isOnline && (
+              <span className="ml-1 text-amber-600">(Offline — action will be queued.)</span>
+            )}
           </DialogDescription>
         </DialogHeader>
 

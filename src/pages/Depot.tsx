@@ -10,17 +10,24 @@ import { HandoverDialog } from '@/components/depot/HandoverDialog';
 import { ReturnDialog } from '@/components/depot/ReturnDialog';
 import QrScanner from '@/components/depot/QrScanner';
 import type { DepotPickup } from '@/components/depot/HandoverDialog';
-import { Package, Phone, Calendar, Search, AlertCircle, QrCode } from 'lucide-react';
+import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useDepotSync } from '@/hooks/useDepotSync';
+import { cachePickups, getCachedPickups } from '@/lib/offline/depotDb';
 
 const Depot = () => {
   const [pickups, setPickups] = useState<DepotPickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
   const [codeFilter, setCodeFilter] = useState('');
   const [showScanner, setShowScanner] = useState(false);
   const [handoverTarget, setHandoverTarget] = useState<DepotPickup | null>(null);
   const [returnTarget, setReturnTarget] = useState<DepotPickup | null>(null);
   const { toast } = useToast();
+
+  const isOnline = useOnlineStatus();
+  const { pendingCount, syncNow, refreshCount } = useDepotSync();
 
   const fetchPickups = useCallback(async () => {
     setLoading(true);
@@ -29,18 +36,30 @@ const Depot = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error: rpcError } = await (supabase as any).rpc('get_depot_pickups');
       if (rpcError) {
-        const msg: string = rpcError.message || 'Unknown error';
-        if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('not authorized') || rpcError.code === '42501') {
-          setError('You are not authorized to view depot pickups. Please contact an administrator.');
-        } else {
-          setError(msg);
-        }
-        return;
+        throw rpcError;
       }
-      setPickups((data as DepotPickup[]) ?? []);
+      const rows = (data as DepotPickup[]) ?? [];
+      setPickups(rows);
+      setFromCache(false);
+      // Persist to IndexedDB so the offline path can read it later.
+      void cachePickups(rows);
+      return;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load depot pickups.';
-      setError(msg);
+      // Network error or RPC error — fall back to the local cache.
+      const cached = await getCachedPickups();
+      if (cached.length > 0) {
+        setPickups(cached);
+        setFromCache(true);
+        setError(null);
+      } else {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'object' && err !== null && 'message' in err
+            ? String((err as { message: unknown }).message)
+            : 'Failed to load depot pickups.';
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -50,6 +69,13 @@ const Depot = () => {
     void fetchPickups();
   }, [fetchPickups]);
 
+  // Re-fetch when we come back online.
+  useEffect(() => {
+    if (isOnline) {
+      void fetchPickups();
+    }
+  }, [isOnline, fetchPickups]);
+
   const filteredPickups = useMemo(() => {
     const q = codeFilter.trim().toLowerCase();
     if (!q) return pickups;
@@ -57,15 +83,17 @@ const Depot = () => {
   }, [codeFilter, pickups]);
 
   const handleActionCompleted = useCallback(async () => {
-    toast({ title: 'Refreshing…' });
-    await fetchPickups();
-  }, [fetchPickups, toast]);
+    await refreshCount();
+    if (isOnline) {
+      toast({ title: 'Refreshing…' });
+      await fetchPickups();
+    }
+  }, [fetchPickups, isOnline, refreshCount, toast]);
 
   const handleQrScan = useCallback(
     (text: string) => {
       const code = text.trim().toUpperCase();
       setCodeFilter(code);
-      // Check if there is a matching active pickup
       const match = pickups.find(
         (p) => p.pickup_code.toUpperCase() === code,
       );
@@ -171,6 +199,8 @@ const Depot = () => {
     </Card>
   );
 
+  const showOfflineBanner = !isOnline || pendingCount > 0;
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -182,6 +212,37 @@ const Depot = () => {
             Process equipment hand-overs and returns for self-pickup bookings.
           </p>
         </div>
+
+        {/* Offline / pending-actions banner */}
+        {showOfflineBanner && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span className="flex-1">
+              {!isOnline && pendingCount > 0
+                ? `Offline — ${pendingCount} action${pendingCount === 1 ? '' : 's'} queued, will sync when back online.`
+                : !isOnline
+                ? 'Offline — showing cached pickups.'
+                : `${pendingCount} action${pendingCount === 1 ? '' : 's'} queued — syncing…`}
+            </span>
+            {isOnline && pendingCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                onClick={() => void syncNow()}
+              >
+                Sync now
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Cached data notice */}
+        {fromCache && (
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
+            Showing cached pickups from the last successful load.
+          </div>
+        )}
 
         {/* Code lookup */}
         <Card className="mb-6 border border-border/60">
