@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CalendarIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
@@ -13,14 +13,32 @@ const toIso = (d: Date) => format(d, 'yyyy-MM-dd');
 export function RentalDateRangePicker() {
   const { startDate, endDate, setRange, clear } = useRentalDates();
   const [open, setOpen] = useState(false);
-  const selected: DateRange | undefined =
+
+  const committed: DateRange | undefined =
     startDate && endDate ? { from: parseISO(startDate), to: parseISO(endDate) } : undefined;
 
+  // The calendar needs to reflect the in-progress (first) click before a full
+  // range exists, so we hold a local draft instead of feeding it only the
+  // committed store value (a controlled picker discards partial selections).
+  const [draft, setDraft] = useState<DateRange | undefined>(committed);
+
+  // Re-sync the draft with the committed range whenever the popover opens.
+  useEffect(() => {
+    if (open) setDraft(committed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const handleSelect = (range: DateRange | undefined) => {
+    setDraft(range);
     if (range?.from && range?.to) {
       setRange(toIso(range.from), toIso(range.to));
       setOpen(false);
     }
+  };
+
+  const handleClear = () => {
+    clear();
+    setDraft(undefined);
   };
 
   const label =
@@ -41,16 +59,16 @@ export function RentalDateRangePicker() {
           <Calendar
             mode="range"
             numberOfMonths={2}
-            selected={selected}
+            selected={draft}
             onSelect={handleSelect}
             min={MIN_NIGHTS + 1} // react-day-picker min counts days; N nights = N+1 days
             disabled={{ before: new Date() }}
-            initialFocus
+            autoFocus
           />
         </PopoverContent>
       </Popover>
       {startDate && endDate && (
-        <Button variant="ghost" size="sm" onClick={clear}>Clear</Button>
+        <Button variant="ghost" size="sm" onClick={handleClear}>Clear</Button>
       )}
     </div>
   );
