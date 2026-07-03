@@ -39,14 +39,20 @@ vi.mock('./CloudflareImageUpload', () => ({
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProductManagement } from './ProductManagement';
 
 describe('ProductManagement image handling', () => {
   it('adds and removes multiple images', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     render(
-      <BrowserRouter>
-        <ProductManagement />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ProductManagement />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
 
     await screen.findByText('Product Management');

@@ -16,6 +16,18 @@ interface SiteAssetsContextType {
 
 const SiteAssetsContext = createContext<SiteAssetsContextType | undefined>(undefined);
 
+// Cache resolved asset URLs so returning visitors paint the hero/logo immediately
+// instead of waiting for two DB round-trips (stale-while-revalidate).
+const ASSETS_CACHE_KEY = 'tla-site-assets-v1';
+
+const readCachedAssets = (): SiteAssets => {
+  try {
+    return JSON.parse(localStorage.getItem(ASSETS_CACHE_KEY) || '{}') as SiteAssets;
+  } catch {
+    return {};
+  }
+};
+
 export const useSiteAssets = () => {
   const ctx = useContext(SiteAssetsContext);
   if (!ctx) throw new Error('useSiteAssets must be used within SiteAssetsProvider');
@@ -23,19 +35,20 @@ export const useSiteAssets = () => {
 };
 
 export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
-  const [assets, setAssets] = useState<SiteAssets>({});
+  const [assets, setAssets] = useState<SiteAssets>(readCachedAssets);
 
   const fetchAssets = async () => {
-    const { data, error } = await supabase
-      .from('content_images')
-      .select('image_key, file_path')
-      .in('image_key', ['hero_image', 'logo', 'favicon']);
-
-    const { data: titleData } = await supabase
-      .from('content_blocks')
-      .select('content')
-      .eq('block_key', 'site_title')
-      .single();
+    const [{ data, error }, { data: titleData }] = await Promise.all([
+      supabase
+        .from('content_images')
+        .select('image_key, file_path')
+        .in('image_key', ['hero_image', 'logo', 'favicon']),
+      supabase
+        .from('content_blocks')
+        .select('content')
+        .eq('block_key', 'site_title')
+        .single(),
+    ]);
 
     if (!error && data) {
       const result: SiteAssets = {};
@@ -54,6 +67,11 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
         result.title = titleData.content as string;
       }
       setAssets(result);
+      try {
+        localStorage.setItem(ASSETS_CACHE_KEY, JSON.stringify(result));
+      } catch {
+        // storage full/blocked — cache is best-effort only
+      }
     }
   };
 

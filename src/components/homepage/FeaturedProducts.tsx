@@ -9,9 +9,8 @@ export const FeaturedProducts = () => {
     const { data: products = [] } = useQuery({
         queryKey: ['featured-products'],
         queryFn: getFeaturedProducts,
-        staleTime: 30 * 1000, // 30 seconds
-        refetchOnMount: true,
-        refetchOnWindowFocus: true,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
     });
 
     if (products.length === 0) return null;
@@ -44,6 +43,8 @@ export const FeaturedProducts = () => {
                                     <img
                                         src={product.images[0]}
                                         alt={product.name}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig, type Plugin } from "vite";
+import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
@@ -144,6 +145,10 @@ export default defineConfig(async ({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/setupTests.ts',
       css: true,
+      // .claude/worktrees holds parallel-agent checkouts whose tests resolve the
+      // @ alias back to THIS tree — collecting them runs duplicates against the
+      // wrong sources.
+      exclude: [...configDefaults.exclude, '**/.claude/**'],
     },
   };
 });

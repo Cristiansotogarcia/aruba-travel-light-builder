@@ -8,12 +8,16 @@ export const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0">
-        <img
-          src={assets.hero_image}
-          alt="Aruba beach rentals"
-          className="h-full w-full object-cover"
-        />
+      <div className="absolute inset-0 bg-foreground">
+        {assets.hero_image && (
+          <img
+            src={assets.hero_image}
+            alt="Aruba beach rentals"
+            fetchPriority="high"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/65" />
       </div>
       <div className="relative z-10">

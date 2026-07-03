@@ -126,6 +126,8 @@ export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps)
               <img
                 src={equipment.images[0]}
                 alt={equipment.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             )}
