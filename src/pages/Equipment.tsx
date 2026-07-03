@@ -1,5 +1,5 @@
 // src/pages/Equipment.tsx
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
@@ -140,12 +140,17 @@ const Equipment = () => {
     };
   }, [equipmentData]);
 
-  const isInitialMount = useRef(true);
+  // Keep the active price range synced to the data-derived bounds. This must
+  // re-run whenever products arrive: syncing only on first mount deadlocked the
+  // page whenever the query resolved after mount (fresh visits in prod builds) —
+  // the range stayed [0,0] and the entire catalog was filtered out.
   useEffect(() => {
-    if (isInitialMount.current) {
-      setFilters(f => ({ ...f, priceRange: filterOptions.priceRange as [number, number] }));
-      isInitialMount.current = false;
-    }
+    const [min, max] = filterOptions.priceRange;
+    setFilters(f =>
+      f.priceRange[0] === min && f.priceRange[1] === max
+        ? f
+        : { ...f, priceRange: [min, max] }
+    );
   }, [filterOptions.priceRange]);
 
   const filteredEquipment = useMemo(() => {
