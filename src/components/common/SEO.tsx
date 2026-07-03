@@ -135,7 +135,6 @@ export const SEO: React.FC<SEOProps> = ({
 
       {/* Twitter Card meta tags */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@travellightaruba" />
       <meta name="twitter:title" content={seoData?.twitter_title || meta.title} />
       <meta name="twitter:description" content={seoData?.og_description || meta.description} />
       <meta name="twitter:image" content={meta.image} />
