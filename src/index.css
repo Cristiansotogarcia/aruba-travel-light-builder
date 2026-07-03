@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap");
+/* Fonts load via <link> in index.html — a CSS @import here chains the request
+   behind the CSS bundle and blocks first render. */
 
 @tailwind base;
 @tailwind components;

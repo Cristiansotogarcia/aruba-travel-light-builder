@@ -10,6 +10,7 @@ import DOMPurify from 'dompurify';
 import { Share2, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/hooks/useCart';
+import { cardImage } from '@/lib/images';
 import type { AvailabilityStatus, Product } from '@/types/types';
 
 interface Equipment {
@@ -124,7 +125,7 @@ export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps)
           <div className="aspect-[4/3] relative overflow-hidden">
             {equipment.images[0] && (
               <img
-                src={equipment.images[0]}
+                src={cardImage(equipment.images[0])}
                 alt={equipment.name}
                 loading="lazy"
                 decoding="async"

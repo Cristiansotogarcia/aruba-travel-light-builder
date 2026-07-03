@@ -56,11 +56,17 @@ export const SiteAssetsProvider = ({ children }: { children: ReactNode }) => {
         if (!['hero_image', 'logo', 'favicon'].includes(image_key)) {
           return;
         }
+        const key = image_key as keyof SiteAssets;
+        // Absolute URLs (e.g. Cloudflare Images) are served as-is; bare paths
+        // resolve against the Supabase site-assets bucket.
+        if (/^https?:\/\//.test(file_path)) {
+          result[key] = file_path;
+          return;
+        }
         const path = file_path.startsWith(`${image_key}/`) ? file_path : `${image_key}/${file_path}`;
         const { data: url } = supabase.storage
           .from('site-assets')
           .getPublicUrl(path);
-        const key = image_key as keyof SiteAssets;
         result[key] = url.publicUrl;
       });
       if (titleData?.content) {

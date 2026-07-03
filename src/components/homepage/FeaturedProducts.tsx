@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
+import { cardImage } from '@/lib/images';
 
 export const FeaturedProducts = () => {
     const { data: products = [] } = useQuery({
@@ -41,7 +42,7 @@ export const FeaturedProducts = () => {
                             {product.images?.[0] && (
                                 <div className="relative aspect-[4/3] overflow-hidden">
                                     <img
-                                        src={product.images[0]}
+                                        src={cardImage(product.images[0])}
                                         alt={product.name}
                                         loading="lazy"
                                         decoding="async"
