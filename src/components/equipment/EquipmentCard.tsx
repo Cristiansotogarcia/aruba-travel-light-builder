@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { cardImage } from '@/lib/images';
 
 interface Equipment {
   id: string;
@@ -87,7 +88,7 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
           <div className="aspect-square relative overflow-hidden">
             {equipment.images[0] && (
               <img
-                src={equipment.images[0]}
+                src={cardImage(equipment.images[0])}
                 alt={equipment.name}
                 loading="lazy"
                 decoding="async"
