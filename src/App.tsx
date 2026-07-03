@@ -42,6 +42,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
+      // Sane site-wide default: content barely changes minute-to-minute, so
+      // remounting a page must not refire every query it touches.
+      staleTime: 2 * 60 * 1000,
+      gcTime: 15 * 60 * 1000,
     },
   },
 });

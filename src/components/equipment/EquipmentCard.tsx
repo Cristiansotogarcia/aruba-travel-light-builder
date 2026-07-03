@@ -89,6 +89,8 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
               <img
                 src={equipment.images[0]}
                 alt={equipment.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             )}

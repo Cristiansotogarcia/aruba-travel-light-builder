@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SEOProps {
@@ -44,36 +45,24 @@ export const SEO: React.FC<SEOProps> = ({
   productData,
   pageSlug
 }) => {
-  const [seoData, setSeoData] = React.useState<SEOMetaData | null>(null);
-  const [loading, setLoading] = React.useState(false);
-
-  // Fetch SEO data from database for static pages
-  React.useEffect(() => {
-    if (pageSlug && !productData) {
-      const fetchSEOData = async () => {
-        setLoading(true);
-        try {
-          const { data, error } = await supabase
-            .from('seo_meta')
-            .select('*')
-            .eq('page_slug', pageSlug)
-            .maybeSingle();
-
-          if (error && error.code !== 'PGRST116') {
-            console.error('Error fetching SEO data:', error);
-          } else if (data) {
-            setSeoData(data);
-          }
-        } catch (error) {
-          console.error('Error fetching SEO data:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchSEOData();
-    }
-  }, [pageSlug, productData]);
+  // Fetch SEO data for static pages via the shared query cache so revisiting a
+  // page within the session doesn't refire the request.
+  const { data: seoData = null, isLoading: loading } = useQuery<SEOMetaData | null>({
+    queryKey: ['seo-meta', pageSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('seo_meta')
+        .select('*')
+        .eq('page_slug', pageSlug as string)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching SEO data:', error);
+      }
+      return data ?? null;
+    },
+    enabled: Boolean(pageSlug && !productData),
+    staleTime: 10 * 60 * 1000,
+  });
 
   // Generate meta tags based on available data
   const generateMetaTags = () => {

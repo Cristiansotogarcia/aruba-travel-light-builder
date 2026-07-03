@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { Buffer } from 'buffer';
@@ -143,5 +144,9 @@ export default defineConfig(({ mode }) => ({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts', // or path to your setup file
     css: true, // if you want to process CSS in tests
+    // .claude/worktrees holds parallel-agent checkouts whose tests resolve the
+    // @ alias back to THIS tree — collecting them runs duplicates against the
+    // wrong sources.
+    exclude: [...configDefaults.exclude, '**/.claude/**'],
   },
 }));

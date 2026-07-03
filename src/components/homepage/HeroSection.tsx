@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
@@ -8,11 +7,15 @@ export const HeroSection = () => {
 
   return (
     <section className="hero-section">
-      <img
-        src={assets.hero_image}
-        alt="Hero"
-        className="w-full h-auto object-cover"
-      />
+      {assets.hero_image && (
+        <img
+          src={assets.hero_image}
+          alt="Hero"
+          fetchPriority="high"
+          decoding="async"
+          className="w-full h-auto object-cover"
+        />
+      )}
       <div className="hero-content">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg">
           {assets.title || 'Premium Beach & Baby Equipment Rentals in Aruba'}

@@ -70,9 +70,11 @@ const AboutUsSection: React.FC = () => {
             {/* Image first on mobile, text first on desktop */}
             <div className="flex justify-center md:order-last">
               {aboutContent?.about_image ? (
-                <img 
+                <img
                   src={aboutContent.about_image}
                   alt="About Us"
+                  loading="lazy"
+                  decoding="async"
                   className="w-80 h-80 rounded-full object-cover shadow-lg"
                 />
               ) : (
