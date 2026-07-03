@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://travellightaruba.com
+**URL**: https://travelightaruba.com
 
 ## How can I edit this code?
 
@@ -10,7 +10,7 @@ There are several ways of editing your application.
 
 **Use the Travel Light Aruba builder**
 
-Visit your [Travel Light Aruba project](https://travellightaruba.com) to make changes directly in the online editor.
+Visit your [Travel Light Aruba project](https://travelightaruba.com) to make changes directly in the online editor.
 
 Changes made via the builder will be committed automatically to this repo.
 
@@ -70,7 +70,7 @@ Yes, you can!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more in our documentation about [setting up a custom domain](https://travellightaruba.com/docs/custom-domain)
+Read more in our documentation about [setting up a custom domain](https://travelightaruba.com/docs/custom-domain)
 
 ## Environment variables
 

@@ -40,7 +40,7 @@ export const useSEO = (config: SEOConfig = {}) => {
         ? `${product.description.substring(0, 155)}...`
         : `Rent ${product.name} in Aruba. Premium beach and baby equipment rentals with delivery service.`,
       image: imageUrl,
-      url: `${typeof window !== 'undefined' ? window.location.origin : 'https://travellightaruba.com'}/equipment/${product.slug || product.name.toLowerCase().replace(/\s+/g, '-')}`,
+      url: `${typeof window !== 'undefined' ? window.location.origin : 'https://travelightaruba.com'}/equipment/${product.slug || product.name.toLowerCase().replace(/\s+/g, '-')}`,
       type: 'product' as const,
       productData: {
         id: product.id,

@@ -34,7 +34,7 @@ interface SEOMetaData {
 const DEFAULT_TITLE = 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
 const DEFAULT_DESCRIPTION = 'Premium Beach & Baby Equipment Rentals in Aruba';
 const DEFAULT_IMAGE = 'https://abofxrgdxfzrhjbvhdkj.supabase.co/storage/v1/object/public/site-assets/favicon/1751031479742-TLA-Favicon.png';
-const SITE_URL = 'https://travellightaruba.com';
+const SITE_URL = 'https://travelightaruba.com';
 
 export const SEO: React.FC<SEOProps> = ({
   title,
