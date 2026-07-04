@@ -97,12 +97,13 @@ Before release, make sure:
 
 If Resend is not configured correctly, the functions may succeed logically but the customer/admin emails will not actually be delivered.
 
-### Stripe webhook is legacy and not part of the current payment flow
+### Payments are manual — Stripe has been removed
 
-The current production flow is manual payment-link based, not Stripe-checkout based.
+The production flow is manual payment-link based. Stripe (the `stripe-webhook` and
+`create-payment-session` edge functions and all Stripe API/checkout code) has been
+removed entirely and is no longer part of the codebase.
 
 Operational guidance:
 
-- do not rely on `stripe-webhook` for production booking/payment handling
-- do not deploy or wire `create-payment-session` / `stripe-webhook` unless Stripe is intentionally reintroduced
 - keep the manual payment-link flow in `system_settings` and the admin booking confirmation flow as the canonical payment process
+- payments are recorded via the `booking_payments` ledger and the admin "confirm payment received" flow (`payment_records` + `issue_booking_invoice`)
