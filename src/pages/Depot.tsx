@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Header } from '@/components/layout/Header';
+import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
 import { HandoverDialog } from '@/components/depot/HandoverDialog';
 import { ReturnDialog } from '@/components/depot/ReturnDialog';
 import QrScanner from '@/components/depot/QrScanner';
@@ -14,6 +14,10 @@ import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff } from '
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useDepotSync } from '@/hooks/useDepotSync';
 import { cachePickups, getCachedPickups } from '@/lib/offline/depotDb';
+
+const DEPOT_NAV: AppNavEntry[] = [
+  { id: 'pickups', label: 'Self-pickup', icon: Package },
+];
 
 const Depot = () => {
   const [pickups, setPickups] = useState<DepotPickup[]>([]);
@@ -210,20 +214,19 @@ const Depot = () => {
   const showOfflineBanner = !isOnline || pendingCount > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
-
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">Depot — Self-pickup</h1>
-          <p className="text-sm text-muted-foreground">
-            Process equipment hand-overs and returns for self-pickup bookings.
-          </p>
-        </div>
-
+    <AppShell
+      panelName="Depot"
+      nav={DEPOT_NAV}
+      activeSection="pickups"
+      onSectionChange={() => {}}
+      contentClassName="max-w-4xl"
+      pageTitle="Self-pickup"
+      pageDescription="Process equipment hand-overs and returns for self-pickup bookings."
+    >
+      <div className="space-y-4">
         {/* Offline / pending-actions banner */}
         {showOfflineBanner && (
-          <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <WifiOff className="h-4 w-4 shrink-0" />
             <span className="flex-1">
               {!isOnline && pendingCount > 0
@@ -247,13 +250,13 @@ const Depot = () => {
 
         {/* Cached data notice */}
         {fromCache && (
-          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
             Showing cached pickups from the last successful load.
           </div>
         )}
 
         {/* Code lookup */}
-        <Card className="mb-6 border border-border/60">
+        <Card className="border border-border/60">
           <CardHeader className="pb-3 pt-4">
             <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Search className="h-4 w-4" />
@@ -346,7 +349,7 @@ const Depot = () => {
             )}
           </div>
         )}
-      </main>
+      </div>
 
       {handoverTarget && (
         <HandoverDialog
@@ -365,7 +368,7 @@ const Depot = () => {
           onCompleted={() => void handleActionCompleted()}
         />
       )}
-    </div>
+    </AppShell>
   );
 };
 

@@ -146,11 +146,11 @@ const CustomerDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-muted/20">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-semibold mb-8">My Bookings</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <h1 className="mb-8 font-display text-2xl font-semibold sm:text-3xl">My Bookings</h1>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <BookingCardSkeleton key={i} />
             ))}
@@ -163,20 +163,25 @@ const CustomerDashboard = () => {
   const activeDeliveries = getActiveDeliveries();
 
   return (
-    <div className="min-h-screen">
-      <Header /> 
-      
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-semibold mb-8">My Bookings</h1>
+    <div className="min-h-screen bg-muted/20">
+      <Header />
+
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 space-y-1">
+          <h1 className="font-display text-2xl font-semibold sm:text-3xl">My Bookings</h1>
+          <p className="text-sm text-muted-foreground">
+            Track deliveries, manage your reservations, and view invoices.
+          </p>
+        </div>
 
         {/* Active Deliveries Section */}
         {activeDeliveries.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-              <Truck className="h-6 w-6" />
+            <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold sm:text-2xl">
+              <Truck className="h-6 w-6 shrink-0" />
               Track Your Delivery
             </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {activeDeliveries.map((task) => (
                 <Card key={task.id} className="overflow-hidden flex flex-col border-l-4 border-l-blue-500">
                   <CardHeader className="pb-3">
@@ -237,7 +242,7 @@ const CustomerDashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {bookings.map((booking: CustomerBooking) => (
               <Card key={booking.id} className="overflow-hidden flex flex-col">
                 <CardHeader>

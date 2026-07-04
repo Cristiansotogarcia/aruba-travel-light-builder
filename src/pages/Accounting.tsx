@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { CreditCard, FileMinus, FileText, LayoutDashboard } from 'lucide-react';
 
 import { AccountingInvoicesPanel } from '@/components/accounting/AccountingInvoicesPanel';
 import { AccountingOverview } from '@/components/accounting/AccountingOverview';
-import { AccountingSidebar } from '@/components/accounting/AccountingSidebar';
 import { CreditNotesPanel } from '@/components/accounting/CreditNotesPanel';
 import { AccountingReports } from '@/components/admin/AccountingReports';
-import { DashboardLayout } from '@/components/admin/DashboardLayout';
+import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
 
 const STORAGE_KEY = 'accounting:activeSection';
+
+const ACCOUNTING_NAV: AppNavEntry[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'transactions', label: 'Transactions', icon: CreditCard },
+  { id: 'invoices', label: 'Invoices', icon: FileText },
+  { id: 'credit-notes', label: 'Credit Notes', icon: FileMinus },
+];
 
 const Accounting = () => {
   const [activeSection, setActiveSection] = useState(
@@ -17,6 +24,8 @@ const Accounting = () => {
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, activeSection);
   }, [activeSection]);
+
+  const nav = useMemo(() => ACCOUNTING_NAV, []);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -33,12 +42,15 @@ const Accounting = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="min-h-screen flex w-full">
-        <AccountingSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-        <main className="flex-1 overflow-y-auto bg-slate-50/40">{renderActiveSection()}</main>
-      </div>
-    </DashboardLayout>
+    <AppShell
+      panelName="Accounting"
+      nav={nav}
+      activeSection={activeSection}
+      onSectionChange={setActiveSection}
+      contentClassName="max-w-none p-0"
+    >
+      {renderActiveSection()}
+    </AppShell>
   );
 };
 
