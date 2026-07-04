@@ -28,12 +28,16 @@ export const BookingFilters = ({
 }: BookingFiltersProps) => {
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
-    { value: 'pending', label: 'Pending' },
+    { value: 'pending_admin_review', label: 'Pending Admin Review' },
+    { value: 'pending', label: 'Pending Payment' },
     { value: 'confirmed', label: 'Confirmed' },
+    { value: 'in_transit', label: 'In Transit' },
     { value: 'out_for_delivery', label: 'Out for Delivery' },
     { value: 'delivered', label: 'Delivered' },
+    { value: 'undeliverable', label: 'Undeliverable' },
     { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' }
+    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'rejected', label: 'Rejected' }
   ];
 
   const currentStatusLabel = statusOptions.find(option => option.value === statusFilter)?.label || 'All Statuses';

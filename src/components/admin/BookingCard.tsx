@@ -3,8 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card'; // Removed CardFooter, CardHeader, CardTitle
 import { Booking } from './calendar/types'; // Removed BookingItem
-import { Eye, Edit, Mail, Phone, MapPin, CalendarDays } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
-import { getStatusColor } from './calendar/statusUtils'; // Added back getStatusColor import
+import { Eye, Edit, Mail, Phone, MapPin, CalendarDays, MessageSquare } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
+import { getStatusColor, getStatusLabel } from './calendar/statusUtils'; // Added back getStatusColor import
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface BookingCardProps {
   booking: Booking;
@@ -139,11 +140,14 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
             <h3 className="font-bold text-lg text-gray-900">{booking.customer_name}</h3>
             <p className="text-sm text-gray-500">Booking ID: {booking.id.substring(0, 8)}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end gap-2">
             <Badge className={getStatusColor(booking.status)}>
-              {booking.status === 'undeliverable' ? 'Undeliverable' : booking.status}
+              {getStatusLabel(booking.status)}
             </Badge>
-            <span className="font-bold text-xl text-gray-900">${booking.total_amount}</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
+            </span>
+            <span className="font-bold text-xl text-gray-900">${Number(booking.total_amount).toFixed(2)}</span>
           </div>
         </div>
 
@@ -161,6 +165,12 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
               <MapPin className="h-4 w-4" />
               <span>{booking.customer_address}</span>
             </div>
+            {booking.customer_comment && (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MessageSquare className="h-4 w-4 mt-1" />
+                <span className="whitespace-pre-wrap">{booking.customer_comment}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-600">
               <CalendarDays className="h-4 w-4" /> {/* Changed to CalendarDays */}
               <span>
@@ -175,7 +185,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
               {booking.booking_items?.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
                   <span>{item.equipment_name} × {item.quantity}</span>
-                  <span>${item.subtotal}</span>
+                  <span>${item.subtotal.toFixed(2)}</span>
                 </div>
               ))}
             </div>

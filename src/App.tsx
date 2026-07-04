@@ -5,37 +5,44 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
+import { PasswordChangeGate } from "@/components/auth/PasswordChangeGate";
+import { initPerformanceMonitoring } from "@/utils/performanceMonitoring";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteAssetsProvider } from "@/hooks/useSiteAssets";
+import { CartProvider } from "@/hooks/useCart";
+import { NotificationProvider } from "@/hooks/useNotifications";
+import { RentalDatesProvider } from "@/hooks/useRentalDates";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { AppPrefetch } from "@/AppPrefetch"; //
+import { PageSkeleton } from "@/components/common/SkeletonLoader";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
 const Equipment = lazy(() => import("./pages/Equipment"));
 const EquipmentItem = lazy(() => import("./pages/EquipmentItem"));
 const About = lazy(() => import("./pages/About"));
-const Book = lazy(() => import("./pages/Book"));
+const Cart = lazy(() => import("./pages/Cart"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Policies = lazy(() => import("./pages/Policies"));
+const Book = lazy(() => import("./pages/Book"));
 const Admin = lazy(() => import("./pages/Admin"));
+const Accounting = lazy(() => import("./pages/Accounting"));
 const Login = lazy(() => import("./pages/Login"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const BookerDashboard = lazy(() => import("./pages/BookerDashboard"));
-const SeoDemo = lazy(() => import("./pages/SeoDemo"));
-const SeoTest = lazy(() => import("./pages/SeoTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Policies = lazy(() => import("./pages/Policies"));
+const ReservationConfirmation = lazy(() => import("./pages/ReservationConfirmation"));
+const Invoice = lazy(() => import("./pages/Invoice"));
+const DeliverySlip = lazy(() => import("./pages/DeliverySlip"));
+const DeliveryTracking = lazy(() => import("./pages/DeliveryTracking"));
+const Depot = lazy(() => import("./pages/Depot"));
 
-// Loading fallback
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-  </div>
-);
+// Loading fallback with skeleton
+const PageLoader = () => <PageSkeleton />;
 
 // React Query client
 const queryClient = new QueryClient({
@@ -51,74 +58,108 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // Initialize performance monitoring on mount
+  useEffect(() => {
+    initPerformanceMonitoring();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppPrefetch /> {/* ✅ altijd prefetch de equipment producten */}
       <TooltipProvider>
         <AuthProvider>
-          <SiteAssetsProvider>
-            <Toaster />
-            <Sonner />
-            <ErrorBoundary>
-              <HelmetProvider>
-                <BrowserRouter>
-                  <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/about-us" element={<About />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/equipment" element={<Equipment />} />
-                    <Route path="/equipment/:slug" element={<EquipmentItem />} />
-                    <Route path="/login" element={<Login />} />
-
-                    {/* Protected Routes */}
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["Customer", "Booker", "Admin", "SuperUser"]} />
-                      }
+          <NotificationProvider>
+            <SiteAssetsProvider>
+              <CartProvider>
+                <Toaster />
+                <Sonner />
+                <ErrorBoundary>
+                  <HelmetProvider>
+                    <BrowserRouter
+                      future={{
+                        v7_startTransition: true,
+                        v7_relativeSplatPath: true,
+                      }}
                     >
-                      <Route path="/book" element={<Book />} />
-                    </Route>
+                      <RentalDatesProvider>
+                      <PasswordChangeGate />
+                      <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/about-us" element={<About />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/equipment" element={<Equipment />} />
+                        <Route path="/equipment/:slug" element={<EquipmentItem />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/book" element={<Book />} />
+                        <Route path="/cart" element={<Cart />} />
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
-                    >
-                      <Route path="/admin" element={<Admin />} />
-                    </Route>
+                        {/* Protected Routes */}
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Admin", "SuperUser"]} />}
+                        >
+                          <Route path="/admin" element={<Admin />} />
+                        </Route>
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["Driver"]} />}
-                    >
-                      <Route path="/driver-dashboard" element={<DriverDashboard />} />
-                    </Route>
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Accounting", "Admin", "SuperUser"]} />}
+                        >
+                          <Route path="/accounting" element={<Accounting />} />
+                        </Route>
 
-                    <Route
-                      element={<ProtectedRoute allowedRoles={["Customer"]} />}
-                    >
-                      <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-                    </Route>
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Driver"]} />}
+                        >
+                          <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                        </Route>
 
-                    <Route
-                      element={
-                        <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
-                      }
-                    >
-                      <Route path="/booker" element={<BookerDashboard />} />
-                    </Route>
+                        <Route
+                          element={<ProtectedRoute allowedRoles={["Customer"]} />}
+                        >
+                          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                        </Route>
 
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/policies" element={<Policies />} />
-                    <Route path="/seo-demo" element={<SeoDemo />} />
-                    <Route path="/seo-test" element={<SeoTest />} />
+                        <Route
+                          element={
+                            <ProtectedRoute allowedRoles={["Booker", "Admin", "SuperUser"]} />
+                          }
+                        >
+                          <Route path="/booker" element={<BookerDashboard />} />
+                        </Route>
 
-                    {/* Catch all */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </HelmetProvider>
-            </ErrorBoundary>
-          </SiteAssetsProvider>
+                        <Route
+                          element={
+                            <ProtectedRoute allowedRoles={["StoreStaff", "Booker", "Admin", "SuperUser"]} />
+                          }
+                        >
+                          <Route path="/depot" element={<Depot />} />
+                        </Route>
+
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/reservation/confirmed" element={<ReservationConfirmation />} />
+                        <Route path="/policies" element={<Policies />} />
+                        <Route path="/invoice/:id" element={<Invoice />} />
+                        <Route path="/track/:token" element={<DeliveryTracking />} />
+
+                        <Route
+                          element={
+                            <ProtectedRoute allowedRoles={["Admin", "SuperUser", "Accounting", "Booker", "Customer", "Driver"]} />
+                          }
+                        >
+                          <Route path="/delivery-slip/:id" element={<DeliverySlip />} />
+                        </Route>
+
+                        {/* Catch all */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                      </Suspense>
+                      </RentalDatesProvider>
+                    </BrowserRouter>
+                  </HelmetProvider>
+                </ErrorBoundary>
+              </CartProvider>
+            </SiteAssetsProvider>
+          </NotificationProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

@@ -13,9 +13,15 @@ interface ChangePasswordModalProps {
   open: boolean;
   onClose: () => void;
   onPasswordChanged: () => void;
+  canCancel?: boolean;
 }
 
-export const ChangePasswordModal = ({ open, onClose, onPasswordChanged }: ChangePasswordModalProps) => {
+export const ChangePasswordModal = ({
+  open,
+  onClose,
+  onPasswordChanged,
+  canCancel = true,
+}: ChangePasswordModalProps) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -111,7 +117,7 @@ export const ChangePasswordModal = ({ open, onClose, onPasswordChanged }: Change
 
       toast({
         title: "Password Changed Successfully",
-        description: "Your password has been updated. Please sign in with your new password.",
+        description: "Your password has been updated successfully.",
       });
 
       onPasswordChanged();
@@ -139,9 +145,27 @@ export const ChangePasswordModal = ({ open, onClose, onPasswordChanged }: Change
     onClose();
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && canCancel) {
+      handleClose();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-md"
+        onEscapeKeyDown={(event) => {
+          if (!canCancel) {
+            event.preventDefault();
+          }
+        }}
+        onInteractOutside={(event) => {
+          if (!canCancel) {
+            event.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
@@ -243,13 +267,15 @@ export const ChangePasswordModal = ({ open, onClose, onPasswordChanged }: Change
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose} className="flex-1">
-              Cancel
-            </Button>
+            {canCancel ? (
+              <Button variant="outline" onClick={handleClose} className="flex-1">
+                Cancel
+              </Button>
+            ) : null}
             <Button 
               onClick={handlePasswordChange} 
               disabled={loading || !currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()}
-              className="flex-1"
+              className={canCancel ? 'flex-1' : 'w-full'}
             >
               {loading ? 'Changing...' : 'Change Password'}
             </Button>

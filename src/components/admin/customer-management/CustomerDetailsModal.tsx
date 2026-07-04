@@ -12,6 +12,7 @@ import { EditCustomerModal } from './EditCustomerModal';
 import { getStatusColor } from '../calendar/statusUtils';
 
 import { Booking } from '../calendar/types';
+import type { Database } from '@/types/supabase';
 
 interface Customer {
   id: string;
@@ -31,6 +32,37 @@ interface CustomerDetailsModalProps {
   onCustomerUpdated: () => void;
   onNavigateToBooking?: (bookingId: string) => void;
 }
+
+type BookingRow = Database['public']['Tables']['bookings']['Row'] & {
+  booking_items: Array<{
+    id: string;
+    equipment_id?: string | null;
+    quantity: number;
+    equipment_price?: number | null;
+    subtotal?: number | null;
+    equipment_name?: string | null;
+  }>;
+};
+
+const toBooking = (booking: BookingRow): Booking => ({
+  ...booking,
+  status: booking.status as Booking['status'],
+  customer_address: booking.customer_address ?? '',
+  customer_comment: booking.customer_comment ?? null,
+  room_number: booking.room_number ?? null,
+  user_id: booking.user_id ?? null,
+  payment_status: booking.payment_status ?? null,
+  payment_link_url: booking.payment_link_url ?? null,
+  assigned_to: booking.assigned_to ?? null,
+  delivery_failure_reason: booking.delivery_failure_reason ?? null,
+  booking_items: (booking.booking_items || []).map((item) => ({
+    equipment_id: item.equipment_id ?? '',
+    equipment_name: item.equipment_name ?? 'Equipment',
+    equipment_price: item.equipment_price ?? 0,
+    quantity: item.quantity ?? 0,
+    subtotal: item.subtotal ?? 0,
+  })),
+});
 
 export const CustomerDetailsModal = ({ 
   open, 
@@ -73,7 +105,7 @@ export const CustomerDetailsModal = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings((data || []) as Booking[]);
+      setBookings(((data || []) as BookingRow[]).map(toBooking));
     } catch (error) {
       console.error('Error fetching booking details:', error);
       toast({
@@ -215,7 +247,7 @@ export const CustomerDetailsModal = ({
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold">${booking.total_amount}</div>
+                        <div className="text-lg font-bold">${Number(booking.total_amount).toFixed(2)}</div>
                         <div className="text-xs text-gray-500">
                           #{booking.id.substring(0, 8)}
                         </div>
@@ -244,7 +276,7 @@ export const CustomerDetailsModal = ({
                       <div className="mb-3">
                         <div className="text-sm font-medium text-gray-700 mb-2">Equipment:</div>
                         <div className="space-y-1">
-                          {booking.booking_items.map((item: any, index: number) => (
+                          {booking.booking_items.map((item, index) => (
                             <div key={index} className="flex justify-between text-sm bg-gray-50 p-2 rounded">
                               <span>{item.equipment_name} × {item.quantity}</span>
                               <span>${item.subtotal}</span>

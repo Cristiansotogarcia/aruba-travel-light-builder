@@ -6,14 +6,14 @@ export interface PerformanceMetric {
     value: number;
     unit: string;
     timestamp: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 export interface PerformanceMark {
     name: string;
     startTime: number;
     endTime?: number;
     duration?: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 export interface PerformanceReport {
     metrics: PerformanceMetric[];
@@ -36,7 +36,7 @@ declare class PerformanceMonitor {
     /**
      * Start timing an operation
      */
-    startTiming(name: string, metadata?: Record<string, any>): void;
+    startTiming(name: string, metadata?: Record<string, unknown>): void;
     /**
      * End timing an operation
      */
@@ -80,23 +80,23 @@ declare class PerformanceMonitor {
 /**
  * Performance decorator for functions
  */
-export declare function measurePerformance<T extends (...args: any[]) => any>(name: string, fn: T): T;
+export declare function measurePerformance<T extends (...args: unknown[]) => unknown>(name: string, fn: T): T;
 /**
  * Performance decorator for async functions
  */
-export declare function measureAsyncPerformance<T extends (...args: any[]) => Promise<any>>(name: string, fn: T): T;
+export declare function measureAsyncPerformance<T extends (...args: unknown[]) => Promise<unknown>>(name: string, fn: T): T;
 /**
  * Debounce function for performance optimization
  */
-export declare function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void;
+export declare function debounce<T extends (...args: unknown[]) => unknown>(fn: T, delay: number): (...args: Parameters<T>) => void;
 /**
  * Throttle function for performance optimization
  */
-export declare function throttle<T extends (...args: any[]) => any>(fn: T, limit: number): (...args: Parameters<T>) => void;
+export declare function throttle<T extends (...args: unknown[]) => unknown>(fn: T, limit: number): (...args: Parameters<T>) => void;
 /**
  * Batch function calls for performance optimization
  */
-export declare function batchCalls<T extends (...args: any[]) => any>(fn: T, batchSize?: number, delay?: number): (...args: Parameters<T>) => void;
+export declare function batchCalls<T extends (...args: unknown[]) => unknown>(fn: T, batchSize?: number, delay?: number): (...args: Parameters<T>) => void;
 /**
  * Memory usage monitoring
  */
@@ -138,7 +138,7 @@ export declare const perf: {
     /**
      * Record a custom metric
      */
-    record: (name: string, value: number, unit?: string, metadata?: Record<string, any>) => void;
+    record: (name: string, value: number, unit?: string, metadata?: Record<string, unknown>) => void;
     /**
      * Get performance report
      */

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ export const SubGroupOrderSettings = () => {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  const loadSubCategories = async () => {
+  const loadSubCategories = useCallback(async () => {
     const { data, error } = await supabase
       .from('equipment_sub_category')
       .select('id,name,sort_order,equipment_category(id,name,sort_order)')
@@ -34,11 +34,11 @@ export const SubGroupOrderSettings = () => {
       toast({ title: 'Error', description: 'Failed to load subgroups', variant: 'destructive' });
     }
     setLoading(false);
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadSubCategories();
-  }, [toast]);
+  }, [loadSubCategories]);
 
   const grouped = useMemo(() => {
     const map: Record<string, { sort_order: number; name: string; items: SubCategory[] }> = {};

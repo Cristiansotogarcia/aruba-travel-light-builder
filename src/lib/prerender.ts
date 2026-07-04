@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 export class Prerenderer {
   private static SITE_URL = 'https://travelightaruba.com';
   private static DEFAULT_IMAGE = 'https://imagedelivery.net/KE7oljFadxNqgUvpxIG0Zg/b0ed7b8f-a7a0-4a00-810f-8b0f02e46500/public';
+  private static DEFAULT_TITLE = 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
 
   static async getProductSEOData(slug: string): Promise<{
     title: string;
@@ -23,7 +24,11 @@ export class Prerenderer {
         return null;
       }
 
-      const product = products as any;
+      const product = products as {
+        name: string;
+        description: string | null;
+        images: string[] | null;
+      };
 
       return {
         title: `${product.name} - TLA Equipment Rentals`,
@@ -45,7 +50,7 @@ export class Prerenderer {
     image: string;
     url: string;
   } | null, isProductPage: boolean = false): string {
-    const title = seoData?.title || 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
+    const title = seoData?.title || this.DEFAULT_TITLE;
     const description = seoData?.description || 'Premium Beach & Baby Equipment Rentals in Aruba';
     const image = seoData?.image || this.DEFAULT_IMAGE;
     const url = seoData?.url || this.SITE_URL;
@@ -53,13 +58,6 @@ export class Prerenderer {
     return `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-KDBFCQBZ');</script>
-    <!-- End Google Tag Manager -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
@@ -95,10 +93,6 @@ export class Prerenderer {
     <script defer src="https://cloud.umami.is/script.js" data-website-id="79d3968a-436f-4946-9d49-a87feb3a65c4"></script>
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KDBFCQBZ"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

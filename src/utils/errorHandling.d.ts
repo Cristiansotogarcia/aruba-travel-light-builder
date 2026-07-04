@@ -59,7 +59,7 @@ export declare const handleApiError: (error: unknown) => AppError;
 /**
  * Error handler for async functions
  */
-export declare const asyncErrorHandler: <T extends any[], R>(fn: (...args: T) => Promise<R>) => (...args: T) => Promise<R>;
+export declare const asyncErrorHandler: <T extends unknown[], R>(fn: (...args: T) => Promise<R>) => (...args: T) => Promise<R>;
 /**
  * Retry wrapper with exponential backoff
  */
@@ -75,4 +75,4 @@ export declare const formatErrorForUser: (error: unknown) => string;
 /**
  * Error reporting utility (for external services)
  */
-export declare const reportError: (error: AppError, context?: Record<string, any>) => void;
+export declare const reportError: (error: AppError, context?: Record<string, unknown>) => void;

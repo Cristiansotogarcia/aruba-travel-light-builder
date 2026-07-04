@@ -6,7 +6,7 @@ import { subDays } from 'date-fns';
 interface TestResult {
   testName: string;
   status: 'PASS' | 'FAIL' | 'SKIP';
-  data?: any;
+  data?: unknown;
   error?: string;
   details?: string;
 }
@@ -108,7 +108,7 @@ export const ReportsDashboardTest: React.FC = () => {
 
         bookings.forEach(booking => {
           booking.booking_items?.forEach(item => {
-            if (item.equipment_name && utilizationMap.hasOwnProperty(item.equipment_name)) {
+            if (item.equipment_name && Object.prototype.hasOwnProperty.call(utilizationMap, item.equipment_name)) {
               utilizationMap[item.equipment_name] += item.quantity || 0;
             }
           });
