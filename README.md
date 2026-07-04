@@ -82,3 +82,27 @@ VITE_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
 These values are required for the application to connect to Supabase during development and builds.
+
+## Production Notes
+
+### Resend email setup is still required
+
+Production email delivery is handled by the Supabase edge email functions and still requires a working Resend configuration.
+
+Before release, make sure:
+
+- `RESEND_API_KEY` is set in the Supabase project secrets
+- the sender/domain used by the email functions is verified in Resend
+- invoice, payment-link, booking-confirmation, rejection, and driver-assignment emails are tested end to end
+
+If Resend is not configured correctly, the functions may succeed logically but the customer/admin emails will not actually be delivered.
+
+### Stripe webhook is legacy and not part of the current payment flow
+
+The current production flow is manual payment-link based, not Stripe-checkout based.
+
+Operational guidance:
+
+- do not rely on `stripe-webhook` for production booking/payment handling
+- do not deploy or wire `create-payment-session` / `stripe-webhook` unless Stripe is intentionally reintroduced
+- keep the manual payment-link flow in `system_settings` and the admin booking confirmation flow as the canonical payment process

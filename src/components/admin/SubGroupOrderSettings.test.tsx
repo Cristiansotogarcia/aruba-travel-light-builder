@@ -4,12 +4,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SubGroupOrderSettings } from './SubGroupOrderSettings';
 
 // Mock supabase client
-let db: any[] = [];
+type SubGroupRecord = {
+  id: string;
+  name: string;
+  sort_order: number;
+  equipment_category: { id: string; name: string; sort_order: number };
+};
+
+let db: SubGroupRecord[] = [];
 const fromMock = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: any[]) => fromMock(...args),
+    from: (...args: unknown[]) => fromMock(...args),
   },
 }));
 

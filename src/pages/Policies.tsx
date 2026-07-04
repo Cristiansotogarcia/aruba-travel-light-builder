@@ -11,13 +11,13 @@ const Policies = () => {
         pageSlug="policies"
       />
       <Header />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Policies</h1>
           <p className="text-lg text-gray-700 mb-4">
             Our rental policies are being finalized and will be published here soon. For any
             questions in the meantime, please{' '}
-            <a href="/contact" className="text-blue-600 hover:underline">
+            <a href="/contact" className="text-primary hover:underline">
               contact us
             </a>
             .

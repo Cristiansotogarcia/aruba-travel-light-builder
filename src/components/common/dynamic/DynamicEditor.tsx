@@ -7,7 +7,7 @@ interface DynamicEditorProps {
   value?: string;
   onChange?: (value?: string) => void;
   className?: string;
-  [key: string]: any; // Allow additional props
+  [key: string]: unknown; // Allow additional props
 }
 
 const DynamicEditor: React.FC<DynamicEditorProps> = ({ value, onChange, className, ...props }) => {

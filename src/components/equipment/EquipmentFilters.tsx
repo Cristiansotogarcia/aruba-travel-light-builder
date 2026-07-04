@@ -64,8 +64,8 @@ export const EquipmentFilters = ({
   const hasActiveFilters = activeFilters.search || activeFilters.categories.length > 0 || activeFilters.subcategory;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="surface-card">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg">Filters</CardTitle>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={onClearFilters}>
@@ -78,9 +78,9 @@ export const EquipmentFilters = ({
       <CardContent className="space-y-6">
         {/* Search */}
         <div className="space-y-2">
-          <Label>Search Equipment</Label>
+          <Label className="text-sm font-semibold">Search Equipment</Label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or description..."
               value={activeFilters.search}
@@ -92,7 +92,7 @@ export const EquipmentFilters = ({
 
         {/* Categories */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Category</Label>
+          <Label className="text-sm font-semibold">Category</Label>
           <Select
             value={activeFilters.categories.length > 0 ? activeFilters.categories[0] : 'all'}
             onValueChange={handleCategoryChange}
@@ -115,7 +115,7 @@ export const EquipmentFilters = ({
         {/* Subcategories */}
         {availableSubcategories.length > 0 && (
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Subcategory</Label>
+          <Label className="text-sm font-semibold">Subcategory</Label>
             <Select
               value={activeFilters.subcategory || 'all'}
               onValueChange={handleSubcategoryChange}

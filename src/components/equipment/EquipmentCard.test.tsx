@@ -4,13 +4,19 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
 import { EquipmentCard } from './EquipmentCard';
+import type { PropsWithChildren } from 'react';
+import type { AvailabilityStatus } from '@/types/types';
 
 vi.mock('@/components/ui/carousel', () => ({
-  Carousel: ({ children }: any) => <div>{children}</div>,
-  CarouselContent: ({ children }: any) => <div>{children}</div>,
-  CarouselItem: ({ children }: any) => <div>{children}</div>,
+  Carousel: ({ children }: PropsWithChildren) => <div>{children}</div>,
+  CarouselContent: ({ children }: PropsWithChildren) => <div>{children}</div>,
+  CarouselItem: ({ children }: PropsWithChildren) => <div>{children}</div>,
   CarouselPrevious: () => null,
   CarouselNext: () => null,
+}));
+
+vi.mock('@/hooks/useCart', () => ({
+  useCart: () => ({ addItem: vi.fn() }),
 }));
 
 const equipment = {
@@ -19,11 +25,14 @@ const equipment = {
   slug: 'tent',
   category: 'Camping',
   price: 10,
+  price_per_week: 50,
   image: '/thumb.jpg',
   images: ['/tent1.jpg', '/tent2.jpg'],
   description: '<b>Single</b><br><script>alert("xss")</script>',
   availability: 'available' as const,
+  availability_status: 'Available' as AvailabilityStatus,
   features: [] as string[],
+  stock_quantity: 5,
 };
 
 describe('EquipmentCard', () => {

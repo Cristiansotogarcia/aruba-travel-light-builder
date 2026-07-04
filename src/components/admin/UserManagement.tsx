@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { UserList } from './user-management/UserList';
 import { UserManagementHeader } from './user-management/UserManagementHeader';
 import { supabase } from '@/integrations/supabase/client'; 
@@ -29,27 +29,25 @@ export const UserManagement = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (hasPermission('UserManagement')) {
-      fetchProfiles();
-    }
-  }, [hasPermission]);
-
-  useEffect(() => {
     // Check if current user needs to change password
     if (currentProfile?.needs_password_change) {
       setIsPasswordModalOpen(true);
     }
   }, [currentProfile]);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
+    setLoading(true);
+
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('admin-user-operations', {
+        body: {
+          action: 'list_users',
+        },
+      });
 
       if (error) throw error;
-      setProfiles(data || []);
+      if (data?.error) throw new Error(data.error);
+      setProfiles(data?.data || []);
     } catch (error) {
       console.error('Error fetching profiles:', error);
       toast({
@@ -60,7 +58,30 @@ export const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasPermission('UserManagement')) {
+      fetchProfiles();
+    }
+  }, [fetchProfiles, hasPermission]);
+
+  useEffect(() => {
+    if (!hasPermission('UserManagement')) {
+      return;
+    }
+
+    const profilesSubscription = supabase
+      .channel('admin-user-management-profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchProfiles();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesSubscription);
+    };
+  }, [fetchProfiles, hasPermission]);
 
   const handleUserCreated = (result: TempPasswordResult) => {
     setCreatedUserResult(result);

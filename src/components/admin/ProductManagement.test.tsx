@@ -22,8 +22,13 @@ vi.mock('@/integrations/supabase/client', () => ({
   }
 }));
 
+type CloudflareImageUploadProps = {
+  isOpen: boolean;
+  onImageSelect: (url: string) => void;
+};
+
 vi.mock('./CloudflareImageUpload', () => ({
-  CloudflareImageUpload: ({ isOpen, onImageSelect }: any) =>
+  CloudflareImageUpload: ({ isOpen, onImageSelect }: CloudflareImageUploadProps) =>
     isOpen ? (
       <div>
         <button data-testid="upload1" onClick={() => onImageSelect('https://example.com/img1.jpg')}>Upload1</button>

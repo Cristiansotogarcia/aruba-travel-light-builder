@@ -24,23 +24,73 @@ serve(async (req) => {
   }
 
   try {
+    // --- AuthZ gate: only an authenticated Admin/SuperUser may create users ---
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Caller-scoped client (validates the caller's JWT).
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      }
+    );
+
+    // Admin client (service role) — only used AFTER the caller is verified.
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { data: authUserData, error: authUserError } = await supabaseUser.auth.getUser();
+    if (authUserError || !authUserData.user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', authUserData.user.id)
+      .single();
+
+    if (callerProfileError || !callerProfile || !['Admin', 'SuperUser'].includes(callerProfile.role)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { name, email, role, password } = await req.json();
 
     if (!name || !email || !role) {
       return new Response(
         JSON.stringify({ success: false, error: 'Name, email, and role are required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Create Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Whitelist assignable roles so the endpoint can never mint an unexpected role.
+    const ALLOWED_ROLES = ['Customer', 'Driver', 'Booker', 'Accounting', 'StoreStaff', 'Admin', 'SuperUser'];
+    if (!ALLOWED_ROLES.includes(role)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid role' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('Creating user with email:', email);
 
@@ -53,7 +103,8 @@ serve(async (req) => {
       email,
       password: userPassword,
       user_metadata: {
-        name: name
+        name: name,
+        role: role,
       },
       email_confirm: true // Auto-confirm email for admin-created users
     });
@@ -71,18 +122,31 @@ serve(async (req) => {
 
     console.log('User created successfully:', authData.user.id);
 
-    // Update the user's profile with role and password change requirement
+    // Ensure the profile exists and includes the latest admin-supplied data.
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({ 
+      .upsert({
+        id: authData.user.id,
+        name: name,
+        email: authData.user.email ?? email,
         role: role,
-        needs_password_change: true 
-      })
-      .eq('id', authData.user.id);
+        needs_password_change: true,
+        is_deactivated: false,
+      }, {
+        onConflict: 'id'
+      });
 
     if (profileError) {
       console.error('Error updating profile:', profileError);
-      // Don't fail the entire operation, but log the error
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+
+      return new Response(
+        JSON.stringify({ success: false, error: `Failed to create profile: ${profileError.message}` }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     // Store the temporary password record for tracking

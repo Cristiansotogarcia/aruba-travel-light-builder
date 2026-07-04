@@ -20,6 +20,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+				display: ["Fraunces", "ui-serif", "Georgia", "serif"]
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -69,6 +73,10 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				soft: '0 18px 60px -30px rgba(15, 23, 42, 0.45)',
+				card: '0 12px 36px -24px rgba(15, 23, 42, 0.35)'
 			},
 			keyframes: {
 				'accordion-down': {

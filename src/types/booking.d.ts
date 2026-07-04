@@ -7,6 +7,5 @@ export interface SupabaseBookingItemData {
     equipment_price: number;
     price_at_booking: number;
     subtotal: number;
-    product_id: string;
     created_at?: string;
 }

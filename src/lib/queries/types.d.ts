@@ -7,6 +7,7 @@ export interface SupabaseBooking {
     status: 'pending' | 'confirmed' | 'canceled';
     created_at?: string;
 }
+export type { Booking, BookingItem, BookingStatus } from '@/components/admin/calendar/types';
 export interface Customer {
     id: string;
     user_id: string;
