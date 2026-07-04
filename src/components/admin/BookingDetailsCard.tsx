@@ -4,9 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Calendar, User, Phone, MapPin, Package, AlertTriangle, Truck } from 'lucide-react';
 import { format } from 'date-fns';
-import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
+import { getStatusColor, getStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from './calendar/statusUtils';
 import { Booking } from './calendar/types';
-import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -117,9 +116,9 @@ export const BookingDetailsCard = ({ booking, onDriverAssigned }: BookingDetails
             <div className="text-2xl font-bold">${Number(booking.total_amount).toFixed(2)}</div>
             <div className="text-sm text-gray-500">Total Amount</div>
             <div className="mt-2 text-xs text-gray-500 uppercase tracking-wide">Payment Status</div>
-            <div className="text-sm font-semibold text-gray-900">
-              {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
-            </div>
+            <Badge className={getPaymentStatusColor(booking.payment_status)}>
+              {getPaymentStatusLabel(booking.payment_status)}
+            </Badge>
           </div>
         </div>
 

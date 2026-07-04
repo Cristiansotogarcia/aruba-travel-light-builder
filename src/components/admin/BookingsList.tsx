@@ -23,6 +23,7 @@ export const BookingsList = () => {
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [showListView, setShowListView] = useState(false);
   const [calendarView, setCalendarView] = useState<'day' | 'week'>('week'); // Default to week view
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -89,8 +90,20 @@ export const BookingsList = () => {
       filtered = filtered.filter(booking => booking.status === statusFilter);
     }
 
+    if (paymentStatusFilter !== 'all') {
+      // Normalize: 'completed' is a legacy alias for paid; anything that is
+      // neither paid nor partial counts as unpaid ('pending').
+      const normalize = (status: string | null | undefined) => {
+        const s = (status ?? '').toLowerCase();
+        if (s === 'paid' || s === 'completed') return 'paid';
+        if (s === 'partial') return 'partial';
+        return 'pending';
+      };
+      filtered = filtered.filter(booking => normalize(booking.payment_status) === paymentStatusFilter);
+    }
+
     setFilteredBookings(filtered);
-  }, [bookings, searchTerm, statusFilter]);
+  }, [bookings, searchTerm, statusFilter, paymentStatusFilter]);
 
   useEffect(() => {
     fetchBookings();
@@ -349,6 +362,8 @@ export const BookingsList = () => {
             onSearchChange={setSearchTerm}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
+            paymentStatusFilter={paymentStatusFilter}
+            onPaymentStatusFilterChange={setPaymentStatusFilter}
             showListView={showListView}
             onReturnToCalendar={() => setShowListView(false)}
             calendarView={calendarView}

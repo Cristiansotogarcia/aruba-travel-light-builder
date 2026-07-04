@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button'; // Added Button import
 import { Edit2, CheckSquare } from 'lucide-react'; // Added icons
-import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
+import { getStatusColor, getStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from './calendar/statusUtils';
 import { Booking, BookingStatus } from './calendar/types';
 import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
@@ -46,8 +46,10 @@ export const BookingSquareCard = ({ booking, onView, onStatusUpdate, onEdit }: B
             {getStatusLabel(booking.status)}
           </Badge>
         </div>
-        <div className="text-xs text-gray-500 text-center">
-          Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
+        <div className="flex justify-center">
+          <Badge variant="outline" className={`text-xs ${getPaymentStatusColor(booking.payment_status)}`}>
+            {getPaymentStatusLabel(booking.payment_status)}
+          </Badge>
         </div>
       </CardContent>
       <div className="p-2 border-t flex justify-end space-x-2 bg-slate-50">
