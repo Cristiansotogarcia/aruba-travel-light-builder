@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AccountingInvoicesPanel } from '@/components/accounting/AccountingInvoicesPanel';
 import { AccountingOverview } from '@/components/accounting/AccountingOverview';
 import { AccountingSidebar } from '@/components/accounting/AccountingSidebar';
+import { CreditNotesPanel } from '@/components/accounting/CreditNotesPanel';
 import { AccountingReports } from '@/components/admin/AccountingReports';
 import { DashboardLayout } from '@/components/admin/DashboardLayout';
 
@@ -23,6 +24,8 @@ const Accounting = () => {
         return <AccountingReports />;
       case 'invoices':
         return <AccountingInvoicesPanel />;
+      case 'credit-notes':
+        return <CreditNotesPanel />;
       case 'overview':
       default:
         return <AccountingOverview onNavigate={setActiveSection} />;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CreditCard, FileText, LayoutDashboard } from 'lucide-react';
+import { CreditCard, FileMinus, FileText, LayoutDashboard } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +14,7 @@ const menuItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'transactions', label: 'Transactions', icon: CreditCard },
   { id: 'invoices', label: 'Invoices', icon: FileText },
+  { id: 'credit-notes', label: 'Credit Notes', icon: FileMinus },
 ];
 
 export const AccountingSidebar = ({ activeSection, onSectionChange }: AccountingSidebarProps) => {
