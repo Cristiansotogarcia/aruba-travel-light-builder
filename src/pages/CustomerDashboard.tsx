@@ -15,6 +15,13 @@ import {
   getServiceTaskStatusLabel,
   getServiceTaskTypeLabel,
 } from '@/lib/delivery/serviceTasks';
+import {
+  getStatusColor,
+  getStatusLabel,
+  getPaymentStatusColor,
+  getPaymentStatusLabel,
+} from '@/components/admin/calendar/statusUtils';
+import { BookingCardSkeleton } from '@/components/common/SkeletonLoader';
 import { Package, Truck, MapPin, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { BookingSelfServiceActions } from '@/components/customer/BookingSelfServiceActions';
@@ -130,21 +137,6 @@ const CustomerDashboard = () => {
     staleTime: 60 * 1000, // 1 minute
   });
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'confirmed':
-        return 'default';
-      case 'pending':
-        return 'secondary';
-      case 'completed':
-        return 'default';
-      case 'cancelled':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
-
   const getActiveDeliveries = () => {
     return deliveryTasks.filter(task => 
       !['completed', 'cancelled', 'failed'].includes(task.status) && 
@@ -154,8 +146,16 @@ const CustomerDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading your bookings...</p>
+      <div className="min-h-screen">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-semibold mb-8">My Bookings</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <BookingCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -243,8 +243,11 @@ const CustomerDashboard = () => {
                 <CardHeader>
                   <CardTitle className="text-lg">Booking #{booking.id.substring(0,8)}</CardTitle>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <Badge variant={getStatusBadgeVariant(booking.status)} className="w-fit capitalize">
-                      {booking.status || 'Unknown'}
+                    <Badge className={getStatusColor(booking.status)}>
+                      {getStatusLabel(booking.status)}
+                    </Badge>
+                    <Badge className={getPaymentStatusColor(booking.payment_status)}>
+                      {getPaymentStatusLabel(booking.payment_status)}
                     </Badge>
                     {booking.delivery_slot && (
                       <Badge variant="outline" className="text-xs">
@@ -252,9 +255,6 @@ const CustomerDashboard = () => {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
-                  </p>
                   {booking.hold_expires_at &&
                     ['pending', 'pending_admin_review'].includes(booking.status) && (
                       new Date(booking.hold_expires_at) > new Date() ? (

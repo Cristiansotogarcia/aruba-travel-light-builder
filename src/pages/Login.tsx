@@ -50,6 +50,8 @@ const Login = () => {
         navigate('/driver-dashboard');
       } else if (userRole === 'Booker') {
         navigate('/booker');
+      } else if (userRole === 'StoreStaff') {
+        navigate('/depot');
       } else if (userRole === 'Customer') {
         navigate('/customer-dashboard');
       } else {

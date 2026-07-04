@@ -42,6 +42,9 @@ export function CancelBookingDialog({ bookingId, open, onOpenChange }: CancelBoo
       toast.success('Your booking has been cancelled.');
       queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['customer-delivery-tasks'] });
+      // Keep the admin/booker/depot views coherent: a self-service cancel must
+      // surface in the operational bookings list, not just the customer's own.
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       onOpenChange(false);
     },
     onError: (error: Error) => {

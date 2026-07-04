@@ -90,6 +90,14 @@ const Depot = () => {
     }
   }, [fetchPickups, isOnline, refreshCount, toast]);
 
+  // Draining the queued actions changes what's still pending — refresh the
+  // visible pickups list too (Depot reads via useState, so the query
+  // invalidation inside useDepotSync has nothing to re-run on its own).
+  const handleSyncNow = useCallback(async () => {
+    await syncNow();
+    await fetchPickups();
+  }, [syncNow, fetchPickups]);
+
   const handleQrScan = useCallback(
     (text: string) => {
       const code = text.trim().toUpperCase();
@@ -229,7 +237,7 @@ const Depot = () => {
                 size="sm"
                 variant="outline"
                 className="shrink-0 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                onClick={() => void syncNow()}
+                onClick={() => void handleSyncNow()}
               >
                 Sync now
               </Button>

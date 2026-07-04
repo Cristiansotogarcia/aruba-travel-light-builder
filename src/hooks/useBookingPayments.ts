@@ -57,6 +57,9 @@ export const useRecordBookingPayment = () => {
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: bookingPaymentsKey(variables.bookingId) });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      // Recording a payment flips the booking's payment badge — keep the
+      // customer's own dashboard in sync with the admin/accounting view.
+      queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
       toast({
         title: 'Payment recorded',
         description: `Booking marked as ${result.payment_status}.`,
@@ -87,6 +90,9 @@ export const useDeleteBookingPayment = (bookingId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingPaymentsKey(bookingId) });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      // Removing a payment can revert the booking's payment badge — mirror it
+      // onto the customer dashboard too.
+      queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
       toast({ title: 'Payment removed' });
     },
     onError: (error: any) => {
