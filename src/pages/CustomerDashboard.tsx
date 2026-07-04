@@ -16,9 +16,12 @@ import {
   getServiceTaskTypeLabel,
 } from '@/lib/delivery/serviceTasks';
 import { Package, Truck, MapPin, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { BookingSelfServiceActions } from '@/components/customer/BookingSelfServiceActions';
 
 // Define interfaces for booking data
 interface CustomerBookingItem {
+  equipment_id: string;
   equipment_name: string;
   quantity: number;
 }
@@ -30,6 +33,7 @@ interface CustomerBooking {
   total_amount: number;
   status: string;
   payment_status: string | null;
+  hold_expires_at: string | null;
   booking_items: CustomerBookingItem[];
   customer_comment: string | null;
   delivery_slot: string | null;
@@ -67,15 +71,18 @@ const CustomerDashboard = () => {
           total_amount,
           status,
           payment_status,
+          hold_expires_at,
           customer_comment,
           delivery_slot,
-          booking_items ( equipment_name, quantity )
+          booking_items ( equipment_id, equipment_name, quantity )
         `)
         .eq('user_id', user.id) // Filter bookings for the current user
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      // Cast: the generated Supabase types predate hold_expires_at (added by the
+      // W1 availability schema migration), so the select parser rejects it.
+      return (data || []) as unknown as CustomerBooking[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -248,6 +255,16 @@ const CustomerDashboard = () => {
                   <p className="text-xs text-muted-foreground mt-2">
                     Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
                   </p>
+                  {booking.hold_expires_at &&
+                    ['pending', 'pending_admin_review'].includes(booking.status) && (
+                      new Date(booking.hold_expires_at) > new Date() ? (
+                        <p className="text-xs text-amber-600">
+                          Reserved for you until {format(new Date(booking.hold_expires_at), 'MMM d, h:mm a')}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-destructive">Reservation hold expired</p>
+                      )
+                    )}
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
                   <div>
@@ -279,16 +296,23 @@ const CustomerDashboard = () => {
                     </div>
                   )}
                 </CardContent>
-                {isSuccessfulBookingPaymentStatus(booking.payment_status) && (
-                  <div className="px-6 pb-6">
+                <div className="px-6 pb-6 space-y-3">
+                  <BookingSelfServiceActions
+                    bookingId={booking.id}
+                    status={booking.status}
+                    startDate={booking.start_date}
+                    endDate={booking.end_date}
+                    items={booking.booking_items ?? []}
+                  />
+                  {isSuccessfulBookingPaymentStatus(booking.payment_status) && (
                     <Link
                       to={`/invoice/${booking.id}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="block text-sm font-medium text-primary hover:underline"
                     >
                       View Invoice
                     </Link>
-                  </div>
-                )}
+                  )}
+                </div>
               </Card>
             ))}
           </div>
