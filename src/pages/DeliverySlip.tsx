@@ -5,8 +5,14 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/types/supabase';
 import { getDeliverySlipDisplayNumber } from '@/lib/delivery/serviceTasks';
+import { getCollectionReceiptDisplayNumber } from '@/lib/delivery/collection';
 
-type DeliverySlipRow = Database['public']['Tables']['delivery_slips']['Row'];
+// `type` and `condition_notes` were added by the W3 collection migration and
+// are not in the generated Database types yet (regenerated at integration).
+type DeliverySlipRow = Database['public']['Tables']['delivery_slips']['Row'] & {
+  type?: string | null;
+  condition_notes?: string | null;
+};
 
 interface DeliverySlipLineItem {
   equipment_name: string;
@@ -87,7 +93,11 @@ const DeliverySlip = () => {
     );
   }
 
-  const slipNumber = getDeliverySlipDisplayNumber(deliverySlip.slip_number, deliverySlip.id);
+  const isCollection = deliverySlip.type === 'collection';
+  const documentTitle = isCollection ? 'Collection Receipt' : 'Delivery Slip';
+  const slipNumber = isCollection
+    ? getCollectionReceiptDisplayNumber(deliverySlip.slip_number, deliverySlip.id)
+    : getDeliverySlipDisplayNumber(deliverySlip.slip_number, deliverySlip.id);
   const deliveredAt = new Date(deliverySlip.delivered_at);
   const lineItems = Array.isArray(deliverySlip.line_items)
     ? (deliverySlip.line_items as unknown as DeliverySlipLineItem[])
@@ -98,8 +108,10 @@ const DeliverySlip = () => {
       <div className="mx-auto max-w-5xl px-4">
         <div className="mb-6 flex items-center justify-between print:hidden">
           <div>
-            <h1 className="text-3xl font-semibold text-foreground">Delivery Slip</h1>
-            <p className="text-sm text-muted-foreground">Slip #{slipNumber}</p>
+            <h1 className="text-3xl font-semibold text-foreground">{documentTitle}</h1>
+            <p className="text-sm text-muted-foreground">
+              {isCollection ? 'Receipt' : 'Slip'} #{slipNumber}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" onClick={() => navigate(-1)}>
@@ -115,11 +127,15 @@ const DeliverySlip = () => {
           <div className="flex flex-col gap-6 border-b border-border/60 pb-6 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-3xl font-semibold text-foreground">Travel Light Aruba</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Proof of delivery record</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {isCollection ? 'Proof of collection record' : 'Proof of delivery record'}
+              </p>
             </div>
             <div className="text-sm text-muted-foreground md:text-right">
-              <p className="font-medium text-foreground">Slip #{slipNumber}</p>
-              <p>Delivered {deliveredAt.toLocaleString('en-US', {
+              <p className="font-medium text-foreground">
+                {isCollection ? 'Receipt' : 'Slip'} #{slipNumber}
+              </p>
+              <p>{isCollection ? 'Collected' : 'Delivered'} {deliveredAt.toLocaleString('en-US', {
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric',
@@ -131,7 +147,9 @@ const DeliverySlip = () => {
 
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Delivered To</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                {isCollection ? 'Collected From' : 'Delivered To'}
+              </p>
               <p className="font-medium text-foreground">{deliverySlip.customer_name}</p>
               <p>{deliverySlip.customer_email}</p>
               {deliverySlip.customer_phone ? <p>{deliverySlip.customer_phone}</p> : null}
@@ -172,10 +190,27 @@ const DeliverySlip = () => {
             </table>
           </div>
 
+          {isCollection ? (
+            <div className="mt-8 max-w-2xl space-y-2 text-sm text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                Equipment Condition on Return
+              </p>
+              <p>
+                {deliverySlip.condition_notes
+                  || 'No condition issues were recorded for the returned equipment.'}
+              </p>
+            </div>
+          ) : null}
+
           <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-md space-y-2 text-sm text-muted-foreground">
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Notes</p>
-              <p>{deliverySlip.notes || 'No additional delivery notes were recorded.'}</p>
+              <p>
+                {deliverySlip.notes
+                  || (isCollection
+                    ? 'No additional collection notes were recorded.'
+                    : 'No additional delivery notes were recorded.')}
+              </p>
             </div>
 
             <div className="w-full max-w-md rounded-2xl border border-border/60 p-4">

@@ -45,6 +45,7 @@ import {
   isToday,
 } from '@/lib/delivery/serviceTasks';
 import { DeliveryProofDialog } from '@/components/driver/DeliveryProofDialog';
+import { CollectionProofDialog } from '@/components/driver/CollectionProofDialog';
 import { TaskEtaDialog } from '@/components/driver/TaskEtaDialog';
 import { TaskFailureDialog } from '@/components/driver/TaskFailureDialog';
 
@@ -148,6 +149,7 @@ export const DriverTasks = ({
   } | null>(null);
   const [failureTask, setFailureTask] = useState<DriverTaskBoardItem | null>(null);
   const [proofTask, setProofTask] = useState<DriverTaskBoardItem | null>(null);
+  const [collectionTask, setCollectionTask] = useState<DriverTaskBoardItem | null>(null);
   const { hasPermission, profile } = useAuth();
   const { toast } = useToast();
 
@@ -213,16 +215,16 @@ export const DriverTasks = ({
       }
 
       const taskRows = ((tasksResult.data || []) as TaskQueryRow[]).filter((row) => row.bookings);
-      const deliveryTaskIds = taskRows
-        .filter((row) => row.task_type === 'delivery')
-        .map((row) => row.id);
+      // Delivery slips and collection receipts share the delivery_slips table,
+      // keyed by the originating task id.
+      const slipTaskIds = taskRows.map((row) => row.id);
 
       let slipMap = new Map<string, SlipRow>();
-      if (deliveryTaskIds.length > 0) {
+      if (slipTaskIds.length > 0) {
         const slipsResult = await supabase
           .from('delivery_slips')
           .select('id, delivery_task_id, slip_number')
-          .in('delivery_task_id', deliveryTaskIds);
+          .in('delivery_task_id', slipTaskIds);
 
         if (slipsResult.error) {
           throw slipsResult.error;
@@ -522,22 +524,6 @@ export const DriverTasks = ({
     setFailureTask(null);
   };
 
-  const handlePickupComplete = async (task: DriverTaskBoardItem) => {
-    await invokeTaskRpc(`${task.taskId}:complete`, async () => {
-      const result = await supabase.rpc('complete_pickup_task', {
-        p_task_id: task.taskId,
-        p_notes: task.notes ?? undefined,
-      });
-
-      if (result.error) throw result.error;
-
-      toast({
-        title: 'Pickup Completed',
-        description: 'The pickup has been completed successfully.',
-      });
-    });
-  };
-
   const handleProofCompleted = async (_slipId: string | null) => {
     await fetchData();
   };
@@ -621,10 +607,11 @@ export const DriverTasks = ({
         {(task.status === 'en_route' || task.status === 'arrived') && task.taskType === 'pickup' ? (
           <Button
             size="sm"
-            onClick={() => void handlePickupComplete(task)}
+            variant={task.status === 'arrived' ? 'default' : 'outline'}
+            onClick={() => setCollectionTask(task)}
             disabled={actionKey === `${keyBase}:complete`}
           >
-            Complete Pickup
+            Complete Collection
           </Button>
         ) : null}
 
@@ -667,7 +654,7 @@ export const DriverTasks = ({
             variant="ghost"
             onClick={() => window.open(`/delivery-slip/${task.slipId}`, '_blank', 'noopener,noreferrer')}
           >
-            View Slip
+            {task.taskType === 'pickup' ? 'View Receipt' : 'View Slip'}
           </Button>
         ) : null}
       </div>
@@ -868,6 +855,7 @@ export const DriverTasks = ({
               <p>Start the task from the dashboard.</p>
               <p>Update the ETA so the customer sees the expected arrival window.</p>
               <p>Capture a signature on screen to complete delivery and issue the stored slip.</p>
+              <p>For collections, record the equipment condition and capture a signature to issue the receipt.</p>
               <p>Use the tracking link button to verify what the customer is seeing.</p>
             </CardContent>
           </Card>
@@ -1010,6 +998,17 @@ export const DriverTasks = ({
           onCompleted={handleProofCompleted}
           open={Boolean(proofTask)}
           taskId={proofTask.taskId}
+        />
+      ) : null}
+
+      {collectionTask ? (
+        <CollectionProofDialog
+          bookingId={collectionTask.booking.id}
+          customerName={collectionTask.customerName}
+          onClose={() => setCollectionTask(null)}
+          onCompleted={handleProofCompleted}
+          open={Boolean(collectionTask)}
+          taskId={collectionTask.taskId}
         />
       ) : null}
     </LoadingState>
