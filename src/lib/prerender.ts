@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export class Prerenderer {
   private static SITE_URL = 'https://travelightaruba.com';
-  private static DEFAULT_IMAGE = 'https://abofxrgdxfzrhjbvhdkj.supabase.co/storage/v1/object/public/site-assets/featured-products/beach-chair-1.jpg';
+  private static DEFAULT_IMAGE = 'https://imagedelivery.net/KE7oljFadxNqgUvpxIG0Zg/c114c839-0e45-4650-4e6e-06e23e364000/public';
   private static DEFAULT_TITLE = 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
 
   static async getProductSEOData(slug: string): Promise<{
