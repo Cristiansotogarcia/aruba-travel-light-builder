@@ -1,23 +1,28 @@
-import { DashboardLayout } from '@/components/admin/DashboardLayout';
+import { Truck } from 'lucide-react';
+
 import { DriverTasks } from '@/components/admin/DriverTasks';
-import { DriverTopBar } from '@/components/driver/DriverTopBar';
+import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
+
+const DRIVER_NAV: AppNavEntry[] = [
+  { id: 'tasks', label: 'My Deliveries', icon: Truck },
+];
 
 const DriverDashboard = () => {
   return (
-    <DashboardLayout>
-      <div className="min-h-screen bg-slate-50">
-        <DriverTopBar />
-
-        <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-          <DriverTasks
-            scope="current-user"
-            requiredPermission="DriverTasks"
-            title="Driver Dashboard"
-            description="Manage today's deliveries and upcoming pickups"
-          />
-        </main>
-      </div>
-    </DashboardLayout>
+    <AppShell
+      panelName="Driver Workspace"
+      nav={DRIVER_NAV}
+      activeSection="tasks"
+      onSectionChange={() => {}}
+      contentClassName="max-w-3xl"
+    >
+      <DriverTasks
+        scope="current-user"
+        requiredPermission="DriverTasks"
+        title="Driver Dashboard"
+        description="Manage today's deliveries and upcoming pickups"
+      />
+    </AppShell>
   );
 };
 

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { AdminMobileNav } from '@/components/admin/AdminMobileNav';
-import { DashboardLayout } from '@/components/admin/DashboardLayout';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { useMemo, useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { AppShell } from '@/components/layout/app-shell';
+import { getVisibleAdminNavigation } from '@/components/admin/adminNavigation';
+import { NotificationBell } from '@/components/admin/NotificationBell';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { BookingsList } from '@/components/admin/BookingsList';
 import { CustomersList } from '@/components/admin/CustomersList';
@@ -24,6 +25,12 @@ interface AdminNavigateEventDetail {
 }
 
 const Admin = () => {
+  const { hasPermission } = useAuth();
+  const adminNav = useMemo(() => {
+    const { dashboard, groups } = getVisibleAdminNavigation(hasPermission);
+    return [dashboard, ...groups];
+  }, [hasPermission]);
+
   const [activeSection, setActiveSection] = useState(() => {
     // Initialize from sessionStorage if available
     const savedSection = sessionStorage.getItem('admin:activeSection');
@@ -116,15 +123,16 @@ const Admin = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="min-h-screen flex flex-col lg:flex-row w-full">
-        <AdminMobileNav activeSection={activeSection} onSectionChange={handleSectionChange} />
-        <AdminSidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
-        <main className="flex-1 p-4 sm:p-6">
-          {renderActiveSection()}
-        </main>
-      </div>
-    </DashboardLayout>
+    <AppShell
+      panelName="Admin Panel"
+      nav={adminNav}
+      activeSection={activeSection}
+      onSectionChange={handleSectionChange}
+      headerAccessory={<NotificationBell />}
+      contentClassName="max-w-none"
+    >
+      {renderActiveSection()}
+    </AppShell>
   );
 };
 
