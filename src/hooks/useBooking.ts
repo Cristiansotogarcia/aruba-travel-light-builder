@@ -297,6 +297,24 @@ const useBooking = () => {
         return;
       }
 
+      // Fire-and-forget: send the "Reservation received" confirmation email.
+      // A failed email must NOT fail the booking — log and, at most, toast a notice.
+      void supabase.functions
+        .invoke('send-booking-confirmation', { body: { booking_id: bookingInsertData.id } })
+        .then(({ error: emailError }) => {
+          if (emailError) {
+            console.warn('Confirmation email could not be sent:', emailError.message);
+            toast({
+              title: 'Booking confirmed',
+              description: 'We could not send the confirmation email, but your reservation was received.',
+              variant: 'default',
+            });
+          }
+        })
+        .catch((emailError) => {
+          console.warn('Confirmation email invocation failed:', emailError);
+        });
+
       toast({ title: 'Booking Successful', description: 'Your booking has been created.', variant: 'default' }); // Changed variant to 'default'
       setBookingData(initialBookingData);
     } catch (error) {
