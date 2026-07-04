@@ -5,6 +5,17 @@
       "destination": "/api/:path*"
     },
     {
+      "source": "/equipment/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|pinterest|skypeuripreview|snapchat|viber).*"
+        }
+      ],
+      "destination": "/api/share-preview?slug=:slug"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }
