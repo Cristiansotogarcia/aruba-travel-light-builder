@@ -389,28 +389,19 @@ const useBooking = () => {
           console.warn('Failed to create notification:', notifErr);
         }
 
-        // Step 4: Send reservation confirmation email
-        try {
-          const { error: emailError } = await supabase.functions.invoke('send-reservation-email', {
-            body: {
-              booking_id: booking.id,
-              customer_name: bookingData.customerInfo.name.trim(),
-              customer_email: bookingData.customerInfo.email.trim().toLowerCase(),
-              start_date: bookingData.startDate,
-              end_date: bookingData.endDate,
-              delivery_slot: bookingData.deliverySlot,
-              total_amount: calculateTotal(),
-              items: bookingData.items
+        // Step 4: Send reservation confirmation email (fire-and-forget).
+        // The function loads all booking data server-side; a failed email
+        // must never fail or delay the booking.
+        void supabase.functions
+          .invoke('send-booking-confirmation', { body: { booking_id: booking.id } })
+          .then(({ error: emailError }) => {
+            if (emailError) {
+              console.warn('Failed to send reservation confirmation email:', emailError);
             }
+          })
+          .catch((emailErr) => {
+            console.warn('Error sending reservation confirmation email:', emailErr);
           });
-
-          if (emailError) {
-            console.warn('Failed to send reservation email:', emailError);
-            // Don't fail the booking if email fails
-          }
-        } catch (emailErr) {
-          console.warn('Error sending reservation email:', emailErr);
-        }
 
         // Success: Reset booking data and navigate to confirmation page
         setBookingData(initialBookingData);
