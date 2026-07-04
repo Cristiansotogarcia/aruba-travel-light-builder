@@ -10,6 +10,8 @@ interface BookingFiltersProps {
   onSearchChange: (value: string) => void;
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
+  paymentStatusFilter: string;
+  onPaymentStatusFilterChange: (value: string) => void;
   showListView: boolean;
   onReturnToCalendar: () => void;
   calendarView: 'day' | 'week';
@@ -21,6 +23,8 @@ export const BookingFilters = ({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  paymentStatusFilter,
+  onPaymentStatusFilterChange,
   showListView,
   onReturnToCalendar,
   calendarView,
@@ -40,7 +44,15 @@ export const BookingFilters = ({
     { value: 'rejected', label: 'Rejected' }
   ];
 
+  const paymentStatusOptions = [
+    { value: 'all', label: 'All Payments' },
+    { value: 'pending', label: 'Unpaid' },
+    { value: 'partial', label: 'Partially Paid' },
+    { value: 'paid', label: 'Paid' }
+  ];
+
   const currentStatusLabel = statusOptions.find(option => option.value === statusFilter)?.label || 'All Statuses';
+  const currentPaymentStatusLabel = paymentStatusOptions.find(option => option.value === paymentStatusFilter)?.label || 'All Payments';
 
   return (
     <div className="flex flex-wrap gap-4 items-start justify-between">
@@ -95,7 +107,30 @@ export const BookingFilters = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-3 py-2 w-[180px] justify-between"
+              >
+                {currentPaymentStatusLabel}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              {paymentStatusOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => onPaymentStatusFilterChange(option.value)}
+                  className={paymentStatusFilter === option.value ? 'bg-accent' : ''}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             variant="outline"
             onClick={onReturnToCalendar}

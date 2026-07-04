@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DeleteBookingModal } from './DeleteBookingModal';
 import { UndeliverableModal } from './UndeliverableModal';
 import { BookingDetailsCard } from './BookingDetailsCard';
+import { BookingPaymentsSection } from './BookingPaymentsSection';
 import { BookingActionButtons } from './BookingActionButtons';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -90,6 +91,8 @@ export const BookingViewModal = ({
                 onClose();
               }}
             />
+
+            <BookingPaymentsSection booking={booking} />
 
             <BookingActionButtons
               booking={booking}

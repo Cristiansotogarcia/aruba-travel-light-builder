@@ -56,3 +56,29 @@ export const getStatusLabel = (status: string) => {
       return status;
   }
 };
+
+// Payment status (bookings.payment_status): 'paid' | 'partial' | 'pending'.
+// 'completed' is a legacy alias for paid (see accounting/invoices helpers).
+export const getPaymentStatusColor = (status: string | null | undefined) => {
+  switch ((status ?? '').toLowerCase()) {
+    case 'paid':
+    case 'completed':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'partial':
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+    default:
+      return 'bg-red-100 text-red-800 border-red-200';
+  }
+};
+
+export const getPaymentStatusLabel = (status: string | null | undefined) => {
+  switch ((status ?? '').toLowerCase()) {
+    case 'paid':
+    case 'completed':
+      return 'Paid';
+    case 'partial':
+      return 'Partial';
+    default:
+      return 'Unpaid';
+  }
+};
