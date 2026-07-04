@@ -69,6 +69,11 @@ const componentVisibilitySettings: ComponentVisibility[] = [
     component_name: 'CategoryManagement',
     roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
   },
+  // SeoManager - SEO management
+  {
+    component_name: 'SeoManager',
+    roles: { SuperUser: true, Admin: true, Booker: false, Driver: false }
+  },
   // UserManagement - User Management
   {
     component_name: 'UserManagement',

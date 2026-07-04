@@ -1,34 +1,111 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+type FulfillmentMethod = 'delivery' | 'pickup';
+
 interface BookingSummaryProps {
   days: number;
   itemsCount: number;
   total: number;
+  startDate: string;
+  deliverySlot?: 'morning' | 'afternoon';
+  pickupSlot?: 'morning' | 'afternoon';
+  fulfillmentMethod?: FulfillmentMethod;
 }
 
-export const BookingSummary = ({ days, itemsCount, total }: BookingSummaryProps) => {
+export const BookingSummary = ({
+  days,
+  itemsCount,
+  total,
+  startDate,
+  deliverySlot,
+  pickupSlot,
+  fulfillmentMethod = 'delivery',
+}: BookingSummaryProps) => {
+  const isPickup = fulfillmentMethod === 'pickup';
+
+  // Check if it's Sunday
+  const isSunday = startDate && new Date(startDate).getDay() === 0;
+
+  // Calculate delivery fee (mirrors computeDeliveryFee logic for display purposes)
+  const deliveryFee = isPickup ? 0 : (isSunday ? 20 : (days < 5 ? 10 : 0));
+
+  // Calculate equipment subtotal (total - delivery fee)
+  const equipmentSubtotal = total - deliveryFee;
+
+  // Check if extra day was added due to time slot mismatch
+  const hasTimeSlotAdjustment = !isPickup && deliverySlot === 'morning' && pickupSlot === 'afternoon';
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Booking Summary</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between">
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
             <span>Rental Period:</span>
-            <span>{days} days</span>
+            <span className="font-medium">{days} days</span>
           </div>
-          <div className="flex justify-between">
+
+          {hasTimeSlotAdjustment && (
+            <div className="flex justify-between text-sm text-blue-600">
+              <span>Time Slot Adjustment:</span>
+              <span>+1 day (afternoon pickup)</span>
+            </div>
+          )}
+
+          <div className="flex justify-between text-sm">
             <span>Equipment Items:</span>
-            <span>{itemsCount}</span>
+            <span className="font-medium">{itemsCount}</span>
           </div>
-          <div className="border-t pt-2">
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>${total}</span>
+
+          <div className="border-t pt-2 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Equipment Subtotal:</span>
+              <span className="font-medium">${equipmentSubtotal.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span>
+                {isPickup
+                  ? 'Delivery Fee (Pickup):'
+                  : isSunday
+                  ? 'Sunday Delivery Fee:'
+                  : days < 5
+                  ? 'Delivery Fee:'
+                  : 'Delivery Fee (Weekly):'}
+              </span>
+              <span className="font-medium">
+                {isPickup ? 'FREE' : deliveryFee > 0 ? `$${deliveryFee.toFixed(2)}` : 'FREE'}
+              </span>
             </div>
           </div>
+
+          <div className="border-t pt-3">
+            <div className="flex justify-between font-bold text-lg">
+              <span>Total Amount:</span>
+              <span className="text-primary">${total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {isPickup && (
+            <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
+              Pickup at store — no delivery fee.
+            </div>
+          )}
+
+          {!isPickup && isSunday && (
+            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+              * Sunday delivery fee applied
+            </div>
+          )}
+
+          {!isPickup && days >= 5 && !isSunday && (
+            <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+              Weekly rental - Free delivery included!
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

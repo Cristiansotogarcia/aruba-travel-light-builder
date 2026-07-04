@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,19 +30,8 @@ export const CloudflareImageBrowser: React.FC<CloudflareImageBrowserProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (isOpen && cloudflareImageService.isConfigured()) {
-      loadImages();
-    } else if (isOpen && !cloudflareImageService.isConfigured()) {
-      toast({
-        title: "Configuration Required",
-        description: "Please configure Cloudflare credentials in environment variables.",
-        variant: "destructive"
-      });
-    }
-  }, [isOpen]);
-
-  const loadImages = async (reset = true) => {
+  const loadImages = useCallback(async (options: { reset?: boolean; continuationToken?: string } = {}) => {
+    const { reset = true, continuationToken: token } = options;
     if (!cloudflareImageService.isConfigured()) return;
     
     setLoading(true);
@@ -50,12 +39,12 @@ export const CloudflareImageBrowser: React.FC<CloudflareImageBrowserProps> = ({
       const response = await cloudflareImageService.listImages(
         1, 
         50, 
-        reset ? undefined : continuationToken
+        reset ? undefined : token
       );
       
       if (response.success) {
         const newImages = response.result.images;
-        setImages(reset ? newImages : [...images, ...newImages]);
+        setImages((prevImages) => (reset ? newImages : [...prevImages, ...newImages]));
         setContinuationToken(response.result.continuation_token);
         setHasMore(!!response.result.continuation_token);
       } else {
@@ -71,11 +60,23 @@ export const CloudflareImageBrowser: React.FC<CloudflareImageBrowserProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (isOpen && cloudflareImageService.isConfigured()) {
+      loadImages();
+    } else if (isOpen && !cloudflareImageService.isConfigured()) {
+      toast({
+        title: "Configuration Required",
+        description: "Please configure Cloudflare credentials in environment variables.",
+        variant: "destructive"
+      });
+    }
+  }, [isOpen, loadImages, toast]);
 
   const loadMoreImages = () => {
     if (hasMore && !loading) {
-      loadImages(false);
+      loadImages({ reset: false, continuationToken });
     }
   };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AdminMobileNav } from '@/components/admin/AdminMobileNav';
 import { DashboardLayout } from '@/components/admin/DashboardLayout';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -14,6 +15,13 @@ import { EnhancedReportsDashboard } from '@/components/admin/EnhancedReportsDash
 import { SiteSettings } from '@/components/admin/SiteSettings';
 import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
+import { PendingReservations } from '@/components/admin/PendingReservations';
+import { InvoicesList } from '@/components/admin/InvoicesList';
+
+interface AdminNavigateEventDetail {
+  section: string;
+  bookingId?: string;
+}
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState(() => {
@@ -32,12 +40,38 @@ const Admin = () => {
     sessionStorage.setItem('admin:activeSection', activeSection);
   }, [activeSection]);
 
+  useEffect(() => {
+    const handleAdminNavigate = (event: Event) => {
+      const customEvent = event as CustomEvent<AdminNavigateEventDetail>;
+      const detail = customEvent.detail;
+      if (!detail?.section) {
+        return;
+      }
+
+      if (detail.bookingId) {
+        sessionStorage.setItem('admin:openBookingId', detail.bookingId);
+      }
+
+      handleSectionChange(detail.section);
+    };
+
+    window.addEventListener('admin:navigate', handleAdminNavigate as EventListener);
+
+    return () => {
+      window.removeEventListener('admin:navigate', handleAdminNavigate as EventListener);
+    };
+  }, []);
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <AdminDashboard />;
+        return <AdminDashboard onNavigate={handleSectionChange} />;
       case 'bookings':
         return <BookingsList />;
+      case 'invoices':
+        return <InvoicesList />;
+      case 'pending-reservations':
+        return <PendingReservations />;
       case 'customers':
         return <CustomersList />;
       case 'assignment':
@@ -55,9 +89,23 @@ const Admin = () => {
       case 'visibility':
         return <VisibilitySettings />;
       case 'tasks':
-        return <DriverTasks />;
+        return (
+          <DriverTasks
+            scope="current-user"
+            requiredPermission="DriverTasks"
+            title="My Tasks"
+            description="Your assigned deliveries and pickups"
+          />
+        );
       case 'taskmaster':
-        return <DriverTasks />;
+        return (
+          <DriverTasks
+            scope="all-assigned"
+            requiredPermission="TaskMaster"
+            title="Task Management"
+            description="Monitor and manage assigned delivery and pickup work"
+          />
+        );
       case 'seo':
         return <SeoManager />;
       case 'settings':
@@ -69,9 +117,10 @@ const Admin = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex flex-col lg:flex-row w-full">
+        <AdminMobileNav activeSection={activeSection} onSectionChange={handleSectionChange} />
         <AdminSidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
-        <main className="flex-1 p-6 bg-gray-50">
+        <main className="flex-1 p-4 sm:p-6">
           {renderActiveSection()}
         </main>
       </div>

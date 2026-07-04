@@ -49,9 +49,11 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 customer_email: string;
                 customer_name: string;
                 customer_phone: string;
+                customer_comment: string | null;
                 delivery_failure_reason: string | null;
                 end_date: string;
                 id: string;
+                user_id: string | null;
                 start_date: string;
                 status: string;
                 total_amount: number;
@@ -64,9 +66,11 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 customer_email: string;
                 customer_name: string;
                 customer_phone: string;
+                customer_comment?: string | null;
                 delivery_failure_reason?: string | null;
                 end_date: string;
                 id?: string;
+                user_id?: string | null;
                 start_date: string;
                 status?: string;
                 total_amount: number;
@@ -79,15 +83,25 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
                 customer_email?: string;
                 customer_name?: string;
                 customer_phone?: string;
+                customer_comment?: string | null;
                 delivery_failure_reason?: string | null;
                 end_date?: string;
                 id?: string;
+                user_id?: string | null;
                 start_date?: string;
                 status?: string;
                 total_amount?: number;
                 updated_at?: string;
             };
-            Relationships: [];
+            Relationships: [
+                {
+                    foreignKeyName: "bookings_user_id_fkey";
+                    columns: ["user_id"];
+                    isOneToOne: false;
+                    referencedRelation: "profiles";
+                    referencedColumns: ["id"];
+                }
+            ];
         };
         component_visibility: {
             Row: {
@@ -471,7 +485,7 @@ export declare const supabase: import("@supabase/supabase-js").SupabaseClient<Da
         };
     };
     Enums: {
-        app_role: "SuperUser" | "Admin" | "Booker" | "Driver";
+        app_role: "SuperUser" | "Admin" | "Accounting" | "Booker" | "Customer" | "Driver";
     };
     CompositeTypes: { [_ in never]: never; };
 }>;

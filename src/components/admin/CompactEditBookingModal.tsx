@@ -9,6 +9,7 @@ import { EquipmentSelectionSection } from './edit-booking/EquipmentSelectionSect
 import { BookingSummarySection } from './edit-booking/BookingSummarySection';
 import { useBookingEquipment } from './edit-booking/useBookingEquipment';
 import { Booking, CustomerInfo } from './edit-booking/types';
+import type { Database } from '@/types/supabase';
 
 interface CompactEditBookingModalProps {
   booking: Booking;
@@ -97,7 +98,7 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
       }
 
       // Prepare update data
-      const updateData: any = {
+      const updateData: Database['public']['Tables']['bookings']['Update'] = {
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
         customer_phone: customerInfo.phone,

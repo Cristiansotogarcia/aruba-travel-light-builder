@@ -1,8 +1,17 @@
-import { useState } from 'react';
-import { Calendar, Users, BarChart3, Package, Settings, Eye, UserPlus, MapPin, CheckSquare, ListOrdered, Search, Info } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
+import {
+  ADMIN_DASHBOARD_ITEM,
+  getAdminGroupIdForSection,
+  getDefaultAdminGroupState,
+  getVisibleAdminNavigation,
+} from './adminNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
+import { NotificationBell } from './NotificationBell';
 
 interface AdminSidebarProps {
   activeSection?: string;
@@ -13,68 +22,130 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
   const { profile, hasPermission, signOut } = useAuth();
   const { assets } = useSiteAssets();
   const [currentSection, setCurrentSection] = useState(activeSection || 'dashboard');
+  const [openGroups, setOpenGroups] = useState(() =>
+    getDefaultAdminGroupState(activeSection || ADMIN_DASHBOARD_ITEM.id)
+  );
+
+  const { dashboard, groups } = useMemo(
+    () => getVisibleAdminNavigation(hasPermission),
+    [hasPermission]
+  );
+  const DashboardIcon = dashboard.icon;
 
   const handleSectionChange = (section: string) => {
     setCurrentSection(section);
     onSectionChange?.(section);
   };
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: null },
-    { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SeoManager' },
-    { id: 'bookings', label: 'Bookings', icon: Calendar, permission: 'BookingManagement' },
-    { id: 'assignment', label: 'Assignments', icon: UserPlus, permission: 'BookingAssignment' },
-    { id: 'customers', label: 'Customers', icon: Users, permission: 'BookingManagement' },
-    { id: 'equipment', label: 'Equipment', icon: Package, permission: 'ProductManagement' },
-    { id: 'categories', label: 'Categories & Order', icon: ListOrdered, permission: 'CategoryManagement' },
-    { id: 'about-us', label: 'About Us', icon: Info, permission: null },
-    { id: 'reports', label: 'Analytics & Reports', icon: BarChart3, permission: 'ReportingAccess' },
-    { id: 'users', label: 'User Management', icon: Users, permission: 'UserManagement' },
-    { id: 'visibility', label: 'Visibility Settings', icon: Eye, permission: 'VisibilitySettings' },
-    { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
-    { id: 'taskmaster', label: 'Task Management', icon: CheckSquare, permission: 'TaskMaster' },
-    { id: 'settings', label: 'Settings', icon: Settings, permission: 'settings' },
-  ];
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((currentGroups) => ({
+      ...currentGroups,
+      [groupId]: !currentGroups[groupId],
+    }));
+  };
 
-  const visibleMenuItems = menuItems.filter(item => 
-    !item.permission || hasPermission(item.permission)
-  );
+  useEffect(() => {
+    const nextSection = activeSection || ADMIN_DASHBOARD_ITEM.id;
+    setCurrentSection(nextSection);
+
+    const activeGroupId = getAdminGroupIdForSection(nextSection);
+    if (activeGroupId) {
+      setOpenGroups((currentGroups) => ({
+        ...currentGroups,
+        [activeGroupId]: true,
+      }));
+    }
+  }, [activeSection]);
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
+    <aside className="hidden lg:flex w-72 bg-background/80 border-r border-border/60 flex-col h-screen backdrop-blur">
       <div className="p-6">
-        <div className="flex items-center mb-4">
-          <img
-            src={assets.logo || '/placeholder.svg'}
-            alt="Travel Light Aruba"
-            className="h-8 w-auto mr-3"
-          />
-          <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <img
+              src={assets.logo || '/placeholder.svg'}
+              alt="Travel Light Aruba"
+              className="h-8 w-auto mr-3"
+              style={{ transform: 'scale(3)', transformOrigin: 'left center' }}
+            />
+            <h2 className="text-xl font-semibold text-foreground">Admin Panel</h2>
+          </div>
+          <NotificationBell />
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {profile?.name} ({profile?.role})
         </p>
       </div>
-      <nav className="px-4 pb-4 space-y-2 flex-1 overflow-y-auto">
-        {visibleMenuItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleSectionChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                currentSection === item.id
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-              <span className="font-medium">{item.label}</span>
-            </button>
-          );
-        })}
+
+      <nav className="px-4 pb-4 flex-1 overflow-y-auto">
+        <div className="space-y-3">
+          <button
+            onClick={() => handleSectionChange(dashboard.id)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+              currentSection === dashboard.id
+                ? 'bg-accent/60 text-foreground border border-border/60'
+                : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+            }`}
+          >
+            <DashboardIcon className="h-5 w-5" />
+            <span className="font-medium">{dashboard.label}</span>
+          </button>
+
+          {groups.map((group) => {
+            const isGroupActive = group.items.some((item) => item.id === currentSection);
+            const GroupIcon = group.icon;
+
+            return (
+              <Collapsible
+                key={group.id}
+                open={openGroups[group.id]}
+                onOpenChange={() => toggleGroup(group.id)}
+              >
+                <div className="rounded-2xl border border-border/60 bg-background/50 overflow-hidden">
+                  <CollapsibleTrigger className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:bg-accent/30">
+                    <div className="flex items-center gap-3">
+                      <GroupIcon className={`h-5 w-5 ${isGroupActive ? 'text-foreground' : 'text-muted-foreground'}`} />
+                      <p className={`text-sm font-semibold ${isGroupActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {group.label}
+                      </p>
+                    </div>
+                    {openGroups[group.id] ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 space-y-1">
+                      {group.items.map((item) => {
+                        const ItemIcon = item.icon;
+
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => handleSectionChange(item.id)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                              currentSection === item.id
+                                ? 'bg-accent/60 text-foreground border border-border/60'
+                                : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+                            }`}
+                          >
+                            <ItemIcon className="h-4 w-4" />
+                            <span className="text-sm font-medium">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            );
+          })}
+        </div>
       </nav>
-      <div className="p-4 border-t border-gray-200">
+
+      <div className="p-4 border-t border-border/60">
         <Button 
           onClick={signOut} 
           variant="outline" 
@@ -83,6 +154,6 @@ export const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarPro
           Sign Out
         </Button>
       </div>
-    </div>
+    </aside>
   );
 };

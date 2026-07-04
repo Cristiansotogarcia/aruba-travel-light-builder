@@ -1,152 +1,154 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { Buffer } from 'buffer';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [
-    react(),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "dompurify": path.resolve(__dirname, "./src/lib/dompurify.ts"),
-      'crypto': 'crypto-browserify',
-      'buffer': 'buffer/',
+export default defineConfig(async ({ mode }) => {
+  const plugins: Plugin[] = [react() as unknown as Plugin];
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  define: {
-    'globalThis.Buffer': Buffer,
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // React core
-          if (id.includes('react') && id.includes('react-dom')) {
-            return 'react-vendor';
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+        "dompurify": path.resolve(__dirname, "./src/lib/dompurify.ts"),
+      },
+    },
+    build: {
+      modulePreload: {
+        resolveDependencies: (url: string, deps: string[], context: { hostType: string }) => {
+          if (context.hostType === "html") {
+            return deps.filter(
+              (dep: string) =>
+                !/admin-(core|reports)/.test(dep) &&
+                !/editor-lib/.test(dep) &&
+                !/charts-lib/.test(dep) &&
+                !/maps-lib/.test(dep)
+            );
           }
-          if (id.includes('react-router')) {
-            return 'react-router';
-          }
-
-          // Radix UI components - split into very small chunks to avoid large bundles
-          if (id.includes('@radix-ui')) {
-            if (id.includes('react-dialog') || id.includes('react-dropdown-menu') ||
-                id.includes('react-popover') || id.includes('react-tooltip')) {
-              return 'radix-overlays';
+          return deps;
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: (id: string) => {
+            const normalizedId = id.replace(/\\/g, "/");
+            const isNodeModule = normalizedId.includes("/node_modules/");
+            
+            // React core - bundle with Radix to avoid forwardRef issues
+            if (
+              isNodeModule &&
+              (normalizedId.includes("/node_modules/react/") ||
+                normalizedId.includes("/node_modules/react-dom/") ||
+                normalizedId.includes("/node_modules/react-is/") ||
+                normalizedId.includes("/node_modules/scheduler/"))
+            ) {
+              return "react-vendor";
             }
-            if (id.includes('react-select') || id.includes('react-accordion') ||
-                id.includes('react-tabs') || id.includes('react-navigation-menu')) {
-              return 'radix-navigation';
+            if (normalizedId.includes('react-router')) {
+              return 'react-router';
             }
-            if (id.includes('react-checkbox') || id.includes('react-radio') ||
-                id.includes('react-switch') || id.includes('react-slider') ||
-                id.includes('react-progress')) {
-              return 'radix-form-controls';
+
+            // Radix UI - bundle ALL radix packages with React vendor
+            if (normalizedId.includes('@radix-ui')) {
+              return 'radix-ui';
             }
-            if (id.includes('react-separator') || id.includes('react-scroll-area') ||
-                id.includes('react-aspect-ratio') || id.includes('react-collapsible')) {
-              return 'radix-layout';
+
+            // Icons - split lucide icons into smaller chunks
+            if (normalizedId.includes('lucide-react')) {
+              return 'lucide-icons';
             }
-            if (id.includes('react-toast') || id.includes('react-alert-dialog') ||
-                id.includes('react-hover-card')) {
-              return 'radix-feedback';
+
+            // Recharts - charting library is heavy
+            if (normalizedId.includes('recharts')) {
+              return 'recharts-vendor';
             }
-            // Core primitives - split smaller
-            return 'radix-core';
-          }
 
-          // Icons - split lucide icons into smaller chunks
-          if (id.includes('lucide-react')) {
-            return 'lucide-icons';
-          }
-
-          // Data management - split further
-          if (id.includes('@tanstack/react-query')) {
-            return 'react-query';
-          }
-          if (id.includes('@supabase/supabase-js')) {
-            return 'supabase';
-          }
-
-          // Forms - split libraries
-          if (id.includes('react-hook-form') || id.includes('@hookform/resolvers')) {
-            return 'forms';
-          }
-          if (id.includes('zod')) {
-            return 'forms-validation';
-          }
-
-          // Heavy libraries - make these load on-demand wherever possible
-          // Note: recharts, leaflet, editor are already dynamically imported
-          if (id.includes('recharts')) {
-            return 'charts-lib';
-          }
-          if (id.includes('leaflet') || id.includes('react-leaflet')) {
-            return 'maps-lib';
-          }
-          if (id.includes('@uiw/react-md-editor')) {
-            return 'editor-lib';
-          }
-
-          // Date utilities - split date-fns more aggressively
-          // This will help with the locale issue
-          if (id.includes('date-fns')) {
-            if (id.includes('locale')) {
-              return 'date-locales';
+            // Leaflet/React-Leaflet - map libraries
+            if (normalizedId.includes('leaflet') || normalizedId.includes('react-leaflet')) {
+              return 'maps-lib';
             }
-            return 'date-utils';
-          }
 
-          // UI utilities
-          if (id.includes('clsx') || id.includes('class-variance-authority') ||
-              id.includes('tailwind-merge') || id.includes('tailwindcss-animate')) {
-            return 'ui-utils';
-          }
-
-          // Other utilities - split smaller
-          if (id.includes('papaparse') || id.includes('dompurify')) {
-            return 'data-utils';
-          }
-          if (id.includes('next-themes') || id.includes('sonner') ||
-              id.includes('vaul') || id.includes('cmdk') || id.includes('input-otp')) {
-            return 'ui-enhancements';
-          }
-          if (id.includes('embla-carousel-react') || id.includes('react-day-picker') ||
-              id.includes('react-resizable-panels')) {
-            return 'interactive-components';
-          }
-
-          // Force admin components into separate chunks
-          if (id.includes('src/components/admin') || id.includes('src/pages/Admin')) {
-            if (id.includes('ReportsDashboard') || id.includes('EnhancedReportsDashboard')) {
-              return 'admin-reports';
+            // MD Editor - rich text editor
+            if (normalizedId.includes('@uiw/react-md-editor') || normalizedId.includes('@mdxeditor')) {
+              return 'md-editor';
             }
-            return 'admin-core';
+
+            // DnD Kit - drag and drop
+            if (normalizedId.includes('@dnd-kit')) {
+              return 'dnd-kit';
+            }
+
+            // Data management - split further
+            if (normalizedId.includes('@tanstack/react-query')) {
+              return 'react-query';
+            }
+            if (normalizedId.includes('@supabase/supabase-js')) {
+              return 'supabase';
+            }
+
+            // Forms - split libraries
+            if (normalizedId.includes('react-hook-form') || normalizedId.includes('@hookform/resolvers')) {
+              return 'forms';
+            }
+            if (normalizedId.includes('zod')) {
+              return 'forms-validation';
+            }
+
+            // Date utilities - split date-fns more aggressively
+            if (normalizedId.includes('date-fns')) {
+              if (normalizedId.includes('locale')) {
+                return 'date-locales';
+              }
+              return 'date-utils';
+            }
+
+            // UI utilities
+            if (normalizedId.includes('clsx') || normalizedId.includes('class-variance-authority') ||
+                normalizedId.includes('tailwind-merge') || normalizedId.includes('tailwindcss-animate')) {
+              return 'ui-utils';
+            }
+
+            // Other utilities - split smaller
+            if (normalizedId.includes('papaparse') || normalizedId.includes('dompurify')) {
+              return 'data-utils';
+            }
+            if (normalizedId.includes('next-themes') || normalizedId.includes('sonner') ||
+                normalizedId.includes('vaul') || normalizedId.includes('cmdk') || normalizedId.includes('input-otp')) {
+              return 'ui-enhancements';
+            }
+            if (normalizedId.includes('embla-carousel-react') || normalizedId.includes('react-day-picker') ||
+                normalizedId.includes('react-resizable-panels')) {
+              return 'interactive-components';
+            }
+
+            // Force admin components into separate chunks
+            if (normalizedId.includes('src/components/admin') || normalizedId.includes('src/pages/Admin')) {
+              if (normalizedId.includes('ReportsDashboard') || normalizedId.includes('EnhancedReportsDashboard')) {
+                return 'admin-reports';
+              }
+              return 'admin-core';
+            }
           }
         }
-      }
+      },
+      chunkSizeWarningLimit: 5000,
     },
-    // Increase chunk size warning limit to 1MB for this feature-rich application
-    // Modern web applications commonly have bundles this size with many features
-    chunkSizeWarningLimit: 1000,
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts', // or path to your setup file
-    css: true, // if you want to process CSS in tests
-    // .claude/worktrees holds parallel-agent checkouts whose tests resolve the
-    // @ alias back to THIS tree — collecting them runs duplicates against the
-    // wrong sources.
-    exclude: [...configDefaults.exclude, '**/.claude/**'],
-  },
-}));
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/setupTests.ts',
+      css: true,
+      // .claude/worktrees holds parallel-agent checkouts whose tests resolve the
+      // @ alias back to THIS tree — collecting them runs duplicates against the
+      // wrong sources.
+      exclude: [...configDefaults.exclude, '**/.claude/**'],
+    },
+  };
+});

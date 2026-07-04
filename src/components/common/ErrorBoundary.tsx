@@ -44,36 +44,36 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-          <Card className="w-full max-w-lg">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg surface-card">
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100">
+                <AlertTriangle className="h-6 w-6 text-rose-600" />
               </div>
-              <CardTitle className="text-xl font-semibold text-gray-900">
+              <CardTitle className="text-xl font-semibold text-foreground">
                 Something went wrong
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="text-muted-foreground">
                 We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="text-sm">
-                  <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
+                  <summary className="cursor-pointer font-medium text-foreground hover:text-foreground/80">
                     Error Details (Development)
                   </summary>
-                  <div className="mt-2 p-3 bg-gray-100 rounded border text-xs font-mono">
-                    <div className="font-semibold text-red-600 mb-1">
+                  <div className="mt-2 p-3 bg-muted/60 rounded border border-border/60 text-xs font-mono">
+                    <div className="font-semibold text-rose-600 mb-1">
                       {this.state.error.name}: {this.state.error.message}
                     </div>
-                    <pre className="whitespace-pre-wrap text-gray-700">
+                    <pre className="whitespace-pre-wrap text-foreground">
                       {this.state.error.stack}
                     </pre>
                     {this.state.errorInfo && (
-                      <div className="mt-2 pt-2 border-t border-gray-300">
-                        <div className="font-semibold text-gray-600 mb-1">Component Stack:</div>
-                        <pre className="whitespace-pre-wrap text-gray-600">
+                      <div className="mt-2 pt-2 border-t border-border/60">
+                        <div className="font-semibold text-muted-foreground mb-1">Component Stack:</div>
+                        <pre className="whitespace-pre-wrap text-muted-foreground">
                           {this.state.errorInfo.componentStack}
                         </pre>
                       </div>
