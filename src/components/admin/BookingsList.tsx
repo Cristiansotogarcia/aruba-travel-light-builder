@@ -1,9 +1,10 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { CreateBookingModal } from './CreateBookingModal';
 import { CompactEditBookingModal } from './CompactEditBookingModal';
 import { BookingViewModal } from './BookingViewModal';
@@ -11,6 +12,8 @@ import { BookingCalendarView } from './BookingCalendarView';
 import { BookingFilters } from './BookingFilters';
 import { BookingsListView } from './BookingsListView';
 import Spinner from '@/components/common/Spinner'; // Added Spinner import
+import { calculateProcessorFee, calculateNetAmount } from '@/utils/feeCalculator';
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 import { Booking, BookingStatus } from './calendar/types'; // Removed BookingItem, kept BookingStatus
 import { useQueryClient } from '@tanstack/react-query'; // Added import for useQueryClient
@@ -27,16 +30,11 @@ export const BookingsList = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient(); // Initialize queryClient
+  const { getNumericSetting, settings: systemSettings } = useSystemSettings();
+  const processorFeePercent = getNumericSetting('processor_fee_percent', 3.99);
+  const defaultCurrency = systemSettings['default_currency'] || 'AWG';
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  useEffect(() => {
-    filterBookings();
-  }, [bookings, searchTerm, statusFilter]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -56,12 +54,14 @@ export const BookingsList = () => {
       // Cast status to BookingStatus
       const typedBookings = data ? data.map(b => ({ ...b, status: b.status as BookingStatus })) : [];
       setBookings(typedBookings);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching bookings:', error);
-      let description = "Failed to fetch bookings.";
-      if (error && error.message && error.message.includes('permission denied')) {
+      let description = 'Failed to fetch bookings.';
+      const message = error instanceof Error ? error.message : '';
+      const code = typeof (error as { code?: unknown }).code === 'string' ? (error as { code?: string }).code : '';
+      if (message.includes('permission denied')) {
         description = "You do not have permission to view all bookings. Please contact an administrator if you believe this is an error.";
-      } else if (error && error.code === 'PGRST116') { // Example: Supabase RLS violation code
+      } else if (code === 'PGRST116') { // Example: Supabase RLS violation code
         description = "Access to some bookings is restricted due to security policies.";
       }
       toast({
@@ -72,9 +72,9 @@ export const BookingsList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterBookings = () => {
+  const filterBookings = useCallback(() => {
     let filtered = bookings;
 
     if (searchTerm) {
@@ -90,7 +90,64 @@ export const BookingsList = () => {
     }
 
     setFilteredBookings(filtered);
-  };
+  }, [bookings, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    filterBookings();
+  }, [filterBookings]);
+
+  // Real-time subscription for bookings
+  useEffect(() => {
+    const bookingsChannel = supabase
+      .channel('public:bookings')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings'
+        },
+        () => {
+          fetchBookings();
+        }
+      )
+      .subscribe();
+
+    const bookingItemsChannel = supabase
+      .channel('public:booking_items')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booking_items'
+        },
+        () => {
+          fetchBookings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(bookingsChannel);
+      supabase.removeChannel(bookingItemsChannel);
+    };
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    if (!bookings.length) return;
+    const openBookingId = sessionStorage.getItem('admin:openBookingId');
+    if (!openBookingId) return;
+    const bookingToOpen = bookings.find((booking) => booking.id === openBookingId);
+    if (bookingToOpen) {
+      setViewingBooking(bookingToOpen);
+      sessionStorage.removeItem('admin:openBookingId');
+    }
+  }, [bookings]);
 
   const updateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => { // Changed newStatus type
     try {
@@ -98,7 +155,7 @@ export const BookingsList = () => {
         .from('bookings')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', bookingId)
-        .select('*, booking_items(*, equipment(*))') // Select the updated booking details
+        .select('*, booking_items(equipment_name, quantity, equipment_price, subtotal, equipment_id)') // Select the updated booking details
         .single();
 
       if (error) {
@@ -155,6 +212,90 @@ export const BookingsList = () => {
         variant: "destructive"
       });
       console.error('Unexpected error in updateBookingStatus:', err);
+    }
+  };
+
+  const confirmPaymentReceived = async (booking: Booking) => {
+    try {
+      if (isSuccessfulBookingPaymentStatus(booking.payment_status)) {
+        toast({
+          title: "Payment Already Recorded",
+          description: "This booking already has a successful payment status.",
+        });
+        return;
+      }
+
+      const processedAt = new Date().toISOString();
+      const processedDate = processedAt.split('T')[0];
+      const grossAmount = Number(booking.total_amount);
+      const feeAmount = calculateProcessorFee(grossAmount, processorFeePercent);
+      const netAmount = calculateNetAmount(grossAmount, processorFeePercent);
+
+      const { data: paymentRecord, error: paymentRecordError } = await supabase
+        .from('payment_records')
+        .insert({
+          booking_id: booking.id,
+          amount: grossAmount,
+          gross_amount: grossAmount,
+          processor_fee_percent: processorFeePercent,
+          processor_fee_amount: feeAmount,
+          net_amount: netAmount,
+          currency_code: defaultCurrency,
+          status: 'paid',
+          processed_at: processedAt,
+          settlement_date: processedDate
+        })
+        .select('id')
+        .single();
+
+      if (paymentRecordError || !paymentRecord) {
+        throw paymentRecordError ?? new Error('Failed to create payment record.');
+      }
+
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_status: 'paid',
+          updated_at: processedAt
+        })
+        .eq('id', booking.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      const { data: invoiceId, error: invoiceError } = await supabase.rpc('issue_booking_invoice', {
+        p_booking_id: booking.id,
+        p_payment_record_id: paymentRecord.id,
+      });
+
+      if (invoiceError || !invoiceId) {
+        throw invoiceError ?? new Error('Failed to issue invoice snapshot.');
+      }
+
+      const { error: emailError } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          invoice_id: invoiceId,
+        }
+      });
+
+      toast({
+        title: "Payment Confirmed",
+        description: emailError
+          ? "Payment recorded and invoice issued, but the invoice email could not be sent."
+          : "Payment recorded and invoice sent to the customer.",
+      });
+
+      fetchBookings();
+    } catch (error: unknown) {
+      console.error('Error confirming payment:', error);
+      const message = error instanceof Error ? error.message : 'Failed to confirm payment.';
+      toast({
+        title: "Payment Confirmation Failed",
+        description: message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -250,6 +391,7 @@ export const BookingsList = () => {
           onClose={handleCloseView}
           onStatusUpdate={updateBookingStatus}
           onEdit={handleEditBooking}
+          onPaymentReceived={confirmPaymentReceived}
           onBookingDeleted={fetchBookings}
           open={!!viewingBooking}
         />

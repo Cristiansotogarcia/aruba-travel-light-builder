@@ -1,9 +1,16 @@
 
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState, ReactNode, useCallback, useContext, createContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import type { Profile, UserRole } from '@/types/types';
 import { useInactivityLogout } from './useInactivityLogout';
+
+// Define the allowed roles for database queries (must match Supabase-generated app_role enum)
+type DbRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
+
+// Define the allowed roles for profile creation (must match Supabase-generated app_role enum)
+type ProfileRole = 'SuperUser' | 'Admin' | 'Accounting' | 'Booker' | 'Driver';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +23,49 @@ interface AuthContextType {
   hasPermission: (componentName: string) => boolean;
   setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
 }
+
+const DEFAULT_PERMISSION_MATRIX: Record<UserRole, Record<string, boolean>> = {
+  SuperUser: {
+    ReportingAccess: true,
+    BookingManagement: true,
+    BookingAssignment: true,
+    ProductManagement: true,
+    CategoryManagement: true,
+    SeoManager: true,
+    UserManagement: true,
+    VisibilitySettings: true,
+    DriverTasks: true,
+    TaskMaster: true,
+    settings: true,
+  },
+  Admin: {
+    ReportingAccess: true,
+    BookingManagement: true,
+    BookingAssignment: true,
+    ProductManagement: true,
+    CategoryManagement: true,
+    SeoManager: true,
+    UserManagement: true,
+    VisibilitySettings: true,
+    DriverTasks: true,
+    TaskMaster: true,
+    settings: true,
+  },
+  Accounting: {
+    ReportingAccess: true,
+  },
+  Booker: {
+    BookingManagement: true,
+    BookingAssignment: true,
+  },
+  Customer: {},
+  Driver: {
+    DriverTasks: true,
+  },
+  StoreStaff: {
+    DepotPickups: true,
+  },
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -41,16 +91,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 
   const loadPermissions = useCallback(async (role: UserRole) => {
+    // Skip loading permissions for roles not stored in component_visibility
+    if (role === 'Customer' || role === 'StoreStaff') {
+      setPermissions(DEFAULT_PERMISSION_MATRIX[role] || {});
+      return;
+    }
+
     try {
       console.log('Loading permissions for role:', role);
       const { data, error } = await supabase
         .from('component_visibility')
         .select('component_name, is_visible')
-        .eq('role', role);
+        .eq('role', role as DbRole);
 
       if (error) throw error;
 
-      const permissionsMap: Record<string, boolean> = {};
+      const permissionsMap: Record<string, boolean> = {
+        ...(DEFAULT_PERMISSION_MATRIX[role] || {}),
+      };
       data?.forEach(({ component_name, is_visible }) => {
         permissionsMap[component_name] = is_visible;
       });
@@ -192,7 +250,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             id: data.user.id,
             email: data.user.email,
             name: name,
-            role: role,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            role: role as any as ProfileRole,
           });
 
         if (profileError) {
@@ -228,8 +287,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sign in failed';
+      return { success: false, error: message };
     } finally {
       setLoading(false);
     }

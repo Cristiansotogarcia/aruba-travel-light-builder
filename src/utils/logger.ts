@@ -12,9 +12,9 @@ enum LogLevel {
 interface LogEntry {
   level: LogLevel;
   message: string;
-  data?: any;
+  data?: unknown;
   timestamp: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   userId?: string;
   sessionId?: string;
 }
@@ -88,8 +88,8 @@ class Logger {
   private createLogEntry(
     level: LogLevel,
     message: string,
-    data?: any,
-    context?: Record<string, any>
+    data?: unknown,
+    context?: Record<string, unknown>
   ): LogEntry {
     return {
       level,
@@ -109,8 +109,8 @@ class Logger {
   private log(
     level: LogLevel,
     message: string,
-    data?: any,
-    context?: Record<string, any>
+    data?: unknown,
+    context?: Record<string, unknown>
   ): void {
     if (!this.shouldLog(level)) return;
 
@@ -192,19 +192,19 @@ class Logger {
   }
 
   // Public logging methods
-  debug(message: string, data?: any, context?: Record<string, any>): void {
+  debug(message: string, data?: unknown, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, data, context);
   }
 
-  info(message: string, data?: any, context?: Record<string, any>): void {
+  info(message: string, data?: unknown, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, data, context);
   }
 
-  warn(message: string, data?: any, context?: Record<string, any>): void {
+  warn(message: string, data?: unknown, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, data, context);
   }
 
-  error(message: string, data?: any, context?: Record<string, any>): void {
+  error(message: string, data?: unknown, context?: Record<string, unknown>): void {
     this.log(LogLevel.ERROR, message, data, context);
   }
 
@@ -307,7 +307,8 @@ export default logger;
 // Development helpers
 if (import.meta.env.DEV) {
   // Make logger available globally for debugging
-  (window as any).logger = logger;
+  const devWindow = window as Window & { logger?: Logger };
+  devWindow.logger = logger;
   
   // Log application start
   logger.info('Application started', {

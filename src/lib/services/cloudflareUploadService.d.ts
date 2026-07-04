@@ -13,7 +13,7 @@ interface CloudflareUploadResponse {
     }>;
 }
 declare class CloudflareUploadService {
-    uploadImage(file: File, metadata?: any): Promise<CloudflareUploadResponse>;
+    uploadImage(file: File, metadata?: Record<string, unknown>): Promise<CloudflareUploadResponse>;
     getImageUrl(imageId: string, variant?: string): string;
     validateFile(file: File): {
         valid: boolean;

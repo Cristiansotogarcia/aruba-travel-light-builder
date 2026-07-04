@@ -1,9 +1,7 @@
-import React, { Suspense } from 'react';
+import 'leaflet/dist/leaflet.css';
 
-const MapContainer = React.lazy(() => import('react-leaflet').then(module => ({ default: module.MapContainer })) );
-const TileLayer = React.lazy(() => import('react-leaflet').then(module => ({ default: module.TileLayer })) );
-const Marker = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Marker })) );
-const Popup = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Popup })) );
+import type { FC } from 'react';
+import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
 
 interface DynamicMapProps {
   center: [number, number];
@@ -14,20 +12,19 @@ interface DynamicMapProps {
   }>;
 }
 
-const DynamicMap: React.FC<DynamicMapProps> = ({ markers }) => {
+const DynamicMap: FC<DynamicMapProps> = ({ center, zoom, markers }) => {
   return (
-    <Suspense fallback={<div>Loading Map...</div>}>
-      <MapContainer style={{ height: '400px', width: '100%' }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {markers && markers.map((marker, idx) => (
-          <Marker key={idx} position={marker.position}>
-            {marker.popup && <Popup>{marker.popup}</Popup>}
-          </Marker>
-        ))}
-      </MapContainer>
-    </Suspense>
+    <MapContainer center={center} zoom={zoom} scrollWheelZoom={false} style={{ height: '400px', width: '100%' }}>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {markers?.map((marker, idx) => (
+        <CircleMarker key={idx} center={marker.position} radius={10}>
+          {marker.popup ? <Popup>{marker.popup}</Popup> : null}
+        </CircleMarker>
+      ))}
+    </MapContainer>
   );
 };
 

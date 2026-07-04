@@ -4,7 +4,7 @@ interface CloudflareImage {
   uploaded: string;
   requireSignedURLs: boolean;
   variants: string[];
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 interface CloudflareImagesResponse {
@@ -14,8 +14,8 @@ interface CloudflareImagesResponse {
     continuation_token?: string;
   };
   success: boolean;
-  errors: any[];
-  messages: any[];
+  errors: unknown[];
+  messages: unknown[];
 }
 
 import { supabase } from '@/integrations/supabase/client';

@@ -13,6 +13,7 @@ interface BookingViewModalProps {
   booking: Booking;
   onClose: () => void;
   onStatusUpdate: (bookingId: string, newStatus: BookingStatus) => void; // Changed to BookingStatus
+  onPaymentReceived?: (booking: Booking) => void;
   onEdit: (booking: Booking) => void;
   onBookingDeleted?: () => void;
   open: boolean;
@@ -22,6 +23,7 @@ export const BookingViewModal = ({
   booking, 
   onClose, 
   onStatusUpdate, 
+  onPaymentReceived,
   onEdit, 
   onBookingDeleted, 
   open 
@@ -72,21 +74,28 @@ export const BookingViewModal = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
             <DialogTitle>Booking Details #{booking.id.substring(0, 8)}</DialogTitle>
             <DialogDescription>
               View the details of the booking and perform actions such as updating the status, editing, or deleting the booking.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6">
-            <BookingDetailsCard booking={booking} />
+          <div className="space-y-6 px-6 py-4 overflow-y-auto flex-1 min-h-0">
+            <BookingDetailsCard 
+              booking={booking} 
+              onDriverAssigned={() => {
+                // Refresh the booking data in parent
+                onClose();
+              }}
+            />
 
             <BookingActionButtons
               booking={booking}
               onStatusUpdate={onStatusUpdate}
               onEdit={onEdit}
+              onPaymentReceived={onPaymentReceived}
               onShowDeleteModal={() => setShowDeleteModal(true)}
               onShowUndeliverableModal={() => setShowUndeliverableModal(true)}
               onClose={onClose}

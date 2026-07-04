@@ -2,7 +2,11 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Footer } from './Footer';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({ user: null })
+}));
 
 describe('Footer Component', () => {
   // it('should be a basic passing test', () => {
@@ -16,7 +20,8 @@ describe('Footer Component', () => {
       </BrowserRouter>
     );
     // screen.debug(); // Removed for now
-    const expected = '© 2025 Travel Light Aruba. All rights reserved.';
+    const year = new Date().getFullYear();
+    const expected = new RegExp(`${year} Travel Light Aruba\\. All rights reserved\\.`);
     const copyrightElement = screen.getByText(expected);
     expect(copyrightElement).toBeInTheDocument();
   });
@@ -39,7 +44,8 @@ describe('Footer Component', () => {
     );
     // Use exact match for the main "Equipment" link to avoid multiple matches
     expect(screen.getByRole('link', { name: /^Equipment$/i })).toBeInTheDocument();
-    // Book Now link is hidden; ensure it is not rendered
-    expect(screen.queryByRole('link', { name: /Book Now/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Book Now/i })).toBeInTheDocument();
   });
 });
+
+

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'; // Added Button import
 import { Edit2, CheckSquare } from 'lucide-react'; // Added icons
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import { Booking, BookingStatus } from './calendar/types';
+import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 
 interface BookingSquareCardProps {
   booking: Booking;
@@ -16,11 +17,13 @@ interface BookingSquareCardProps {
 export const BookingSquareCard = ({ booking, onView, onStatusUpdate, onEdit }: BookingSquareCardProps) => {
   // A simple example of cycling status, replace with a proper dropdown/modal later
   const handleSimpleStatusUpdate = () => {
-    const statuses: BookingStatus[] = ['pending', 'confirmed', 'out_for_delivery', 'delivered', 'completed', 'cancelled'];
+    const statuses: BookingStatus[] = ['pending_admin_review', 'pending', 'confirmed', 'out_for_delivery', 'delivered', 'completed', 'cancelled'];
     const currentIndex = statuses.indexOf(booking.status);
     const nextIndex = (currentIndex + 1) % statuses.length;
     onStatusUpdate(booking.id, statuses[nextIndex]);
   };
+
+  const canCycleStatus = booking.status !== 'pending' || isSuccessfulBookingPaymentStatus(booking.payment_status);
 
   return (
     <Card 
@@ -43,12 +46,24 @@ export const BookingSquareCard = ({ booking, onView, onStatusUpdate, onEdit }: B
             {getStatusLabel(booking.status)}
           </Badge>
         </div>
+        <div className="text-xs text-gray-500 text-center">
+          Payment {isSuccessfulBookingPaymentStatus(booking.payment_status) ? 'Paid' : 'Pending'}
+        </div>
       </CardContent>
       <div className="p-2 border-t flex justify-end space-x-2 bg-slate-50">
         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(booking); }} title="Edit Booking">
           <Edit2 className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSimpleStatusUpdate(); }} title="Update Status (Cycle)">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={!canCycleStatus}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (canCycleStatus) handleSimpleStatusUpdate();
+          }}
+          title={canCycleStatus ? "Update Status (Cycle)" : "Payment pending"}
+        >
           <CheckSquare className="h-4 w-4" />
         </Button>
       </div>

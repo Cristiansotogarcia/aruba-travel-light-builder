@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
 import { useCategories } from '@/hooks/useCategories';
 import MobileNav from './MobileNav';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ShoppingCart, ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   NavigationMenu,
@@ -19,6 +20,7 @@ import {
 
 export const Header = () => {
   const { user, profile, signOut, loading } = useAuth();
+  const { items } = useCart();
   const { assets } = useSiteAssets();
   const { categories, loading: categoriesLoading } = useCategories();
   const navigate = useNavigate();
@@ -43,10 +45,16 @@ export const Header = () => {
       case 'Admin':
       case 'SuperUser':
         return { path: '/admin', label: 'Admin Dashboard' };
+      case 'Accounting':
+        return { path: '/accounting', label: 'Accounting Dashboard' };
       case 'Driver':
         return { path: '/driver-dashboard', label: 'Driver Dashboard' };
       case 'Booker':
+        return { path: '/booker', label: 'Booker Dashboard' };
+      case 'Customer':
         return { path: '/customer-dashboard', label: 'My Dashboard' };
+      case 'StoreStaff':
+        return { path: '/depot', label: 'Depot' };
       default:
         return null;
     }
@@ -55,31 +63,36 @@ export const Header = () => {
   const dashboardLink = getDashboardLink();
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16 sm:h-20">
           <Link to="/" className="flex items-center">
             <img
               src={assets.logo || '/placeholder.svg'}
               alt="Travel Light Aruba"
-              className="w-auto h-20 object-contain"
+              className="w-auto h-12 sm:h-16 object-contain"
+              style={{ transform: 'scale(1.5)', transformOrigin: 'left center' }}
             />
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6 text-sm">
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger>Equipment</NavigationMenuTrigger>
+                  <NavigationMenuTrigger className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+                    Equipment
+                  </NavigationMenuTrigger>
                   <NavigationMenuContent className="max-h-[60vh] overflow-y-auto">
-                    <div className="grid gap-3 p-4 w-[500px]">
+                    <div className="grid gap-3 p-4 w-[520px]">
                       <NavigationMenuLink asChild>
                         <Link
                           to="/equipment"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          className="block select-none space-y-1 rounded-xl border border-transparent p-3 leading-none no-underline outline-none transition-colors hover:border-border/60 hover:bg-accent/60 focus:border-border/60 focus:bg-accent/60"
                         >
-                          <div className="text-sm font-medium leading-none">All Equipment</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">Browse our complete equipment catalog</p>
+                          <div className="text-sm font-semibold leading-none">All Equipment</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Browse our complete equipment catalog
+                          </p>
                         </Link>
                       </NavigationMenuLink>
 
@@ -90,7 +103,7 @@ export const Header = () => {
                               open={categoryStates[category.id] || false}
                               onOpenChange={() => toggleCategory(category.id)}
                             >
-                              <CollapsibleTrigger className="flex w-full items-center justify-between select-none rounded-md p-3 text-sm font-medium leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <CollapsibleTrigger className="flex w-full items-center justify-between select-none rounded-xl border border-transparent p-3 text-sm font-semibold leading-none no-underline outline-none transition-colors hover:border-border/60 hover:bg-accent/60 focus:border-border/60 focus:bg-accent/60">
                                 <span>{category.name}</span>
                                 {categoryStates[category.id]
                                   ? <ChevronDown className="h-4 w-4 shrink-0" />
@@ -101,7 +114,7 @@ export const Header = () => {
                                   <NavigationMenuLink asChild>
                                     <Link
                                       to={`/equipment?category=${encodeURIComponent(category.name)}`}
-                                      className="block select-none rounded-md p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground text-muted-foreground"
+                                      className="block select-none rounded-lg p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus:bg-accent/50 focus:text-foreground text-muted-foreground"
                                     >
                                       All {category.name}
                                     </Link>
@@ -110,7 +123,7 @@ export const Header = () => {
                                     <NavigationMenuLink key={subCategory.id} asChild>
                                       <Link
                                         to={`/equipment?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subCategory.name)}`}
-                                        className="block select-none rounded-md p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground text-muted-foreground"
+                                        className="block select-none rounded-lg p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus:bg-accent/50 focus:text-foreground text-muted-foreground"
                                       >
                                         {subCategory.name}
                                       </Link>
@@ -123,9 +136,9 @@ export const Header = () => {
                             <NavigationMenuLink asChild>
                               <Link
                                 to={`/equipment?category=${encodeURIComponent(category.name)}`}
-                                className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                className="block select-none space-y-1 rounded-xl border border-transparent p-3 leading-none no-underline outline-none transition-colors hover:border-border/60 hover:bg-accent/60 focus:border-border/60 focus:bg-accent/60"
                               >
-                                <div className="text-sm font-medium leading-none">{category.name}</div>
+                                <div className="text-sm font-semibold leading-none">{category.name}</div>
                                 <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                                   {category.description || `Browse all ${category.name.toLowerCase()}`}
                                 </p>
@@ -139,28 +152,35 @@ export const Header = () => {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
-            <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <Link to="/about" className="font-semibold text-muted-foreground hover:text-foreground transition-colors">
               About
             </Link>
-            <Link to="/contact" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <Link to="/contact" className="font-semibold text-muted-foreground hover:text-foreground transition-colors">
               Contact
             </Link>
-            <Link to="/policies" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <Link to="/policies" className="font-semibold text-muted-foreground hover:text-foreground transition-colors">
               Policies
             </Link>
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
+            <Button asChild variant="ghost" size="icon" className="relative">
+              <Link to="/cart" aria-label="Cart">
+                <ShoppingCart className="h-5 w-5" />
+                {items.length > 0 && (
+                  <span className="absolute -top-1 -right-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold h-5 min-w-5 px-1 flex items-center justify-center">
+                    {items.length}
+                  </span>
+                )}
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/book">Book Now</Link>
+            </Button>
             {loading ? (
               <p>Loading...</p>
             ) : user && profile ? (
               <>
-                {profile.role === 'Booker' && (
-                  // Hide Book Now button until booking is enabled
-                  <Button asChild className="hidden" hidden>
-                    <Link to="/book">Book Now</Link>
-                  </Button>
-                )}
                 {dashboardLink && (
                   <Button asChild variant="outline">
                     <Link to={dashboardLink.path}>{dashboardLink.label}</Link>

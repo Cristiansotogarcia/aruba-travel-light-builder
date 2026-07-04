@@ -10,7 +10,18 @@ export interface BookingItem {
   equipment?: Product; // Added to reflect nested equipment data from Supabase query
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'out_for_delivery' | 'delivered' | 'undeliverable';
+export type BookingStatus =
+  | 'pending'
+  | 'pending_admin_review'
+  | 'confirmed'
+  | 'cancelled'
+  | 'completed'
+  | 'out_for_delivery'
+  | 'in_transit'
+  | 'delivered'
+  | 'undeliverable'
+  | 'rejected'
+  | 'expired';
 
 export interface Booking {
   id: string;
@@ -18,13 +29,23 @@ export interface Booking {
   customer_email: string;
   customer_phone: string;
   customer_address: string;
+  room_number?: string | null;
+  customer_comment: string | null;
+  user_id: string | null; // Nullable to support guest bookings
   start_date: string;
   end_date: string;
   status: BookingStatus;
+  payment_status?: string | null;
+  payment_link_url?: string | null;
   total_amount: number;
   delivery_failure_reason: string | null;
   booking_items: BookingItem[];
   assigned_to: string | null;
+  assigned_driver_id?: string | null;
+  delivery_scheduled_at?: string | null;
+  delivered_at?: string | null;
+  pickup_scheduled_at?: string | null;
+  picked_up_at?: string | null;
   created_at: string;
   updated_at: string;
 }
