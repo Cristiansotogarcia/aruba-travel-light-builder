@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { supabase } from '@/integrations/supabase/client';
 import {
   getInvoiceDisplayNumber,
@@ -11,6 +12,15 @@ import {
   type InvoiceLineItem,
   type InvoiceSnapshot,
 } from '@/lib/accounting/invoices';
+import { computeInclusiveTax, parseTaxRate } from '@/utils/invoice';
+
+interface CreditNoteRow {
+  id: string;
+  credit_number: string;
+  amount: number;
+  reason: string;
+  created_at: string;
+}
 
 const toInvoiceLineItems = (value: unknown): InvoiceLineItem[] =>
   Array.isArray(value) ? (value as InvoiceLineItem[]) : [];
@@ -20,8 +30,10 @@ const Invoice = () => {
   const { profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [invoice, setInvoice] = useState<InvoiceSnapshot | null>(null);
+  const [creditNotes, setCreditNotes] = useState<CreditNoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { getSetting } = useSystemSettings();
   const shouldAutoPrint = searchParams.get('download') === '1';
 
   useEffect(() => {
@@ -84,6 +96,28 @@ const Invoice = () => {
   }, [id]);
 
   useEffect(() => {
+    const fetchCreditNotes = async () => {
+      if (!invoice?.booking_id) {
+        return;
+      }
+
+      // RLS restricts credit notes to Accounting/Admin/SuperUser; other viewers
+      // simply get an empty list.
+      const { data, error } = await (supabase as any)
+        .from('credit_notes')
+        .select('id, credit_number, amount, reason, created_at')
+        .eq('booking_id', invoice.booking_id)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) {
+        setCreditNotes(data as CreditNoteRow[]);
+      }
+    };
+
+    fetchCreditNotes();
+  }, [invoice?.booking_id]);
+
+  useEffect(() => {
     if (!invoice || !shouldAutoPrint) {
       return;
     }
@@ -121,6 +155,14 @@ const Invoice = () => {
   const paymentLabel = isSuccessfulBookingPaymentStatus(invoice.payment_status) ? 'Paid' : 'Pending';
   const backTarget = profile?.role === 'Accounting' ? '/accounting' : '/admin';
   const backLabel = profile?.role === 'Accounting' ? 'Back to accounting' : 'Back to dashboard';
+
+  // Turnover tax (BBO/BAZV/BAVP) is displayed tax-inclusively: the charged total
+  // stays unchanged and we surface the embedded tax when a rate is configured.
+  const taxRate = parseTaxRate(getSetting('invoice_tax_rate_percent', '0'));
+  const taxLabel = getSetting('invoice_tax_label', 'BBO/BAZV/BAVP') || 'BBO/BAZV/BAVP';
+  const { taxAmount } = computeInclusiveTax(Number(invoice.total_amount), taxRate);
+  const totalCredited = creditNotes.reduce((sum, note) => sum + Number(note.amount), 0);
+  const balanceAfterCredits = Number(invoice.total_amount) - totalCredited;
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 print:bg-white print:py-0">
@@ -215,6 +257,31 @@ const Invoice = () => {
                 <span className="font-semibold text-foreground">Total</span>
                 <span className="text-lg font-semibold text-foreground">${Number(invoice.total_amount).toFixed(2)}</span>
               </div>
+              {taxRate > 0 && taxAmount > 0 && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Includes {taxLabel} ({taxRate}%)</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {creditNotes.length > 0 && (
+                <>
+                  {creditNotes.map((note) => (
+                    <div key={note.id} className="flex items-center justify-between text-red-600">
+                      <span>
+                        Credit Note {note.credit_number}
+                        {note.reason ? (
+                          <span className="block text-xs text-muted-foreground">{note.reason}</span>
+                        ) : null}
+                      </span>
+                      <span className="font-medium">-${Number(note.amount).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between border-t border-border/60 pt-3">
+                    <span className="font-semibold text-foreground">Balance After Credits</span>
+                    <span className="text-lg font-semibold text-foreground">${balanceAfterCredits.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
