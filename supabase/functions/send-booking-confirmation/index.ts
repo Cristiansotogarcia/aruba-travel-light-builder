@@ -1,32 +1,34 @@
-/// <reference lib="deno.ns" />
-// supabase/functions/send-booking-confirmation/index.ts
-//
-// Sends a "Reservation received" confirmation email to the customer after a
-// booking is created. Invoked fire-and-forget from the client with
-// { booking_id }. All booking data is loaded server-side using the service
-// role key so the caller cannot influence the email content.
-//
-// Secrets (already configured in the Supabase project — this function does not
-// add any):
-//   - RESEND_API_KEY            Resend API key
-//   - SUPABASE_URL              (injected automatically)
-//   - SUPABASE_SERVICE_ROLE_KEY (injected automatically)
-//   - BOOKING_EMAIL_FROM        (optional) override the From address
-//
-// This function is deploy-ready but is NOT deployed here (the orchestrator
-// deploys at integration time).
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Default From address. Uses the verified sending domain travellightaruba.com.
-// Overridable via the BOOKING_EMAIL_FROM secret without redeploying code.
-const DEFAULT_FROM = 'Travel Light Aruba <reservations@travellightaruba.com>';
+// Sends a "Reservation received" confirmation email to the customer right
+// after a booking is created. Invoked fire-and-forget from the client with
+// { booking_id } only — all booking data is loaded server-side with the
+// service role key so the caller cannot influence the email content.
+//
+// Secrets (already configured for sibling functions — nothing new added):
+//   RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-// Store / pickup location details (from the store location card).
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const RESEND_API_URL = 'https://api.resend.com/emails';
+const FROM_EMAIL = 'Travel Light Aruba <info@travelightaruba.com>';
+const REPLY_TO = 'info@travelightaruba.com';
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : null;
+
+// Store pickup location (matches the store location card on the site).
 const STORE_NAME = 'Travel Light Aruba';
-const STORE_ADDRESS_LINE1 = 'Caya Taratata 15, Unit 11';
-const STORE_ADDRESS_LINE2 = 'Coral Plaza, Aruba';
+const STORE_ADDRESS = 'Caya Taratata 15, Unit 11, Coral Plaza';
+
+interface BookingConfirmationRequest {
+  booking_id: string;
+}
 
 interface BookingItemRow {
   equipment_name: string;
@@ -44,7 +46,124 @@ interface BookingRow {
   end_date: string;
   total_amount: number;
   status: string;
+  fulfillment_method: 'delivery' | 'pickup' | null;
+  pickup_code: string | null;
+  delivery_slot: string | null;
+  pickup_slot: string | null;
 }
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Never leak internals to the caller — generic failure body only.
+  const genericFailure = (status: number) =>
+    new Response(JSON.stringify({ error: 'Could not send confirmation email' }), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  try {
+    let requestData: BookingConfirmationRequest;
+    try {
+      requestData = await req.json() as BookingConfirmationRequest;
+    } catch {
+      return genericFailure(400);
+    }
+
+    if (!requestData.booking_id || typeof requestData.booking_id !== 'string') {
+      return genericFailure(400);
+    }
+
+    if (!supabase) {
+      console.error('send-booking-confirmation: Supabase service role is not configured');
+      return genericFailure(500);
+    }
+
+    // Load booking server-side (service role bypasses RLS).
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id, customer_name, customer_email, customer_address, start_date, end_date, total_amount, status, fulfillment_method, pickup_code, delivery_slot, pickup_slot')
+      .eq('id', requestData.booking_id)
+      .single<BookingRow>();
+
+    if (bookingError || !booking) {
+      console.error('send-booking-confirmation: booking not found', requestData.booking_id, bookingError?.message);
+      return genericFailure(404);
+    }
+
+    if (!booking.customer_email) {
+      console.error('send-booking-confirmation: booking has no customer_email', booking.id);
+      return genericFailure(422);
+    }
+
+    // Load line items (best effort — email is still useful without them).
+    const { data: itemRows, error: itemsError } = await supabase
+      .from('booking_items')
+      .select('equipment_name, quantity, equipment_price, subtotal')
+      .eq('booking_id', booking.id);
+
+    if (itemsError) {
+      console.error('send-booking-confirmation: failed to load items', booking.id, itemsError.message);
+    }
+    const items: BookingItemRow[] = (itemRows as BookingItemRow[] | null) ?? [];
+
+    const bookingRef = booking.id.slice(0, 8).toUpperCase();
+    const subject = `Reservation Received - Booking #${bookingRef}`;
+    const emailHtml = generateConfirmationEmail(booking, items);
+
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY not configured');
+      console.log('=== BOOKING CONFIRMATION EMAIL (NOT SENT - NO API KEY) ===');
+      console.log(`To: ${booking.customer_email}`);
+      console.log(`Subject: ${subject}`);
+
+      return new Response(
+        JSON.stringify({
+          message: 'Email service not configured - email logged to console',
+          booking_id: booking.id,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
+    const emailResponse = await fetch(RESEND_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [booking.customer_email],
+        reply_to: REPLY_TO,
+        subject,
+        html: emailHtml,
+      }),
+    });
+
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      console.error('send-booking-confirmation: Resend API error', emailResponse.status, errorText);
+      return genericFailure(502);
+    }
+
+    const emailResult = await emailResponse.json();
+    console.log('send-booking-confirmation: email sent', booking.id, emailResult?.id);
+
+    return new Response(JSON.stringify({ success: true, booking_id: booking.id }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error: unknown) {
+    console.error('send-booking-confirmation: unexpected error', error);
+    return genericFailure(500);
+  }
+});
 
 function escapeHtml(value: string): string {
   return value
@@ -59,249 +178,200 @@ function formatDate(value: string): string {
   const d = new Date(value);
   if (isNaN(d.getTime())) return escapeHtml(value);
   return d.toLocaleDateString('en-US', {
-    weekday: 'short',
+    weekday: 'long',
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: 'numeric',
   });
 }
 
-function formatMoney(value: number): string {
-  const n = typeof value === 'number' && !isNaN(value) ? value : 0;
-  return `$${n.toFixed(2)}`;
+function formatSlot(slot: string | null): string {
+  if (slot === 'morning') return 'Morning (9AM - 12PM)';
+  if (slot === 'afternoon') return 'Afternoon (1PM - 5PM)';
+  return '';
 }
 
-// This branch of the app has no fulfillment_method / pickup_code columns on the
-// bookings table (no migrations allowed). Pickup vs delivery is therefore
-// derived from whether a delivery address is present: delivery bookings capture
-// an address; pickup bookings leave it blank.
-function isPickup(address: string | null): boolean {
-  return !address || address.trim().length === 0;
-}
+function generateConfirmationEmail(booking: BookingRow, items: BookingItemRow[]): string {
+  const isPickup = booking.fulfillment_method === 'pickup';
+  const bookingRef = booking.id.slice(0, 8).toUpperCase();
+  const customerName = escapeHtml(booking.customer_name || 'there');
 
-function buildItemsHtml(items: BookingItemRow[]): string {
-  const rows = items
-    .map((item) => {
-      const name = escapeHtml(item.equipment_name ?? '');
-      const qty = Number(item.quantity ?? 0);
-      const subtotal = formatMoney(Number(item.subtotal ?? 0));
-      return `
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #eaeaea;">${name}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eaeaea;text-align:center;">${qty}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eaeaea;text-align:right;">${subtotal}</td>
-        </tr>`;
-    })
-    .join('');
+  const itemsList = items.map((item) => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(item.equipment_name || '')}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${Number(item.quantity || 0)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">$${Number(item.equipment_price || 0).toFixed(2)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">$${Number(item.subtotal || 0).toFixed(2)}</td>
+    </tr>
+  `).join('');
 
-  return `
-    <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;">
-      <thead>
-        <tr>
-          <th style="padding:8px 12px;border-bottom:2px solid #333;text-align:left;">Item</th>
-          <th style="padding:8px 12px;border-bottom:2px solid #333;text-align:center;">Qty</th>
-          <th style="padding:8px 12px;border-bottom:2px solid #333;text-align:right;">Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
+  const deliverySlotText = formatSlot(booking.delivery_slot);
+  const pickupSlotText = formatSlot(booking.pickup_slot);
 
-function buildEmailHtml(booking: BookingRow, items: BookingItemRow[]): string {
-  const name = escapeHtml(booking.customer_name ?? 'there');
-  const pickup = isPickup(booking.customer_address);
-  const shortId = escapeHtml(String(booking.id).substring(0, 8).toUpperCase());
-
-  const pickupSection = pickup
+  const datesTable = isPickup
     ? `
-      <div style="margin:24px 0;padding:16px 20px;background:#f4f9f4;border:1px solid #cfe6cf;border-radius:8px;">
-        <p style="margin:0 0 8px;font-weight:bold;font-size:15px;">Your pickup code</p>
-        <p style="margin:0 0 12px;font-size:28px;font-weight:bold;letter-spacing:3px;color:#1a7f37;">${shortId}</p>
-        <p style="margin:0 0 4px;">Please bring this code with you when you collect your equipment.</p>
-        <p style="margin:12px 0 4px;font-weight:bold;">Pickup location</p>
-        <p style="margin:0;">${escapeHtml(STORE_NAME)}<br/>${escapeHtml(STORE_ADDRESS_LINE1)}<br/>${escapeHtml(STORE_ADDRESS_LINE2)}</p>
-      </div>`
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 12px 0; color: #6b7280; width: 140px;">Rental Start:</td>
+            <td style="padding: 12px 0; color: #111827; font-weight: 500;">${formatDate(booking.start_date)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; color: #6b7280;">Rental End:</td>
+            <td style="padding: 12px 0; color: #111827; font-weight: 500;">${formatDate(booking.end_date)}</td>
+          </tr>
+        </table>`
     : `
-      <div style="margin:24px 0;padding:16px 20px;background:#f5f7fb;border:1px solid #d5deee;border-radius:8px;">
-        <p style="margin:0 0 8px;font-weight:bold;font-size:15px;">Delivery</p>
-        <p style="margin:0;">We'll deliver your equipment to:<br/>${escapeHtml(booking.customer_address ?? '')}</p>
-      </div>`;
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 12px 0; color: #6b7280; width: 140px;">Delivery Date:</td>
+            <td style="padding: 12px 0; color: #111827; font-weight: 500;">${formatDate(booking.start_date)}</td>
+          </tr>
+          ${deliverySlotText ? `<tr>
+            <td style="padding: 12px 0; color: #6b7280;">Delivery Time:</td>
+            <td style="padding: 12px 0; color: #111827; font-weight: 500;">${deliverySlotText}</td>
+          </tr>` : ''}
+          <tr>
+            <td style="padding: 12px 0; color: #6b7280;">Pickup Date:</td>
+            <td style="padding: 12px 0; color: #111827; font-weight: 500;">${formatDate(booking.end_date)}</td>
+          </tr>
+          ${pickupSlotText ? `<tr>
+            <td style="padding: 12px 0; color: #6b7280;">Pickup Time:</td>
+            <td style="padding: 12px 0; color: #111827; font-weight: 500;">${pickupSlotText}</td>
+          </tr>` : ''}
+        </table>`;
 
-  return `
-  <div style="font-family:Arial,Helvetica,sans-serif;color:#222;max-width:600px;margin:0 auto;padding:24px;line-height:1.5;">
-    <h1 style="font-size:22px;margin:0 0 8px;">Reservation received</h1>
-    <p style="margin:0 0 16px;">Hi ${name},</p>
-    <p style="margin:0 0 16px;">Thank you for your reservation with ${escapeHtml(STORE_NAME)}. We've received your request and it is now <strong>pending review</strong>. Here are the details:</p>
+  const pickupSection = isPickup && booking.pickup_code
+    ? `
+      <div style="background-color: #ecfdf5; border: 2px solid #10b981; padding: 24px; border-radius: 8px; margin: 30px 0; text-align: center;">
+        <p style="margin: 0 0 10px; color: #065f46; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Your Pickup Code</p>
+        <p style="margin: 0 0 16px; color: #047857; font-size: 36px; font-weight: bold; font-family: monospace; letter-spacing: 4px;">${escapeHtml(booking.pickup_code)}</p>
+        <p style="margin: 0 0 12px; color: #065f46; font-size: 14px; line-height: 1.6;">
+          Please bring this code with you when collecting your equipment at our store.
+        </p>
+        <p style="margin: 0; color: #065f46; font-size: 14px; font-weight: 600;">
+          ${escapeHtml(STORE_NAME)}<br>
+          ${escapeHtml(STORE_ADDRESS)}
+        </p>
+      </div>`
+    : '';
 
-    <table style="font-size:14px;margin:0 0 8px;">
-      <tr><td style="padding:2px 12px 2px 0;color:#666;">Reservation</td><td style="padding:2px 0;">#${shortId}</td></tr>
-      <tr><td style="padding:2px 12px 2px 0;color:#666;">Rental dates</td><td style="padding:2px 0;">${formatDate(booking.start_date)} &ndash; ${formatDate(booking.end_date)}</td></tr>
-    </table>
+  const deliveryAddressSection = !isPickup && booking.customer_address
+    ? `
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
+        <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Delivery Address</p>
+        <p style="margin: 0; color: #111827; font-size: 16px; line-height: 1.5;">${escapeHtml(booking.customer_address)}</p>
+      </div>`
+    : '';
 
-    ${buildItemsHtml(items)}
+  const nextStepFinal = isPickup
+    ? 'Collect your equipment at our store &mdash; bring your pickup code'
+    : "We'll deliver your equipment on the scheduled date";
 
-    <p style="text-align:right;font-size:16px;margin:4px 0 0;"><strong>Total: ${formatMoney(Number(booking.total_amount ?? 0))}</strong></p>
-
-    ${pickupSection}
-
-    <div style="margin:24px 0;padding:16px 20px;background:#fff8ef;border:1px solid #f0dcc0;border-radius:8px;font-size:14px;">
-      <p style="margin:0 0 8px;font-weight:bold;">What happens next</p>
-      <p style="margin:0 0 8px;">Your reservation is <strong>pending review</strong>. Our team will confirm availability within <strong>48 hours</strong>.</p>
-      <p style="margin:0 0 8px;"><strong>This is not a payment request.</strong> No payment is due now &mdash; a secure payment link will follow once your reservation is confirmed.</p>
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservation Received</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 20px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Travel Light Aruba</h1>
+      <p style="color: #dbeafe; margin: 10px 0 0; font-size: 16px;">Reservation Received</p>
     </div>
 
-    <p style="margin:16px 0 4px;">If you have any questions, just reply to this email.</p>
-    <p style="margin:0;">Warm regards,<br/>The ${escapeHtml(STORE_NAME)} Team</p>
-  </div>`;
+    <div style="padding: 40px 30px;">
+      <div style="background-color: #dcfce7; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 30px; border-radius: 4px;">
+        <p style="margin: 0; color: #166534; font-weight: bold;">Reservation Successfully Received</p>
+        <p style="margin: 8px 0 0; color: #166534; font-size: 14px;">Your reservation is now pending review by our team.</p>
+      </div>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">Dear ${customerName},</p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+        Thank you for your equipment rental reservation! We've received your request and our team will review it shortly.
+      </p>
+
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
+        <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Booking Reference</p>
+        <p style="margin: 0; color: #111827; font-size: 24px; font-weight: bold; font-family: monospace;">${bookingRef}</p>
+      </div>
+
+      ${pickupSection}
+
+      <div style="margin: 30px 0;">
+        <h2 style="color: #111827; font-size: 20px; margin: 0 0 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Reservation Details</h2>
+        ${datesTable}
+      </div>
+
+      ${deliveryAddressSection}
+
+      <div style="margin: 30px 0;">
+        <h2 style="color: #111827; font-size: 20px; margin: 0 0 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Equipment</h2>
+
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background-color: #f9fafb;">
+              <th style="padding: 12px 8px; text-align: left; color: #6b7280; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">Item</th>
+              <th style="padding: 12px 8px; text-align: center; color: #6b7280; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">Qty</th>
+              <th style="padding: 12px 8px; text-align: right; color: #6b7280; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">Price/Day</th>
+              <th style="padding: 12px 8px; text-align: right; color: #6b7280; font-weight: 600; font-size: 14px; border-bottom: 2px solid #e5e7eb;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsList}
+            <tr>
+              <td colspan="3" style="padding: 16px 8px 8px; text-align: right; font-weight: 600; color: #111827; font-size: 16px;">Estimated Total:</td>
+              <td style="padding: 16px 8px 8px; text-align: right; font-weight: 700; color: #2563eb; font-size: 18px;">$${Number(booking.total_amount || 0).toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background-color: #fffbeb; border: 1px solid #fde68a; padding: 20px; border-radius: 8px; margin: 30px 0;">
+        <p style="margin: 0; color: #92400e; font-size: 15px; line-height: 1.6;">
+          <strong>This is not a payment request.</strong> No payment is due right now &mdash; you'll receive a secure payment link by email after we confirm your reservation.
+        </p>
+      </div>
+
+      <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 20px; border-radius: 8px; margin: 30px 0;">
+        <h3 style="color: #1e40af; margin: 0 0 15px; font-size: 18px;">What Happens Next?</h3>
+        <ol style="color: #1e3a8a; margin: 0; padding-left: 20px; line-height: 1.8;">
+          <li style="margin-bottom: 8px;">Our team will review your reservation and confirm within 48 hours</li>
+          <li style="margin-bottom: 8px;">You'll receive an email with a secure payment link</li>
+          <li style="margin-bottom: 8px;">Complete the payment to confirm your booking</li>
+          <li>${nextStepFinal}</li>
+        </ol>
+      </div>
+
+      <div style="margin: 30px 0; padding: 20px; background-color: #f9fafb; border-radius: 8px;">
+        <h3 style="color: #111827; margin: 0 0 15px; font-size: 16px;">Questions or Need Help?</h3>
+        <p style="color: #6b7280; margin: 0; line-height: 1.6;">
+          If you have any questions about your reservation, please don't hesitate to contact us:
+        </p>
+        <p style="color: #374151; margin: 10px 0 0; font-weight: 500;">
+          Email: info@travelightaruba.com<br>
+          Phone: +297 593-2028<br>
+          Hours: Monday - Sunday, 9AM - 6PM
+        </p>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0;">
+        Thank you for choosing Travel Light Aruba!<br>
+        We look forward to serving you.
+      </p>
+    </div>
+
+    <div style="background-color: #f3f4f6; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+      <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+        This is an automated email. Please do not reply directly to this message.
+      </p>
+      <p style="margin: 10px 0 0; color: #9ca3af; font-size: 12px;">
+        &copy; ${new Date().getFullYear()} Travel Light Aruba. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
-
-function buildEmailText(booking: BookingRow, items: BookingItemRow[]): string {
-  const pickup = isPickup(booking.customer_address);
-  const shortId = String(booking.id).substring(0, 8).toUpperCase();
-
-  const lines: string[] = [];
-  lines.push(`Hi ${booking.customer_name ?? 'there'},`);
-  lines.push('');
-  lines.push(
-    `Thank you for your reservation with ${STORE_NAME}. We've received your request and it is now pending review.`,
-  );
-  lines.push('');
-  lines.push(`Reservation: #${shortId}`);
-  lines.push(`Rental dates: ${formatDate(booking.start_date)} - ${formatDate(booking.end_date)}`);
-  lines.push('');
-  lines.push('Items:');
-  for (const item of items) {
-    lines.push(
-      `  - ${item.equipment_name} x${item.quantity} — ${formatMoney(Number(item.subtotal ?? 0))}`,
-    );
-  }
-  lines.push('');
-  lines.push(`Total: ${formatMoney(Number(booking.total_amount ?? 0))}`);
-  lines.push('');
-  if (pickup) {
-    lines.push(`Your pickup code: ${shortId}`);
-    lines.push('Please bring this code with you when you collect your equipment.');
-    lines.push('');
-    lines.push('Pickup location:');
-    lines.push(`  ${STORE_NAME}`);
-    lines.push(`  ${STORE_ADDRESS_LINE1}`);
-    lines.push(`  ${STORE_ADDRESS_LINE2}`);
-  } else {
-    lines.push('Delivery to:');
-    lines.push(`  ${booking.customer_address ?? ''}`);
-  }
-  lines.push('');
-  lines.push('What happens next:');
-  lines.push('Your reservation is pending review. Our team will confirm availability within 48 hours.');
-  lines.push('This is not a payment request. No payment is due now — a secure payment link will follow once your reservation is confirmed.');
-  lines.push('');
-  lines.push('If you have any questions, just reply to this email.');
-  lines.push('');
-  lines.push(`Warm regards,`);
-  lines.push(`The ${STORE_NAME} Team`);
-
-  return lines.join('\n');
-}
-
-Deno.serve(async (req: Request) => {
-  // CORS preflight (client invokes this from the browser via supabase-js).
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  // Generic failure response — never leak internal error details to the caller.
-  const genericFailure = (status: number) =>
-    new Response(
-      JSON.stringify({ success: false, error: 'Could not send confirmation email' }),
-      { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
-
-  try {
-    let body: { booking_id?: string };
-    try {
-      body = await req.json();
-    } catch {
-      return genericFailure(400);
-    }
-
-    const bookingId = body?.booking_id;
-    if (!bookingId || typeof bookingId !== 'string') {
-      return genericFailure(400);
-    }
-
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!resendApiKey || !supabaseUrl || !serviceRoleKey) {
-      console.error('send-booking-confirmation: missing required environment secrets');
-      return genericFailure(500);
-    }
-
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Load the booking (service role — bypasses RLS).
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .select('id, customer_name, customer_email, customer_address, start_date, end_date, total_amount, status')
-      .eq('id', bookingId)
-      .single<BookingRow>();
-
-    if (bookingError || !booking) {
-      console.error('send-booking-confirmation: booking not found', bookingId, bookingError?.message);
-      // Booking does not exist / not found — treat as a bad request but stay generic.
-      return genericFailure(404);
-    }
-
-    if (!booking.customer_email) {
-      console.error('send-booking-confirmation: booking has no customer_email', bookingId);
-      return genericFailure(422);
-    }
-
-    // Load line items (best-effort — an email with an empty item list is still useful).
-    const { data: itemsData, error: itemsError } = await supabase
-      .from('booking_items')
-      .select('equipment_name, quantity, equipment_price, subtotal')
-      .eq('booking_id', bookingId);
-
-    if (itemsError) {
-      console.error('send-booking-confirmation: failed to load items', bookingId, itemsError.message);
-    }
-    const items: BookingItemRow[] = (itemsData as BookingItemRow[] | null) ?? [];
-
-    const from = Deno.env.get('BOOKING_EMAIL_FROM') || DEFAULT_FROM;
-    const subject = `Reservation received — #${String(booking.id).substring(0, 8).toUpperCase()}`;
-
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: booking.customer_email,
-        subject,
-        html: buildEmailHtml(booking, items),
-        text: buildEmailText(booking, items),
-      }),
-    });
-
-    if (!emailResponse.ok) {
-      const detail = await emailResponse.text();
-      console.error('send-booking-confirmation: Resend error', emailResponse.status, detail);
-      return genericFailure(502);
-    }
-
-    const result = await emailResponse.json().catch(() => ({}));
-    console.log('send-booking-confirmation: email sent', bookingId, (result as { id?: string })?.id);
-
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
-  } catch (error) {
-    console.error('send-booking-confirmation: unexpected error', error);
-    return genericFailure(500);
-  }
-});
