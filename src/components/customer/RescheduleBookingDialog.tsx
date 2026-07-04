@@ -94,6 +94,9 @@ export function RescheduleBookingDialog({
       toast.success('Dates updated! Your booking is pending re-approval by our team.');
       queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['customer-delivery-tasks'] });
+      // A reschedule moves the booking back to pending_admin_review with new
+      // dates — the admin/booker list must reflect that immediately too.
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       onOpenChange(false);
     },
     onError: (error: Error) => {

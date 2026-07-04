@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { PageSkeleton } from '@/components/common/SkeletonLoader';
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];
@@ -11,8 +12,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children 
   const { user, profile, loading } = useAuth();
 
   if (loading) {
-    // You might want to show a loading spinner here
-    return <div className="min-h-screen flex flex-col items-center justify-center"><p>Loading...</p></div>;
+    // Match the Suspense fallback so every role sees one consistent loading
+    // surface on the way into its dashboard instead of a bare "Loading…".
+    return <PageSkeleton />;
   }
 
   if (!user) {

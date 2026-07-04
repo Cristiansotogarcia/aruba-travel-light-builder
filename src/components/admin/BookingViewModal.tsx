@@ -5,6 +5,8 @@ import { DeleteBookingModal } from './DeleteBookingModal';
 import { UndeliverableModal } from './UndeliverableModal';
 import { BookingDetailsCard } from './BookingDetailsCard';
 import { BookingPaymentsSection } from './BookingPaymentsSection';
+import { BookingFulfilmentSection } from './BookingFulfilmentSection';
+import { BookingDocumentsSection } from './BookingDocumentsSection';
 import { BookingActionButtons } from './BookingActionButtons';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -93,6 +95,10 @@ export const BookingViewModal = ({
             />
 
             <BookingPaymentsSection booking={booking} />
+
+            <BookingFulfilmentSection bookingId={booking.id} />
+
+            <BookingDocumentsSection booking={booking} />
 
             <BookingActionButtons
               booking={booking}

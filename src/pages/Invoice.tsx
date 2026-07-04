@@ -31,10 +31,18 @@ const Invoice = () => {
   const [searchParams] = useSearchParams();
   const [invoice, setInvoice] = useState<InvoiceSnapshot | null>(null);
   const [creditNotes, setCreditNotes] = useState<CreditNoteRow[]>([]);
+  const [assignedNumber, setAssignedNumber] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { getSetting } = useSystemSettings();
   const shouldAutoPrint = searchParams.get('download') === '1';
+
+  // Roles the get_or_assign_invoice_number RPC accepts (mirrors the SQL guard).
+  const canAssignInvoiceNumber =
+    profile?.role === 'Admin' ||
+    profile?.role === 'SuperUser' ||
+    profile?.role === 'Accounting' ||
+    profile?.role === 'Booker';
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -117,8 +125,43 @@ const Invoice = () => {
     fetchCreditNotes();
   }, [invoice?.booking_id]);
 
+  // Ensure the booking carries a stable sequential invoice number (INV-YYYY-NNNN)
+  // the first time an authorized user opens/prints it — no manual step required.
+  // The RPC is idempotent (returns the existing number on repeat calls) and
+  // guarded to Admin/SuperUser/Accounting/Booker, so customer/driver viewers
+  // simply keep the display fallback.
+  useEffect(() => {
+    const assignNumber = async () => {
+      if (!invoice?.booking_id || !canAssignInvoiceNumber) {
+        return;
+      }
+      if (invoice.invoice_number && invoice.invoice_number.trim()) {
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc('get_or_assign_invoice_number', {
+        p_booking_id: invoice.booking_id,
+      });
+
+      if (!error && typeof data === 'string' && data.trim()) {
+        setAssignedNumber(data);
+      }
+    };
+
+    void assignNumber();
+  }, [invoice?.booking_id, invoice?.invoice_number, canAssignInvoiceNumber]);
+
   useEffect(() => {
     if (!invoice || !shouldAutoPrint) {
+      return;
+    }
+
+    // Don't print before the sequential number has settled, or the PDF would
+    // capture the TLA- fallback instead of the real INV number.
+    const numberSettled =
+      Boolean(invoice.invoice_number?.trim()) || Boolean(assignedNumber) || !canAssignInvoiceNumber;
+    if (!numberSettled) {
       return;
     }
 
@@ -127,7 +170,7 @@ const Invoice = () => {
     }, 300);
 
     return () => window.clearTimeout(timeoutId);
-  }, [invoice, shouldAutoPrint]);
+  }, [invoice, shouldAutoPrint, assignedNumber, canAssignInvoiceNumber]);
 
   if (loading) {
     return (
@@ -145,7 +188,10 @@ const Invoice = () => {
     );
   }
 
-  const invoiceNumber = getInvoiceDisplayNumber(invoice.invoice_number, invoice.id);
+  const invoiceNumber = getInvoiceDisplayNumber(
+    invoice.invoice_number?.trim() || assignedNumber,
+    invoice.id,
+  );
   const invoiceDate = new Date(invoice.payment_processed_at || invoice.issued_at);
   const formattedDate = invoiceDate.toLocaleDateString('en-US', {
     month: 'long',
