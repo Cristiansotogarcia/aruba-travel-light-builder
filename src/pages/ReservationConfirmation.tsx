@@ -30,7 +30,7 @@ const ReservationConfirmation = () => {
     <div className="min-h-screen flex flex-col">
       <SEO
         title="Reservation Confirmed – Travel Light Aruba"
-        description="Your equipment reservation has been received. We'll send you a payment link within 24 hours."
+        description="Your equipment reservation has been received. We'll review it and send you a payment link within 48 hours."
         pageSlug="reservation/confirmed"
       />
       <Header />
@@ -47,7 +47,7 @@ const ReservationConfirmation = () => {
             <CardContent className="space-y-4 text-muted-foreground">
               <p>
                 Thank you{customerName ? `, ${customerName}` : ''}. We'll review your reservation
-                and email you a payment link within 24 hours.
+                and email you a payment link within 48 hours.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link
