@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, Clock, CreditCard, LayoutDashboard, PackageCheck, UserCheck, UserPlus } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ClipboardCheck, Clock, CreditCard, LayoutDashboard, PackageCheck, Plus, UserCheck, UserPlus } from 'lucide-react';
 
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
+import { OrderWizard } from '@/components/staff/order-wizard';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookingListSkeleton, DashboardStatsSkeleton } from '@/components/common/SkeletonLoader';
@@ -72,6 +75,9 @@ const BookerDashboard = () => {
   const [activeSection, setActiveSection] = useState(
     () => sessionStorage.getItem(STORAGE_KEY) || 'overview'
   );
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, activeSection);
@@ -198,8 +204,22 @@ const BookerDashboard = () => {
       headerAccessory={<NotificationBell />}
       pageTitle={meta.label}
       pageDescription={meta.description}
+      pageActions={
+        <Button onClick={() => setWizardOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Order
+        </Button>
+      }
     >
       {renderSection()}
+      <OrderWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        role={profile?.role}
+        onCreated={() => {
+          void queryClient.invalidateQueries({ queryKey: ['booker-workspace-bookings'] });
+        }}
+      />
     </AppShell>
   );
 };

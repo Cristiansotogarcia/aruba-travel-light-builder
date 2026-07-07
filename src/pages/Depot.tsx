@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
+import { OrderWizard } from '@/components/staff/order-wizard';
+import { useAuth } from '@/hooks/useAuth';
 import { HandoverDialog } from '@/components/depot/HandoverDialog';
 import { ReturnDialog } from '@/components/depot/ReturnDialog';
 import QrScanner from '@/components/depot/QrScanner';
 import type { DepotPickup } from '@/components/depot/HandoverDialog';
-import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff } from 'lucide-react';
+import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff, Plus } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useDepotSync } from '@/hooks/useDepotSync';
 import { cachePickups, getCachedPickups } from '@/lib/offline/depotDb';
@@ -28,7 +30,11 @@ const Depot = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [handoverTarget, setHandoverTarget] = useState<DepotPickup | null>(null);
   const [returnTarget, setReturnTarget] = useState<DepotPickup | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const { toast } = useToast();
+  const { profile } = useAuth();
+
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   const isOnline = useOnlineStatus();
   const { pendingCount, syncNow, refreshCount } = useDepotSync();
@@ -222,6 +228,12 @@ const Depot = () => {
       contentClassName="max-w-4xl"
       pageTitle="Self-pickup"
       pageDescription="Process equipment hand-overs and returns for self-pickup bookings."
+      pageActions={
+        <Button onClick={() => setWizardOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Walk-in order
+        </Button>
+      }
     >
       <div className="space-y-4">
         {/* Offline / pending-actions banner */}
@@ -368,6 +380,16 @@ const Depot = () => {
           onCompleted={() => void handleActionCompleted()}
         />
       )}
+
+      <OrderWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        role={profile?.role}
+        defaultFulfillment="pickup"
+        lockFulfillment
+        defaultStartDate={todayIso}
+        onCreated={() => void fetchPickups()}
+      />
     </AppShell>
   );
 };

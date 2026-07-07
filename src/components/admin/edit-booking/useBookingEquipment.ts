@@ -1,9 +1,15 @@
-
 import { useState } from 'react';
-import { mockEquipment } from '@/data/mockEquipment';
 import { BookingItem } from '@/components/admin/calendar/types';
+import type { CatalogItem } from '@/components/staff/order-wizard/types';
 
-export const useBookingEquipment = (initialItems: BookingItem[] = []) => {
+/**
+ * Booking-line state for the edit modals. Resolves equipment from the LIVE
+ * catalog (passed in) — never from mock data. Prices use price_per_day.
+ */
+export const useBookingEquipment = (
+  catalog: CatalogItem[],
+  initialItems: BookingItem[] = [],
+) => {
   const [selectedEquipment, setSelectedEquipment] = useState('');
   const [bookingItems, setBookingItems] = useState<BookingItem[]>(initialItems);
 
@@ -14,8 +20,8 @@ export const useBookingEquipment = (initialItems: BookingItem[] = []) => {
 
   const addEquipment = (startDate: string, endDate: string) => {
     if (!selectedEquipment) return;
-    
-    const equipment = mockEquipment.find(eq => eq.id === selectedEquipment);
+
+    const equipment = catalog.find(eq => eq.id === selectedEquipment);
     if (!equipment) return;
 
     const existingItem = bookingItems.find(item => item.equipment_id === selectedEquipment);
@@ -32,9 +38,9 @@ export const useBookingEquipment = (initialItems: BookingItem[] = []) => {
       setBookingItems(items => [...items, {
         equipment_id: selectedEquipment,
         equipment_name: equipment.name,
-        equipment_price: equipment.price,
+        equipment_price: equipment.price_per_day,
         quantity: 1,
-        subtotal: equipment.price * days
+        subtotal: equipment.price_per_day * days
       }]);
     }
     setSelectedEquipment('');
@@ -45,8 +51,8 @@ export const useBookingEquipment = (initialItems: BookingItem[] = []) => {
     setBookingItems(items =>
       items.map(item =>
         item.equipment_id === equipmentId
-          ? { 
-              ...item, 
+          ? {
+              ...item,
               quantity: Math.max(1, item.quantity + change),
               subtotal: Math.max(1, item.quantity + change) * item.equipment_price * days
             }

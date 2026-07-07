@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, BookingFormData, CustomerInfo, AvailabilityStatus } from '../types/types';
 import { createBookingWithItems, parseAvailabilityConflict } from '@/lib/queries/booking-create';
-import { computeDeliveryFee } from '@/lib/pricing/deliveryFee';
+import { computeBookingTotals } from '@/lib/pricing/bookingTotals';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -161,63 +161,27 @@ const useBooking = () => {
   };
 
   const calculateTotal = () => {
-    if (!bookingData.startDate || !bookingData.endDate) return 0;
-    
-    let days = calculateDays();
-    
-    // Time slot adjustment: Add 1 day if delivery is morning and pickup is afternoon
-    if (bookingData.deliverySlot === 'morning' && bookingData.pickupSlot === 'afternoon') {
-      days += 1;
-    }
-    
-    // Calculate equipment costs
-    const equipmentTotal = bookingData.items.reduce((total, item) => {
+    // Delegates to the shared pricing util so the public flow and the staff Order
+    // Wizard always agree. Line items carry only equipment_id/quantity, so we join
+    // the live `products` list to recover price_per_day/price_per_week per item.
+    const pricedItems = bookingData.items.flatMap((item) => {
       const equipment = products.find(eq => eq.id === item.equipment_id);
-      if (!equipment) return total;
-      
-      let itemTotal = 0;
-      
-      // Weekly pricing logic
-      // 1-4 days: daily rate
-      // 5-7 days: weekly rate (flat)
-      // 8+ days: calculate full weeks + remaining days
-      
-      if (days <= 4) {
-        // Simple daily rate for 1-4 days
-        itemTotal = equipment.price_per_day * item.quantity * days;
-      } else if (days >= 5 && days <= 7) {
-        // Weekly rate applies for 5-7 days
-        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 5);
-        itemTotal = weeklyRate * item.quantity;
-      } else {
-        // For 8+ days: calculate full weeks + remaining days
-        const weeklyRate = equipment.price_per_week || (equipment.price_per_day * 5);
-        const fullWeeks = Math.floor(days / 7);
-        const remainingDays = days % 7;
-        
-        // Calculate cost for full weeks
-        const weeksCost = fullWeeks * weeklyRate * item.quantity;
-        
-        // Calculate cost for remaining days
-        let remainingCost = 0;
-        if (remainingDays >= 1 && remainingDays <= 4) {
-          // Remaining days charged at daily rate
-          remainingCost = remainingDays * equipment.price_per_day * item.quantity;
-        } else if (remainingDays >= 5) {
-          // If remaining days are 5-7, charge weekly rate
-          remainingCost = weeklyRate * item.quantity;
-        }
-        
-        itemTotal = weeksCost + remainingCost;
-      }
-      
-      return total + itemTotal;
-    }, 0);
-    
-    // Add delivery fee (pickup = $0, delivery = fee based on date/days)
-    const deliveryFee = computeDeliveryFee(bookingData.fulfillmentMethod ?? 'delivery', bookingData.startDate, days);
+      if (!equipment) return [];
+      return [{
+        price_per_day: equipment.price_per_day,
+        price_per_week: equipment.price_per_week,
+        quantity: item.quantity,
+      }];
+    });
 
-    return equipmentTotal + deliveryFee;
+    return computeBookingTotals({
+      items: pricedItems,
+      startDate: bookingData.startDate,
+      endDate: bookingData.endDate,
+      deliverySlot: bookingData.deliverySlot,
+      pickupSlot: bookingData.pickupSlot,
+      fulfillmentMethod: bookingData.fulfillmentMethod ?? 'delivery',
+    }).total;
   };
 
   const validateBookingData = () => {

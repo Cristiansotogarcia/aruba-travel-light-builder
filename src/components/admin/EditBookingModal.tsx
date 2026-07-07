@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { mockEquipment } from '@/data/mockEquipment';
+import { useStaffCatalog } from '@/components/staff/order-wizard/useStaffCatalog';
 import { Booking, BookingItem } from './calendar/types';
 
 interface EditBookingModalProps {
@@ -38,6 +38,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { items: catalog } = useStaffCatalog();
 
   useEffect(() => {
     if (booking && open) {
@@ -57,7 +58,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
   const addEquipment = () => {
     if (!selectedEquipment) return;
     
-    const equipment = mockEquipment.find(eq => eq.id === selectedEquipment);
+    const equipment = catalog.find(eq => eq.id === selectedEquipment);
     if (!equipment) return;
 
     const existingItem = bookingItems.find(item => item.equipment_id === selectedEquipment);
@@ -65,7 +66,7 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
       setBookingItems(items =>
         items.map(item =>
           item.equipment_id === selectedEquipment
-            ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * (item.equipment_price || equipment.price) * calculateDays() }
+            ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * (item.equipment_price || equipment.price_per_day) * calculateDays() }
             : item
         )
       );
@@ -74,9 +75,9 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
       setBookingItems(items => [...items, {
         equipment_id: selectedEquipment,
         equipment_name: equipment.name,
-        equipment_price: equipment.price,
+        equipment_price: equipment.price_per_day,
         quantity: 1,
-        subtotal: equipment.price * days
+        subtotal: equipment.price_per_day * days
       }]);
     }
     setSelectedEquipment('');
@@ -309,9 +310,9 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
                   <SelectValue placeholder="Select equipment" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockEquipment.map((equipment) => (
+                  {catalog.map((equipment) => (
                     <SelectItem key={equipment.id} value={equipment.id}>
-                      {equipment.name} - ${equipment.price}/day
+                      {equipment.name} - ${equipment.price_per_day}/day
                     </SelectItem>
                   ))}
                 </SelectContent>

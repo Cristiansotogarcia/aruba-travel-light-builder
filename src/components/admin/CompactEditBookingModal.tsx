@@ -8,6 +8,7 @@ import { DateSelectionSection } from './edit-booking/DateSelectionSection';
 import { EquipmentSelectionSection } from './edit-booking/EquipmentSelectionSection';
 import { BookingSummarySection } from './edit-booking/BookingSummarySection';
 import { useBookingEquipment } from './edit-booking/useBookingEquipment';
+import { useStaffCatalog } from '@/components/staff/order-wizard/useStaffCatalog';
 import { Booking, CustomerInfo } from './edit-booking/types';
 import type { Database } from '@/types/supabase';
 
@@ -30,6 +31,7 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { items: catalog } = useStaffCatalog();
 
   const {
     selectedEquipment,
@@ -39,7 +41,7 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
     addEquipment,
     updateQuantity,
     removeItem
-  } = useBookingEquipment();
+  } = useBookingEquipment(catalog);
 
   useEffect(() => {
     if (booking && open) {
@@ -197,6 +199,7 @@ export const CompactEditBookingModal = ({ booking, onBookingUpdated, onClose, op
             <EquipmentSelectionSection
               selectedEquipment={selectedEquipment}
               bookingItems={bookingItems}
+              catalog={catalog}
               onSelectedEquipmentChange={setSelectedEquipment}
               onAddEquipment={handleAddEquipment}
               onUpdateQuantity={handleUpdateQuantity}

@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
-import { CreateBookingModal } from './CreateBookingModal';
+import { OrderWizard } from '@/components/staff/order-wizard';
+import { useAuth } from '@/hooks/useAuth';
+import { Plus } from 'lucide-react';
 import { CompactEditBookingModal } from './CompactEditBookingModal';
 import { BookingViewModal } from './BookingViewModal';
 import { BookingCalendarView } from './BookingCalendarView';
@@ -29,7 +31,9 @@ export const BookingsList = () => {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const { toast } = useToast();
+  const { profile } = useAuth();
   const queryClient = useQueryClient(); // Initialize queryClient
   const { getNumericSetting, settings: systemSettings } = useSystemSettings();
   const processorFeePercent = getNumericSetting('processor_fee_percent', 3.99);
@@ -351,7 +355,16 @@ export const BookingsList = () => {
           >
             {filteredBookings.length} bookings
           </Button>
-          <CreateBookingModal onBookingCreated={fetchBookings} />
+          <Button className="gap-2" onClick={() => setWizardOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add New Booking
+          </Button>
+          <OrderWizard
+            open={wizardOpen}
+            onOpenChange={setWizardOpen}
+            role={profile?.role}
+            onCreated={() => void fetchBookings()}
+          />
         </div>
       </div>
 
