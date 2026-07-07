@@ -35,3 +35,10 @@ src/components/**/*.d.ts
 # Supabase CLI cache (regenerated locally; must not be tracked)
 supabase/.temp/
 
+# AI-assistant session artifacts (worktrees, transcripts, browser logs)
+.claude/
+.playwright-mcp/
+
+# Verification screenshots dropped in the repo root during browser testing
+/*.png
+
