@@ -2,6 +2,8 @@
 import { Link } from 'react-router-dom';
 
 export const Footer = () => {
+  const year = new Date().getFullYear();
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -55,7 +57,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2025 Travel Light Aruba. All rights reserved.</p>
+          <p>&copy; {year} Travel Light Aruba. All rights reserved.</p>
         </div>
       </div>
     </footer>
