@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Minus, X } from 'lucide-react';
-import { mockEquipment } from '@/data/mockEquipment';
 import { BookingItem } from '@/components/admin/calendar/types';
+import type { CatalogItem } from '@/components/staff/order-wizard/types';
 
 interface EquipmentSelectionSectionProps {
   selectedEquipment: string;
   bookingItems: BookingItem[];
+  /** Live equipment catalog (no mock data). */
+  catalog: CatalogItem[];
   onSelectedEquipmentChange: (equipmentId: string) => void;
   onAddEquipment: () => void;
   onUpdateQuantity: (equipmentId: string, change: number) => void;
@@ -18,6 +20,7 @@ interface EquipmentSelectionSectionProps {
 export const EquipmentSelectionSection = ({
   selectedEquipment,
   bookingItems,
+  catalog,
   onSelectedEquipmentChange,
   onAddEquipment,
   onUpdateQuantity,
@@ -32,9 +35,9 @@ export const EquipmentSelectionSection = ({
             <SelectValue placeholder="Select equipment" />
           </SelectTrigger>
           <SelectContent>
-            {mockEquipment.map((equipment) => (
+            {catalog.map((equipment) => (
               <SelectItem key={equipment.id} value={equipment.id}>
-                {equipment.name} - ${equipment.price}/day
+                {equipment.name} - ${equipment.price_per_day}/day
               </SelectItem>
             ))}
           </SelectContent>

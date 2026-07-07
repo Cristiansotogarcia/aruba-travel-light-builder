@@ -1,11 +1,13 @@
 
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Eye, Truck, Package } from 'lucide-react';
+import { Calendar, Eye, Truck, Package, Plus } from 'lucide-react';
 import { format } from 'date-fns';
-import { CreateBookingModal } from '../CreateBookingModal';
+import { OrderWizard } from '@/components/staff/order-wizard';
+import { useAuth } from '@/hooks/useAuth';
 import { Booking } from '@/components/admin/calendar/types';
 import { getStatusColor } from './statusUtils';
 import { getBookingsByTypeForDate } from './bookingUtils';
@@ -25,8 +27,10 @@ export const DayPopupDialog = ({
   selectedDate, 
   bookings, 
   onCreateBooking,
-  onViewBooking 
+  onViewBooking
 }: DayPopupDialogProps) => {
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const { profile } = useAuth();
   if (!selectedDate) return null;
 
   const { deliveries, pickups } = getBookingsByTypeForDate(bookings, selectedDate);
@@ -152,12 +156,19 @@ export const DayPopupDialog = ({
             <p className="text-gray-500 mb-4">
               No deliveries or pickups scheduled for {format(selectedDate, 'dd/MM/yyyy')}
             </p>
-            <CreateBookingModal 
-              onBookingCreated={() => {
+            <Button className="gap-2" onClick={() => setWizardOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Add New Booking
+            </Button>
+            <OrderWizard
+              open={wizardOpen}
+              onOpenChange={setWizardOpen}
+              role={profile?.role}
+              defaultStartDate={format(selectedDate, 'yyyy-MM-dd')}
+              onCreated={() => {
                 onCreateBooking();
                 onClose();
               }}
-              preselectedDate={selectedDate}
             />
           </div>
         )}
