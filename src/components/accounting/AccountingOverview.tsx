@@ -3,6 +3,7 @@ import { ArrowRight, CreditCard, DollarSign, FileText, RefreshCcw, Wallet } from
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/common/StatCard';
 import { useToast } from '@/hooks/use-toast';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { supabase } from '@/integrations/supabase/client';
@@ -223,81 +224,42 @@ export const AccountingOverview = ({ onNavigate }: AccountingOverviewProps) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Invoiced</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(defaultCurrency, metrics.totalInvoiced)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {metrics.invoiceCount} issued invoices
-                </p>
-              </div>
-              <div className="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                <FileText className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Net Received</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(defaultCurrency, metrics.totalNetReceived)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {settledPayments.length} settled transactions
-                </p>
-              </div>
-              <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                <Wallet className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Outstanding Balance</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(defaultCurrency, metrics.outstandingBalance)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {bookings.length - metrics.paidBookingCount} bookings not fully paid
-                </p>
-              </div>
-              <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
-                <DollarSign className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Refunds</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(defaultCurrency, metrics.totalRefunds)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Tracked across successful and refund events
-                </p>
-              </div>
-              <div className="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
-                <CreditCard className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Total Invoiced"
+          value={formatCurrency(defaultCurrency, metrics.totalInvoiced)}
+          description={`${metrics.invoiceCount} issued invoices`}
+          icon={FileText}
+          iconWrapperClassName="bg-emerald-100 text-emerald-700"
+          onClick={() => onNavigate?.('invoices')}
+          actionHint="View issued invoices"
+        />
+        <StatCard
+          label="Net Received"
+          value={formatCurrency(defaultCurrency, metrics.totalNetReceived)}
+          description={`${settledPayments.length} settled transactions`}
+          icon={Wallet}
+          iconWrapperClassName="bg-blue-100 text-blue-700"
+          onClick={() => onNavigate?.('transactions')}
+          actionHint="View settled transactions"
+        />
+        <StatCard
+          label="Outstanding Balance"
+          value={formatCurrency(defaultCurrency, metrics.outstandingBalance)}
+          description={`${bookings.length - metrics.paidBookingCount} bookings not fully paid`}
+          icon={DollarSign}
+          iconWrapperClassName="bg-amber-100 text-amber-700"
+          onClick={() => onNavigate?.('transactions')}
+          actionHint="Review bookings not fully paid"
+        />
+        <StatCard
+          label="Refunds"
+          value={formatCurrency(defaultCurrency, metrics.totalRefunds)}
+          description="Tracked across successful and refund events"
+          icon={CreditCard}
+          iconWrapperClassName="bg-rose-100 text-rose-700"
+          onClick={() => onNavigate?.('transactions')}
+          actionHint="View refund transactions"
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
