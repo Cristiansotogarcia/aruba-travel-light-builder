@@ -231,12 +231,23 @@ const Invoice = () => {
         <div className="bg-white shadow-sm rounded-2xl border border-border/60 p-8 print:border-0 print:shadow-none print:rounded-none">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Travel Light Aruba</p>
-              <h2 className="text-2xl font-semibold text-foreground mt-2">Invoice</h2>
+              <img
+                src="https://imagedelivery.net/KE7oljFadxNqgUvpxIG0Zg/b0ed7b8f-a7a0-4a00-810f-8b0f02e46500/w=200"
+                alt="Travel Light Aruba"
+                className="h-14 w-auto"
+              />
+              <h2 className="text-2xl font-semibold text-foreground mt-4">Invoice</h2>
               <p className="text-sm text-muted-foreground mt-1">Invoice #{invoiceNumber}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Invoice Date</p>
+              <p className="text-sm font-semibold text-foreground">Travel Light Aruba</p>
+              <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                <p>{getSetting('store_address', 'Caya Taratata 15, Unit 11 (Coral Plaza)')}</p>
+                <p>Aruba</p>
+                <p>+297 593-2028</p>
+                <p>info@travelightaruba.com</p>
+              </div>
+              <p className="text-sm text-muted-foreground mt-3">Invoice Date</p>
               <p className="text-base font-semibold text-foreground">{formattedDate}</p>
               <p className="text-sm text-muted-foreground mt-2">Payment Status</p>
               <p className="text-base font-semibold text-foreground">{paymentLabel}</p>
