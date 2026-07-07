@@ -5,12 +5,14 @@ import { ClipboardCheck, Clock, CreditCard, LayoutDashboard, PackageCheck, Plus,
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { NotificationBell } from '@/components/admin/NotificationBell';
+import { PaymentsWorkspace } from '@/components/booker/PaymentsWorkspace';
 import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
 import { OrderWizard } from '@/components/staff/order-wizard';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/common/StatCard';
 import { BookingListSkeleton, DashboardStatsSkeleton } from '@/components/common/SkeletonLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
@@ -40,36 +42,16 @@ const STORAGE_KEY = 'booker:activeSection';
 const BOOKER_NAV: AppNavEntry[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'review', label: 'Pending Reservations', icon: Clock },
+  { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'assignments', label: 'Assignments', icon: UserPlus },
 ];
 
 const STAT_META: Record<string, { label: string; description: string }> = {
   overview: { label: 'Overview', description: 'Review new reservations, track payment handoffs, and assign drivers.' },
   review: { label: 'Pending Reservations', description: 'Approve or decline reservations awaiting review.' },
+  payments: { label: 'Payments', description: 'Record payments and send payment links for orders awaiting payment.' },
   assignments: { label: 'Assignments', description: 'Match confirmed bookings with available drivers.' },
 };
-
-const StatCard = ({
-  label,
-  value,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: number;
-  icon: typeof ClipboardCheck;
-  tone: string;
-}) => (
-  <Card>
-    <CardContent className="flex items-center justify-between gap-3 p-4">
-      <div className="min-w-0">
-        <p className="truncate text-sm text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </div>
-      <Icon className={`h-8 w-8 shrink-0 ${tone}`} />
-    </CardContent>
-  </Card>
-);
 
 const BookerDashboard = () => {
   const [activeSection, setActiveSection] = useState(
@@ -138,10 +120,38 @@ const BookerDashboard = () => {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Pending Review" value={pendingReviewCount} icon={ClipboardCheck} tone="text-orange-600" />
-          <StatCard label="Awaiting Payment" value={pendingPaymentCount} icon={CreditCard} tone="text-amber-600" />
-          <StatCard label="Ready to Assign" value={readyToAssignCount} icon={UserCheck} tone="text-blue-600" />
-          <StatCard label="Assigned Work" value={assignedCount} icon={PackageCheck} tone="text-emerald-600" />
+          <StatCard
+            label="Pending Review"
+            value={pendingReviewCount}
+            icon={ClipboardCheck}
+            tone="text-orange-600"
+            onClick={() => setActiveSection('review')}
+            actionHint="View pending reservations"
+          />
+          <StatCard
+            label="Awaiting Payment"
+            value={pendingPaymentCount}
+            icon={CreditCard}
+            tone="text-amber-600"
+            onClick={() => setActiveSection('payments')}
+            actionHint="Open the payments workspace"
+          />
+          <StatCard
+            label="Ready to Assign"
+            value={readyToAssignCount}
+            icon={UserCheck}
+            tone="text-blue-600"
+            onClick={() => setActiveSection('assignments')}
+            actionHint="View assignments"
+          />
+          <StatCard
+            label="Assigned Work"
+            value={assignedCount}
+            icon={PackageCheck}
+            tone="text-emerald-600"
+            onClick={() => setActiveSection('assignments')}
+            actionHint="View assignments"
+          />
         </div>
 
         <Card>
@@ -185,6 +195,8 @@ const BookerDashboard = () => {
     switch (activeSection) {
       case 'review':
         return <PendingReservations />;
+      case 'payments':
+        return <PaymentsWorkspace />;
       case 'assignments':
         return <BookingAssignment />;
       case 'overview':

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/common/StatCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LoadingState from '@/components/common/LoadingState';
@@ -150,6 +151,15 @@ export const DriverTasks = ({
   const [failureTask, setFailureTask] = useState<DriverTaskBoardItem | null>(null);
   const [proofTask, setProofTask] = useState<DriverTaskBoardItem | null>(null);
   const [collectionTask, setCollectionTask] = useState<DriverTaskBoardItem | null>(null);
+
+  // Section anchors so the stat cards can jump to the list they summarise.
+  const todaySectionRef = useRef<HTMLDivElement>(null);
+  const upcomingSectionRef = useRef<HTMLDivElement>(null);
+  const historySectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSection = useCallback((ref: React.RefObject<HTMLDivElement>) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
   const { hasPermission, profile } = useAuth();
   const { toast } = useToast();
 
@@ -772,34 +782,30 @@ export const DriverTasks = ({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Today</p>
-              <p className="text-2xl font-semibold text-foreground">{todayTasks.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Upcoming</p>
-              <p className="text-2xl font-semibold text-foreground">{upcomingTasks.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Completed</p>
-              <p className="text-2xl font-semibold text-foreground">
-                {historyTasks.filter((task) => task.status === 'completed').length}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Needs Attention</p>
-              <p className="text-2xl font-semibold text-foreground">
-                {visibleTasks.filter((task) => task.status === 'failed').length}
-              </p>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Today"
+            value={todayTasks.length}
+            onClick={() => scrollToSection(todaySectionRef)}
+            actionHint="Jump to today's tasks"
+          />
+          <StatCard
+            label="Upcoming"
+            value={upcomingTasks.length}
+            onClick={() => scrollToSection(upcomingSectionRef)}
+            actionHint="Jump to upcoming tasks"
+          />
+          <StatCard
+            label="Completed"
+            value={historyTasks.filter((task) => task.status === 'completed').length}
+            onClick={() => scrollToSection(historySectionRef)}
+            actionHint="Jump to completed history"
+          />
+          <StatCard
+            label="Needs Attention"
+            value={visibleTasks.filter((task) => task.status === 'failed').length}
+            onClick={() => scrollToSection(historySectionRef)}
+            actionHint="Jump to failed tasks in history"
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -861,7 +867,7 @@ export const DriverTasks = ({
           </Card>
         </div>
 
-        <Card>
+        <Card ref={todaySectionRef} className="scroll-mt-20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Truck className="h-5 w-5" />
@@ -877,7 +883,7 @@ export const DriverTasks = ({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card ref={upcomingSectionRef} className="scroll-mt-20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -893,7 +899,7 @@ export const DriverTasks = ({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card ref={historySectionRef} className="scroll-mt-20">
           <CardHeader>
             <CardTitle>Completed and Issue History</CardTitle>
           </CardHeader>

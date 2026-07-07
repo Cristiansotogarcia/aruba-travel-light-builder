@@ -3,8 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, Check, Copy, Loader2, PartyPopper } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, Loader2, Mail, PartyPopper, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getEquipmentAvailability } from '@/lib/queries/availability';
 import { computeBookingTotals } from '@/lib/pricing/bookingTotals';
@@ -63,7 +66,14 @@ export function OrderWizard({
   const [discount, setDiscount] = useState(0);
   const [initialStatus, setInitialStatus] = useState<WizardInitialStatus>('confirmed');
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<{ bookingId: string; pickupCode: string | null } | null>(null);
+  const [success, setSuccess] = useState<{
+    bookingId: string;
+    pickupCode: string | null;
+    awaitingPayment: boolean;
+    customerName: string;
+    customerEmail: string;
+    totalAmount: number;
+  } | null>(null);
 
   // Reset to a clean slate every time the wizard opens.
   useEffect(() => {
@@ -183,9 +193,30 @@ export function OrderWizard({
         fulfillmentMethod: fulfillment,
         initialStatus,
       });
-      setSuccess({ bookingId: result.bookingId, pickupCode: result.pickupCode });
+      setSuccess({
+        bookingId: result.bookingId,
+        pickupCode: result.pickupCode,
+        awaitingPayment: initialStatus === 'pending',
+        customerName: customer.name,
+        customerEmail: customer.email,
+        totalAmount: grandTotal,
+      });
       onCreated?.({ bookingId: result.bookingId, pickupCode: result.pickupCode });
       toast({ title: 'Order created', description: `Booking #${result.bookingId.slice(0, 8)} created.` });
+
+      // Fire-and-forget reservation confirmation email. The function loads all
+      // booking data server-side; a failed (or not-yet-deployed) email must
+      // never affect the created order.
+      void supabase.functions
+        .invoke('send-booking-confirmation', { body: { booking_id: result.bookingId } })
+        .then(({ error: emailError }) => {
+          if (emailError) {
+            console.warn('Failed to send reservation confirmation email:', emailError);
+          }
+        })
+        .catch((emailErr) => {
+          console.warn('Error sending reservation confirmation email:', emailErr);
+        });
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : 'Failed to create the order.';
       const conflicts = parseAvailabilityConflict(raw);
@@ -334,10 +365,71 @@ function SuccessPanel({
   onClose,
   toastCopy,
 }: {
-  success: { bookingId: string; pickupCode: string | null };
+  success: {
+    bookingId: string;
+    pickupCode: string | null;
+    awaitingPayment: boolean;
+    customerName: string;
+    customerEmail: string;
+    totalAmount: number;
+  };
   onClose: () => void;
   toastCopy: ReturnType<typeof useToast>['toast'];
 }) {
+  const [paymentLink, setPaymentLink] = useState('');
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
+  const linkValid = /^https?:\/\/\S+$/i.test(paymentLink.trim());
+
+  const handleSendPaymentLink = async () => {
+    const link = paymentLink.trim();
+    if (!linkValid) {
+      toastCopy({
+        title: 'Payment link required',
+        description: 'Enter a valid http(s) payment link before sending.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSendingLink(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          payment_link_url: link,
+          payment_link_generated_at: new Date().toISOString(),
+        })
+        .eq('id', success.bookingId);
+
+      if (updateError) throw updateError;
+
+      const { error: emailError } = await supabase.functions.invoke('send-payment-link-email', {
+        body: {
+          booking_id: success.bookingId,
+          customer_name: success.customerName,
+          customer_email: success.customerEmail,
+          payment_link: link,
+          total_amount: success.totalAmount,
+        },
+      });
+
+      if (emailError) throw emailError;
+
+      setLinkSent(true);
+      toastCopy({ title: 'Payment link sent', description: `Emailed ${success.customerEmail}.` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      toastCopy({
+        title: 'Could not send payment link',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingLink(false);
+    }
+  };
+
   return (
     <div className="space-y-5 py-4 text-center">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
@@ -347,6 +439,50 @@ function SuccessPanel({
         <p className="text-lg font-semibold">Order created</p>
         <p className="text-sm text-muted-foreground">Booking #{success.bookingId.slice(0, 8)}</p>
       </div>
+
+      {success.awaitingPayment && (
+        <div className="mx-auto max-w-sm space-y-3 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-left">
+          <div className="flex items-center gap-2 text-amber-800">
+            <Mail className="h-4 w-4" />
+            <p className="text-sm font-semibold">Awaiting payment</p>
+          </div>
+          <p className="text-xs text-amber-800/90">
+            This order still needs payment. Paste a payment link to email the customer now, or do it
+            later from the Payments workspace.
+          </p>
+          <div>
+            <Label htmlFor="wizard-payment-link" className="text-xs">
+              Payment link URL
+            </Label>
+            <Input
+              id="wizard-payment-link"
+              type="url"
+              inputMode="url"
+              placeholder="https://..."
+              value={paymentLink}
+              onChange={(event) => setPaymentLink(event.target.value)}
+              className="mt-1 bg-white"
+              disabled={sendingLink || linkSent}
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="w-full gap-2"
+            onClick={handleSendPaymentLink}
+            disabled={!linkValid || sendingLink || linkSent}
+          >
+            {sendingLink ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : linkSent ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {linkSent ? 'Payment link sent' : 'Send payment link'}
+          </Button>
+        </div>
+      )}
 
       {success.pickupCode && (
         <div className="mx-auto max-w-xs space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
