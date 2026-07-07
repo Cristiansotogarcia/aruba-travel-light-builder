@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,8 +34,7 @@ export interface StatCardProps {
 /**
  * A summary / KPI tile. When any of `onClick`, `to`, or `href` is provided the
  * whole card becomes a real navigation affordance: proper button/link
- * semantics, keyboard operable, hover + focus-visible states, cursor-pointer,
- * and a chevron that hints it takes you to the records it counts.
+ * semantics, keyboard operable, hover + focus-visible states, cursor-pointer.
  */
 export const StatCard = ({
   label,
@@ -82,12 +80,6 @@ export const StatCard = ({
             ) : (
               <Icon className={cn('h-8 w-8', tone)} />
             ))}
-          {interactive && (
-            <ArrowUpRight
-              aria-hidden="true"
-              className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
-            />
-          )}
         </div>
       </CardContent>
     </Card>
