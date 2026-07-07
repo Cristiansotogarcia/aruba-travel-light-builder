@@ -346,6 +346,19 @@ const Invoice = () => {
             Thank you for choosing Travel Light Aruba. If you have any questions about this invoice, reply to
             info@travelightaruba.com.
           </div>
+          {(getSetting('company_registration_number', '').trim() ||
+            getSetting('company_tax_number', '').trim()) && (
+            <div className="mt-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+              {getSetting('company_registration_number', '').trim() && (
+                <span>KvK Aruba: {getSetting('company_registration_number', '')}</span>
+              )}
+              {getSetting('company_registration_number', '').trim() &&
+                getSetting('company_tax_number', '').trim() && <span> · </span>}
+              {getSetting('company_tax_number', '').trim() && (
+                <span>Tax ID (CRIB): {getSetting('company_tax_number', '')}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
