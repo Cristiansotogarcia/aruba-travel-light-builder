@@ -115,8 +115,8 @@ export const searchSchema = z.object({
 
 // Environment variable validation
 export const envSchema = z.object({
-  VITE_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
-  VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
+  VITE_PUBLIC_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
+  VITE_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
   CLOUDFLARE_IMAGES_HASH: z.string().min(1, 'Cloudflare images hash is required').optional()
 });
 
