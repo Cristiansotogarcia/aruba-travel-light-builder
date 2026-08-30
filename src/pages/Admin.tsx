@@ -71,7 +71,7 @@ const Admin = () => {
     <DashboardLayout>
       <div className="min-h-screen flex w-full">
         <AdminSidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
-        <main className="flex-1 p-6 bg-gray-50">
+        <main className="h-screen overflow-y-auto flex-1 p-6 bg-gray-50">
           {renderActiveSection()}
         </main>
       </div>

@@ -64,4 +64,33 @@ describe('ProductManagement image handling', () => {
     fireEvent.click(screen.getAllByLabelText('Remove image')[0]);
     await waitFor(() => expect(screen.getAllByAltText(/Selected/)).toHaveLength(1));
   });
+
+  it('releases leftover body scroll lock when the create dialog closes', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ProductManagement />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+
+    await screen.findByText('Product Management');
+    fireEvent.click(screen.getByText('Add Product'));
+    await screen.findByText('Create New Product');
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.pointerEvents = 'none';
+    document.body.setAttribute('data-scroll-locked', '1');
+
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+
+    await waitFor(() => {
+      expect(document.body.style.overflow).not.toBe('hidden');
+      expect(document.body.style.pointerEvents).not.toBe('none');
+      expect(document.body.hasAttribute('data-scroll-locked')).toBe(false);
+    });
+  });
 });
