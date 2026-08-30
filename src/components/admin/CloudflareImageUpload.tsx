@@ -137,7 +137,7 @@ export const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Upload Image to Cloudflare</DialogTitle>
