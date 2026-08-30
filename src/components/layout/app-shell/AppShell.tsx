@@ -278,7 +278,7 @@ export const AppShell = ({
           {headerAccessory}
         </header>
 
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 h-screen overflow-y-auto">
           {(pageTitle || pageActions) && (
             <div className="border-b border-border/60 bg-background/60">
               <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">

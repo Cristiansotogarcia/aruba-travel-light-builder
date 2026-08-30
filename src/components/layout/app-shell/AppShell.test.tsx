@@ -78,4 +78,13 @@ describe('AppShell', () => {
     // After collapsing, an expand affordance is shown.
     expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument();
   });
+
+  it('makes the content pane its own scroller so a leftover body lock cannot freeze it', () => {
+    const { container } = renderShell();
+    const main = container.querySelector('main');
+    expect(main).toBeTruthy();
+    expect(main?.className).toMatch(/h-screen/);
+    expect(main?.className).toMatch(/overflow-y-auto/);
+    expect(screen.getByText('Section body')).toBeInTheDocument();
+  });
 });

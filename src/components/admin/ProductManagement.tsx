@@ -15,6 +15,7 @@ import { BulkProductUpload } from './BulkProductUpload';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ProductCard } from './ProductCard';
 import { CloudflareImageUpload } from './CloudflareImageUpload';
+import { releaseRadixScrollLock } from '@/utils/scrollLock';
 import { AdminEquipmentFilters } from './AdminEquipmentFilters';
 import type { ActiveAdminFiltersState } from './AdminEquipmentFilters';
 import type { Product as GlobalProduct, AvailabilityStatus } from '@/types/types';
@@ -179,6 +180,7 @@ export const ProductManagement = () => {
       setIsEditDialogOpen(false);
       setIsCreateDialogOpen(false);
       setEditingProduct(null);
+      releaseRadixScrollLock();
       fetchData();
     }
   };
@@ -325,8 +327,8 @@ export const ProductManagement = () => {
           <ProductCard key={product.id} product={product} onEdit={() => handleEditProduct(product)} onDelete={() => setProductToDelete(product)} onToggleAvailability={() => {}} />
         ))}
       </div>
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>{renderProductForm(handleSaveProduct, "Create New Product", "Create Product")}</Dialog>
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>{editingProduct && renderProductForm(handleSaveProduct, "Edit Product", "Save Changes")}</Dialog>
+      <Dialog open={isCreateDialogOpen} onOpenChange={(open) => { setIsCreateDialogOpen(open); if (!open) releaseRadixScrollLock(); }}>{renderProductForm(handleSaveProduct, "Create New Product", "Create Product")}</Dialog>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) releaseRadixScrollLock(); }}>{editingProduct && renderProductForm(handleSaveProduct, "Edit Product", "Save Changes")}</Dialog>
       <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => !isOpen && setProductToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete "{productToDelete?.name}".</AlertDialogDescription></AlertDialogHeader>
