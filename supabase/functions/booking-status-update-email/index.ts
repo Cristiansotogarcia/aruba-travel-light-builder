@@ -1,5 +1,6 @@
 /// <reference lib="deno.ns" />
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireRole, STAFF_ROLES } from '../_shared/auth.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_API_URL = 'https://api.resend.com/emails';
@@ -22,6 +23,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const auth = await requireRole(req, STAFF_ROLES);
+    if (!auth.ok) return auth.response;
+
     const {
       customer_email,
       customer_name,
