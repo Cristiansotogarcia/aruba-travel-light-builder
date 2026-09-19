@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCategories } from '@/hooks/useCategories';
-import { X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 export interface ActiveAdminFiltersState {
   category: string;
   subcategory: string;
+  search: string;
 }
 
 interface AdminEquipmentFiltersProps {
@@ -44,7 +46,7 @@ export const AdminEquipmentFilters = ({
     });
   };
 
-  const hasActiveFilters = activeFilters.category || activeFilters.subcategory;
+  const hasActiveFilters = Boolean(activeFilters.category || activeFilters.subcategory || activeFilters.search?.trim());
 
   return (
     <Card>
@@ -59,6 +61,22 @@ export const AdminEquipmentFilters = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Search */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium" htmlFor="admin-equipment-search">Search</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="admin-equipment-search"
+              type="search"
+              value={activeFilters.search ?? ''}
+              onChange={(event) => onFiltersChange({ ...activeFilters, search: event.target.value })}
+              placeholder="Search by name or description"
+              className="pl-9"
+            />
+          </div>
+        </div>
+
         {/* Categories */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Category</Label>
