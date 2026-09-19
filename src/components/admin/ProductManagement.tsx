@@ -51,6 +51,7 @@ export const ProductManagement = () => {
   const [activeFilters, setActiveFilters] = useState<ActiveAdminFiltersState>({
     category: '',
     subcategory: '',
+    search: '',
   });
 
 
@@ -79,7 +80,14 @@ export const ProductManagement = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const { category, subcategory } = activeFilters;
+      const { category, subcategory, search } = activeFilters;
+      const term = search?.trim().toLowerCase() ?? '';
+      if (term) {
+        const haystack = `${product.name ?? ''} ${product.description ?? ''}`.toLowerCase();
+        if (!haystack.includes(term)) {
+          return false;
+        }
+      }
       if (category && product.category !== category) {
         return false;
       }
@@ -295,8 +303,11 @@ export const ProductManagement = () => {
       <AdminEquipmentFilters
         activeFilters={activeFilters}
         onFiltersChange={setActiveFilters}
-        onClearFilters={() => setActiveFilters({ category: '', subcategory: '' })}
+        onClearFilters={() => setActiveFilters({ category: '', subcategory: '', search: '' })}
       />
+      <p className="text-sm text-muted-foreground">
+        Showing {filteredProducts.length} of {products.length} {products.length === 1 ? 'product' : 'products'}
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map(product => (
           <ProductCard key={product.id} product={product} onEdit={() => handleEditProduct(product)} onDelete={() => setProductToDelete(product)} onToggleAvailability={() => {}} />
