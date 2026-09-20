@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { SEO } from '@/components/common/SEO';
 import { useSEO } from '@/hooks/useSEO';
+import { getEquipmentAvailability } from '@/lib/equipmentAvailability';
 
 const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -30,12 +31,6 @@ const EquipmentItem = () => {
 
     return products
       .map((p) => {
-        const stock = p.stock_quantity ?? 0;
-        let availability: 'available' | 'limited' | 'unavailable';
-        if (stock <= 0) availability = 'unavailable';
-        else if (stock <= 5) availability = 'limited';
-        else availability = 'available';
-
         return {
           id: p.id,
           name: p.name,
@@ -47,7 +42,10 @@ const EquipmentItem = () => {
           images: p.images || [],
 
           description: p.description || '',
-          availability,
+          availability: getEquipmentAvailability({
+            stockQuantity: p.stock_quantity,
+            availabilityStatus: p.availability_status,
+          }),
           features: [],
         };
       })

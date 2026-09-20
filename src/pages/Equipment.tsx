@@ -11,6 +11,7 @@ import { Footer } from '@/components/layout/Footer';
 import type { ActiveFiltersState } from '@/components/equipment/EquipmentFilters';
 import { useSearchParams } from 'react-router-dom';
 import { SEO } from '@/components/common/SEO';
+import { getEquipmentAvailability } from '@/lib/equipmentAvailability';
 
 const Equipment = () => {
   const [searchParams] = useSearchParams();
@@ -43,12 +44,6 @@ const Equipment = () => {
 
   const equipmentData = useMemo(() => {
     return products.map((p) => {
-      const stock = p.stock_quantity ?? 0;
-      let availability: 'available' | 'limited' | 'unavailable';
-      if (stock <= 0) availability = 'unavailable';
-      else if (stock <= 5) availability = 'limited';
-      else availability = 'available';
-
       return {
         id: p.id,
         name: p.name,
@@ -61,7 +56,10 @@ const Equipment = () => {
         images: p.images || [],
 
         description: p.description || '',
-        availability,
+        availability: getEquipmentAvailability({
+          stockQuantity: p.stock_quantity,
+          availabilityStatus: p.availability_status,
+        }),
         availability_status: p.availability_status || 'Available',
         features: [],
         category_sort_order: p.equipment_category?.sort_order ?? 0,
