@@ -37,9 +37,16 @@ beforeEach(() => {
   ];
 
   fromMock.mockImplementation(() => ({
-    select: () => ({
-      order: () => Promise.resolve({ data: db, error: null }),
-    }),
+    // `.select(...).order(...).order(...)` — the real supabase builder chains,
+    // so return a thenable that supports any number of chained `.order()` calls.
+    select: () => {
+      const orderable = {
+        order: () => orderable,
+        then: (onFulfilled: (v: { data: SubGroupRecord[]; error: null }) => unknown) =>
+          Promise.resolve({ data: db, error: null }).then(onFulfilled),
+      };
+      return orderable;
+    },
     update: ({ sort_order }: { sort_order: number }) => ({
       eq: (_: string, id: string) => {
         const item = db.find(d => d.id === id);
