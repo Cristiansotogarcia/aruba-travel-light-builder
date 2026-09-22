@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
-import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
@@ -36,32 +35,6 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
     () => DOMPurify.sanitize(equipment.description),
     [equipment.description]
   );
-
-  const getAvailabilityColor = (availability: string) => {
-    switch (availability) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'limited':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'unavailable':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getAvailabilityText = (availability: string) => {
-    switch (availability) {
-      case 'available':
-        return 'Available';
-      case 'limited':
-        return 'Limited Stock';
-      case 'unavailable':
-        return 'Out of Stock';
-      default:
-        return 'Unknown';
-    }
-  };
 
   const handleShare = async () => {
     const url = `${window.location.origin}/equipment/${equipment.slug}`;
@@ -95,18 +68,6 @@ export const EquipmentCard = ({ equipment }: EquipmentCardProps) => {
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             )}
-            <div className="absolute top-2 right-2">
-              {equipment.availability !== 'unavailable' && equipment.availability_status !== 'Temporarily Not Available' && (
-                <div
-                  className={clsx(
-                    'text-xs font-medium px-2 py-1 rounded-full',
-                    getAvailabilityColor(equipment.availability)
-                  )}
-                >
-                  {getAvailabilityText(equipment.availability)}
-                </div>
-              )}
-            </div>
           </div>
         </Link>
 

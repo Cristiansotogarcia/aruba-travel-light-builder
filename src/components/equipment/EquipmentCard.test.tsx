@@ -38,6 +38,41 @@ describe('EquipmentCard', () => {
     expect(document.querySelector('script')).toBeNull();
   });
 
+  it('does not render general availability labels', () => {
+    const { rerender } = render(
+      <BrowserRouter>
+        <EquipmentCard equipment={equipment} />
+      </BrowserRouter>
+    );
+
+    expect(screen.queryByText('Available')).not.toBeInTheDocument();
+
+    rerender(
+      <BrowserRouter>
+        <EquipmentCard equipment={{ ...equipment, availability: 'limited' as const }} />
+      </BrowserRouter>
+    );
+
+    expect(screen.queryByText('Limited Stock')).not.toBeInTheDocument();
+    expect(screen.queryByText('Out of Stock')).not.toBeInTheDocument();
+  });
+
+  it('keeps the temporary unavailable label', () => {
+    render(
+      <BrowserRouter>
+        <EquipmentCard
+          equipment={{
+            ...equipment,
+            availability: 'unavailable',
+            availability_status: 'Temporarily Not Available',
+          }}
+        />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByText('Temporarily Not Available')).toBeInTheDocument();
+  });
+
   it('renders images in modal carousel', async () => {
     const user = userEvent.setup();
     render(
