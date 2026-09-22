@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
-import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { Share2, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
@@ -44,32 +43,6 @@ export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps)
     () => DOMPurify.sanitize(equipment.description),
     [equipment.description]
   );
-
-  const getAvailabilityColor = (availability: string) => {
-    switch (availability) {
-      case 'available':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'limited':
-        return 'bg-amber-100 text-amber-700';
-      case 'unavailable':
-        return 'bg-rose-100 text-rose-700';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getAvailabilityText = (availability: string) => {
-    switch (availability) {
-      case 'available':
-        return 'Available';
-      case 'limited':
-        return 'Limited Stock';
-      case 'unavailable':
-        return 'Out of Stock';
-      default:
-        return 'Unknown';
-    }
-  };
 
   const handleShare = async () => {
     const url = `${window.location.origin}/equipment/${equipment.slug}`;
@@ -132,19 +105,6 @@ export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps)
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             )}
-            <div className="absolute top-3 left-3">
-              {equipment.availability !== 'unavailable' &&
-                equipment.availability_status !== 'Temporarily Not Available' && (
-                  <div
-                    className={clsx(
-                      'text-xs font-semibold px-3 py-1 rounded-full bg-white/90 shadow-sm',
-                      getAvailabilityColor(equipment.availability)
-                    )}
-                  >
-                    {getAvailabilityText(equipment.availability)}
-                  </div>
-                )}
-            </div>
           </div>
         </Link>
 
