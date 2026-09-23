@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireRole, STAFF_ROLES } from '../_shared/auth.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_API_URL = 'https://api.resend.com/emails';
@@ -39,6 +40,9 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await requireRole(req, STAFF_ROLES);
+    if (!auth.ok) return auth.response;
+
     const requestData = await req.json() as DeliveryTrackingRequest;
 
     if (!requestData.task_id) {
