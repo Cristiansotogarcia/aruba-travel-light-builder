@@ -50,7 +50,13 @@ export default defineConfig(async ({ mode }) => {
                 normalizedId.includes("/node_modules/scheduler/") ||
                 // Shared by Radix and Tiptap; left unassigned it lands in admin-core
                 // and Radix then imports admin-core, a chunk cycle that blanks the page.
-                normalizedId.includes("/node_modules/use-sync-external-store/"))
+                normalizedId.includes("/node_modules/use-sync-external-store/") ||
+                // react-easy-crop's CJS dependency (normalize-wheel) pulls in the same
+                // shared CJS-interop helper as react/scheduler. Left unassigned, that
+                // helper lands in admin-core (react-easy-crop's own default chunk) and
+                // react-vendor ends up importing admin-core — the same cycle as above.
+                normalizedId.includes("/node_modules/react-easy-crop/") ||
+                normalizedId.includes("/node_modules/normalize-wheel/"))
             ) {
               return "react-vendor";
             }
