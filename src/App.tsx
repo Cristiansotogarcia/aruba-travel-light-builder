@@ -42,6 +42,7 @@ const Invoice = lazy(() => import("./pages/Invoice"));
 const DeliverySlip = lazy(() => import("./pages/DeliverySlip"));
 const DeliveryTracking = lazy(() => import("./pages/DeliveryTracking"));
 const Depot = lazy(() => import("./pages/Depot"));
+const BlogStudio = lazy(() => import("./pages/BlogStudio"));
 
 // Loading fallback with skeleton
 const PageLoader = () => <PageSkeleton />;
@@ -137,6 +138,10 @@ const App = () => {
                           }
                         >
                           <Route path="/depot" element={<Depot />} />
+                        </Route>
+
+                        <Route element={<ProtectedRoute />}>
+                          <Route path="/blog-studio" element={<BlogStudio />} />
                         </Route>
 
                         <Route path="/contact" element={<Contact />} />

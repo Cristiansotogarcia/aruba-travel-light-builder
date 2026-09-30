@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Calendar, LayoutDashboard, Package } from 'lucide-react';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 
 import { AppShell } from './AppShell';
 import type { AppNavEntry } from './types';
@@ -20,6 +21,15 @@ vi.mock('@/hooks/useSiteAssets', () => ({
   useSiteAssets: () => ({ assets: {}, refresh: vi.fn() }),
 }));
 
+// AppShell shows a "Blog studio" entry for active bloggers; this suite covers
+// generic shell behavior for every panel, so it stubs the access check rather
+// than exercising the real blog_authors query (covered in useBlogAuthorAccess's
+// own callers). mockIsBlogger is mutable so individual tests can flip it.
+const { mockIsBlogger } = vi.hoisted(() => ({ mockIsBlogger: { value: false } }));
+vi.mock('@/components/admin/blog/useBlogAuthorAccess', () => ({
+  useBlogAuthorAccess: () => ({ isBlogger: mockIsBlogger.value, author: null, isLoading: false }),
+}));
+
 const nav: AppNavEntry[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   {
@@ -31,19 +41,23 @@ const nav: AppNavEntry[] = [
   { id: 'catalog', label: 'Catalog', icon: Package, items: [{ id: 'equipment', label: 'Equipment', icon: Package }] },
 ];
 
-const renderShell = (activeSection = 'overview') =>
-  render(
-    <BrowserRouter>
-      <AppShell
-        panelName="Test Panel"
-        nav={nav}
-        activeSection={activeSection}
-        onSectionChange={vi.fn()}
-      >
-        <div>Section body</div>
-      </AppShell>
-    </BrowserRouter>,
+const renderShell = (activeSection = 'overview', panelName = 'Test Panel') => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppShell
+          panelName={panelName}
+          nav={nav}
+          activeSection={activeSection}
+          onSectionChange={vi.fn()}
+        >
+          <div>Section body</div>
+        </AppShell>
+      </BrowserRouter>
+    </QueryClientProvider>,
   );
+};
 
 describe('AppShell', () => {
   it('renders the panel name, role identity and sign out control', () => {
@@ -86,5 +100,29 @@ describe('AppShell', () => {
     expect(main?.className).toMatch(/h-screen/);
     expect(main?.className).toMatch(/overflow-y-auto/);
     expect(screen.getByText('Section body')).toBeInTheDocument();
+  });
+
+  describe('blog studio entry point', () => {
+    afterEach(() => {
+      mockIsBlogger.value = false;
+    });
+
+    it('hides the "Blog studio" link for a user without active blogging access', () => {
+      mockIsBlogger.value = false;
+      renderShell();
+      expect(screen.queryByRole('button', { name: /blog studio/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the "Blog studio" link for an active blogger', () => {
+      mockIsBlogger.value = true;
+      renderShell();
+      expect(screen.getByRole('button', { name: /blog studio/i })).toBeInTheDocument();
+    });
+
+    it('does not show the link when already on the Blog Studio panel itself', () => {
+      mockIsBlogger.value = true;
+      renderShell('overview', 'Blog Studio');
+      expect(screen.queryByRole('button', { name: /blog studio/i })).not.toBeInTheDocument();
+    });
   });
 });

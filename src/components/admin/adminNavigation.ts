@@ -8,6 +8,7 @@ import {
   Info,
   ListOrdered,
   MapPin,
+  Newspaper,
   Package,
   Search,
   Settings,
@@ -67,6 +68,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { id: 'about-us', label: 'About Us', icon: Info, permission: null },
       { id: 'seo', label: 'SEO Manager', icon: Search, permission: 'SeoManager' },
+      { id: 'blog', label: 'Blog', icon: Newspaper, permission: 'BlogManagement' },
     ],
   },
   {

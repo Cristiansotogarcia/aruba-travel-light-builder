@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
+import { useBlogAuthorAccess } from '@/components/admin/blog/useBlogAuthorAccess';
 import { cn } from '@/lib/utils';
 
 import { AppShellNav } from './AppShellNav';
@@ -104,7 +105,9 @@ export const AppShell = ({
 }: AppShellProps) => {
   const { profile, signOut } = useAuth();
   const { assets } = useSiteAssets();
+  const { isBlogger } = useBlogAuthorAccess();
   const navigate = useNavigate();
+  const showBlogStudioLink = isBlogger && panelName !== 'Blog Studio';
 
   const defaultGroups = useDefaultGroupState(nav, activeSection);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(defaultGroups);
@@ -198,6 +201,27 @@ export const AppShell = ({
 
         <div className={cn('space-y-2 border-t border-sidebar-border/70 p-3', collapsed && 'px-2')}>
           {!collapsed && <UserIdentity name={profile?.name} role={profile?.role} />}
+          {showBlogStudioLink && !collapsed && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-sidebar-foreground/80 hover:text-sidebar-foreground"
+              onClick={() => navigate('/blog-studio')}
+            >
+              <Newspaper className="h-4 w-4" />
+              Blog studio
+            </Button>
+          )}
+          {showBlogStudioLink && collapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/blog-studio')}
+              aria-label="Blog studio"
+              className="w-full text-sidebar-foreground/70 hover:text-sidebar-foreground"
+            >
+              <Newspaper className="h-5 w-5" />
+            </Button>
+          )}
           <div className={cn('flex gap-2', collapsed ? 'flex-col items-center' : 'items-center')}>
             <Button
               type="button"
@@ -262,6 +286,19 @@ export const AppShell = ({
 
                 <div className="space-y-3 border-t border-border/60 p-4">
                   <UserIdentity name={profile?.name} role={profile?.role} />
+                  {showBlogStudioLink && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        navigate('/blog-studio');
+                      }}
+                    >
+                      <Newspaper className="h-4 w-4" />
+                      Blog studio
+                    </Button>
+                  )}
                   <Button variant="outline" className="w-full gap-2" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
                     Sign out
