@@ -8,6 +8,7 @@ import AboutUsSection from '@/components/homepage/AboutUsSection';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from '@/lib/queries/products';
 import { SEO } from '@/components/common/SEO';
+import { FromTheBlog } from '@/components/homepage/FromTheBlog';
 
 const Index = () => {
   useQuery({
@@ -31,6 +32,7 @@ const Index = () => {
         <FeaturedProducts />
         <HowItWorks />
         <AboutUsSection />
+        <FromTheBlog />
       </main>
       <Footer />
     </div>

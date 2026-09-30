@@ -18,6 +18,13 @@ interface SEOProps {
     category?: string;
   };
   pageSlug?: string; // For static pages that use seo_meta table
+  articleData?: {
+    title: string;
+    publishedAt: string | null;
+    updatedAt: string;
+    author: string;
+    image: string | null;
+  };
 }
 
 interface SEOMetaData {
@@ -43,7 +50,8 @@ export const SEO: React.FC<SEOProps> = ({
   url,
   type = 'website',
   productData,
-  pageSlug
+  pageSlug,
+  articleData
 }) => {
   // Fetch SEO data for static pages via the shared query cache so revisiting a
   // page within the session doesn't refire the request.
@@ -152,7 +160,24 @@ export const SEO: React.FC<SEOProps> = ({
 
       {/* Additional meta tags for better social media support */}
       <meta name="robots" content="index, follow" />
-      <meta name="author" content="Travel Light Aruba" />
+      <meta name="author" content={articleData?.author || 'Travel Light Aruba'} />
+      {articleData && <>
+        {articleData.publishedAt && <meta property="article:published_time" content={articleData.publishedAt} />}
+        <meta property="article:modified_time" content={articleData.updatedAt} />
+        <meta property="article:author" content={articleData.author} />
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: articleData.title,
+          description: meta.description,
+          datePublished: articleData.publishedAt,
+          dateModified: articleData.updatedAt,
+          author: { '@type': 'Person', name: articleData.author },
+          image: articleData.image || meta.image,
+          mainEntityOfPage: meta.url,
+          publisher: { '@type': 'Organization', name: 'Travel Light Aruba' },
+        }).replace(/</g, '\\u003c')}</script>
+      </>}
     </Helmet>
   );
 };

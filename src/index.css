@@ -120,4 +120,21 @@
   .surface-card {
     @apply bg-card/85 backdrop-blur-sm border border-border/60 shadow-card;
   }
+
+  .blog-prose {
+    overflow-wrap: anywhere;
+  }
+
+  .blog-prose img,
+  .blog-prose iframe {
+    max-width: 100%;
+  }
+
+  .blog-prose iframe {
+    display: block;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+    border: 0;
+  }
 }
