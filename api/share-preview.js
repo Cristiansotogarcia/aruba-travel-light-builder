@@ -1,4 +1,4 @@
-// Social-share preview for equipment pages.
+// Social-share preview for equipment and published blog pages.
 //
 // Social crawlers (WhatsApp, Facebook, X, ...) don't execute JavaScript, so
 // they never see the React-rendered og: tags. vercel.json rewrites
@@ -36,14 +36,39 @@ const shareImage = (url) => {
 
 export default async function handler(req, res) {
   const slug = String(req.query.slug || '');
+  const isBlog = req.query.kind === 'blog';
 
   let title = 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
   let description = 'Premium Beach & Baby Equipment Rentals in Aruba';
   let image = LOGO_IMAGE;
-  let pageUrl = `${SITE_URL}/equipment`;
+  let pageUrl = `${SITE_URL}/${isBlog ? 'blog' : 'equipment'}`;
+  let found = !isBlog;
+  let unavailable = isBlog && !SUPABASE_ANON_KEY;
 
   try {
-    if (slug && SUPABASE_ANON_KEY) {
+    if (isBlog && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) && SUPABASE_ANON_KEY) {
+      const query = new URLSearchParams({
+        select: 'title,slug,excerpt,cover_image_url,seo_title,seo_description,published_at',
+        slug: `eq.${slug}`,
+        status: 'eq.published',
+        published_at: `lte.${new Date().toISOString()}`,
+        limit: '1',
+      });
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?${query}`, {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      });
+      if (resp.ok) {
+        const rows = await resp.json();
+        const post = rows[0];
+        if (post) {
+          found = true;
+          title = post.seo_title || post.title;
+          description = post.seo_description || post.excerpt || post.title;
+          image = post.cover_image_url ? shareImage(post.cover_image_url) : LOGO_IMAGE;
+          pageUrl = `${SITE_URL}/blog/${slug}`;
+        }
+      } else unavailable = true;
+    } else if (!isBlog && slug && SUPABASE_ANON_KEY) {
       const resp = await fetch(
         `${SUPABASE_URL}/rest/v1/equipment?select=name,description,images,price_per_day`,
         { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
@@ -65,7 +90,15 @@ export default async function handler(req, res) {
       }
     }
   } catch {
-    // fall through with defaults — a broken preview beats a 500 for crawlers
+    if (isBlog) unavailable = true;
+    // Equipment keeps its existing generic preview fallback.
+  }
+
+  if (isBlog && !found) {
+    title = `${unavailable ? 'Story unavailable' : 'Story not found'} | Travel Light Aruba`;
+    description = unavailable ? 'Please try again later.' : 'This story is not available.';
+    image = LOGO_IMAGE;
+    pageUrl = `${SITE_URL}/blog`;
   }
 
   const html = `<!DOCTYPE html>
@@ -74,7 +107,7 @@ export default async function handler(req, res) {
   <meta charset="UTF-8">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
-  <meta property="og:type" content="product">
+  <meta property="og:type" content="${isBlog ? 'article' : 'product'}">
   <meta property="og:url" content="${escapeHtml(pageUrl)}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
@@ -85,6 +118,7 @@ export default async function handler(req, res) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(image)}">
   <link rel="canonical" href="${escapeHtml(pageUrl)}">
+  ${isBlog && !found && !unavailable ? '<meta name="robots" content="noindex, nofollow">' : ''}
 </head>
 <body>
   <h1>${escapeHtml(title)}</h1>
@@ -94,6 +128,6 @@ export default async function handler(req, res) {
 </html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-  res.status(200).send(html);
+  res.setHeader('Cache-Control', isBlog ? 'no-store' : 'public, s-maxage=3600, stale-while-revalidate=86400');
+  res.status(isBlog && !found ? unavailable ? 503 : 404 : 200).send(html);
 }

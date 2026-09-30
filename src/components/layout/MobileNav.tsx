@@ -163,6 +163,7 @@ const MobileNav = () => {
           </Collapsible>
           <NavLink to={user ? '/book' : '/login?redirect=/book'}>Book Now</NavLink>
           <NavLink to="/about">About</NavLink>
+          <NavLink to="/blog">Blog</NavLink>
           <NavLink to="/contact">Contact</NavLink>
           <NavLink to="/policies">Policies</NavLink>
           {(loading || (user && profile)) && (
