@@ -51,7 +51,7 @@ const BlogArticle = () => {
             <Link to="/blog" className="text-sm font-semibold text-sky-800 hover:underline">The Aruba Journal</Link>
             <h1 className="mt-6 font-display text-4xl leading-tight sm:text-6xl">{post.title}</h1>
             {post.excerpt && <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">{post.excerpt}</p>}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground"><span>By {byline}</span><span aria-hidden="true">·</span><time dateTime={post.published_at || undefined}>{date}</time><span aria-hidden="true">·</span><span>{post.reading_minutes} min read</span></div>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground"><AuthorIdentity author={post.author} compact byline /><span aria-hidden="true">·</span><time dateTime={post.published_at || undefined}>{date}</time><span aria-hidden="true">·</span><span>{post.reading_minutes} min read</span></div>
           </div>
           {post.cover_image_url && <figure className="mx-auto max-w-6xl px-4 sm:px-6"><img src={post.cover_image_url} alt={post.cover_image_alt || ''} className="max-h-[650px] w-full rounded-2xl object-cover" /></figure>}
           <div className="mx-auto max-w-[760px] px-4 pb-20 pt-10 sm:px-6 sm:pt-16">

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { AuthorIdentity } from './AuthorIdentity';
 
@@ -16,5 +16,15 @@ describe('blog author identity', () => {
     expect(screen.getByText('Roxanne')).toBeInTheDocument();
     expect(screen.getByText('R')).toBeInTheDocument();
     expect(screen.getByText('Stories from the Travel Light Aruba team.')).toBeInTheDocument();
+  });
+
+  it('shows initials when an avatar URL fails to load and retries a changed URL', () => {
+    const { container, rerender } = render(<AuthorIdentity author={{ display_name: 'Roxanne', avatar_url: '/broken-photo.jpg', bio: null }} />);
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.querySelector('img')).toBeNull();
+    expect(screen.getByText('R')).toBeInTheDocument();
+
+    rerender(<AuthorIdentity author={{ display_name: 'Roxanne', avatar_url: '/new-photo.jpg', bio: null }} />);
+    expect(container.querySelector('img')).toHaveAttribute('src', '/new-photo.jpg');
   });
 });
