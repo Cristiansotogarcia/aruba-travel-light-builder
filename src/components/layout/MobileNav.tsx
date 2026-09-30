@@ -7,10 +7,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { useCategories } from '@/hooks/useCategories';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { faqData } from '@/components/common/FaqAccordion';
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(false);
   const [categoryStates, setCategoryStates] = useState<Record<string, boolean>>({});
   const { user, profile, signOut, loading } = useAuth();
   const { items } = useCart();
@@ -166,6 +169,26 @@ const MobileNav = () => {
           <NavLink to="/blog">Blog</NavLink>
           <NavLink to="/contact">Contact</NavLink>
           <NavLink to="/policies">Policies</NavLink>
+          <Collapsible open={faqOpen} onOpenChange={setFaqOpen}>
+            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-foreground/80 transition-colors hover:bg-accent/60 hover:text-foreground">
+              <span>FAQ</span>
+              {faqOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <Accordion type="single" collapsible className="px-4">
+                {faqData.map((item, index) => (
+                  <AccordionItem key={index} value={`faq-${index}`}>
+                    <AccordionTrigger className="text-sm font-medium text-left leading-tight break-words">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground pt-1 pb-2 whitespace-pre-line">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CollapsibleContent>
+          </Collapsible>
           {(loading || (user && profile)) && (
             <div className="mt-4 pt-4 border-t">
               {loading ? (

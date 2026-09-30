@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCategories } from '@/hooks/useCategories';
-import { Search, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 
 export interface FilterOptions {
   categories: string[];
@@ -34,6 +34,8 @@ export const EquipmentFilters = ({
   onClearFilters
 }: EquipmentFiltersProps) => {
   const { categories, loading: categoriesLoading } = useCategories();
+  // On small screens the filter card starts collapsed so the equipment list is visible first.
+  const [mobileOpen, setMobileOpen] = useState(false);
   
   // Get subcategories for the selected category
   const availableSubcategories = useMemo(() => {
@@ -62,11 +64,27 @@ export const EquipmentFilters = ({
   };
 
   const hasActiveFilters = activeFilters.search || activeFilters.categories.length > 0 || activeFilters.subcategory;
+  const activeFilterCount =
+    (activeFilters.search ? 1 : 0) + activeFilters.categories.length + (activeFilters.subcategory ? 1 : 0);
 
   return (
     <Card className="surface-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg">Filters</CardTitle>
+        <button
+          type="button"
+          onClick={() => setMobileOpen(open => !open)}
+          aria-expanded={mobileOpen}
+          aria-controls="equipment-filters-content"
+          className="flex flex-1 items-center gap-2 text-left lg:pointer-events-none"
+        >
+          <CardTitle className="text-lg">
+            Filters
+            {activeFilterCount > 0 && <span className="lg:hidden"> ({activeFilterCount})</span>}
+          </CardTitle>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform lg:hidden ${mobileOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={onClearFilters}>
             <X className="h-4 w-4 mr-1" />
@@ -75,7 +93,10 @@ export const EquipmentFilters = ({
         )}
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent
+        id="equipment-filters-content"
+        className={`space-y-6 ${mobileOpen ? 'block' : 'hidden'} lg:block`}
+      >
         {/* Search */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold">Search Equipment</Label>
