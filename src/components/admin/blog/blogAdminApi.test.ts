@@ -1,10 +1,40 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { assertValidImageFile, friendlySaveError, isUniqueSlugViolation, publishNowTimestamp } from './blogAdminApi';
+
+// blog_authors has two FKs into profiles (user_id, granted_by). An unqualified
+// `profiles(...)` embed is ambiguous to PostgREST and throws PGRST201 on every
+// call, which is why newly-added bloggers (and everyone else) never rendered in
+// the admin Bloggers list. Guard the exact select string so it stays disambiguated.
+const { orderFn, selectFn, fromFn } = vi.hoisted(() => {
+  const orderFn = vi.fn().mockResolvedValue({ data: [], error: null });
+  const selectFn = vi.fn(() => ({ order: orderFn }));
+  const fromFn = vi.fn(() => ({ select: selectFn }));
+  return { orderFn, selectFn, fromFn };
+});
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { from: fromFn },
+}));
 
 const makeFile = (type: string, size: number, name = 'photo.jpg') => {
   const file = new File([new Uint8Array(size)], name, { type });
   return file;
 };
+
+describe('listAuthorsAdmin', () => {
+  beforeEach(() => {
+    fromFn.mockClear();
+    selectFn.mockClear();
+    orderFn.mockClear();
+  });
+
+  it('disambiguates the profiles embed by the user_id foreign key', async () => {
+    const { listAuthorsAdmin } = await import('./blogAdminApi');
+    await listAuthorsAdmin();
+    expect(fromFn).toHaveBeenCalledWith('blog_authors');
+    expect(selectFn).toHaveBeenCalledWith('*, profile:profiles!user_id(name, email)');
+  });
+});
 
 describe('isUniqueSlugViolation', () => {
   it('recognizes a Postgres unique-violation error object', () => {

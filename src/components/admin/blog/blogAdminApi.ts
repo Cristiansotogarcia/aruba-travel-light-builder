@@ -137,9 +137,13 @@ export interface BlogAuthorWithProfile extends BlogAuthor {
 }
 
 export async function listAuthorsAdmin(): Promise<BlogAuthorWithProfile[]> {
+  // blog_authors has TWO foreign keys into profiles (user_id and granted_by), so an
+  // unqualified `profiles(...)` embed is ambiguous to PostgREST (PGRST201) and the
+  // whole query throws on every call, not just for newly-added rows. `!user_id` picks
+  // the byline's own profile instead of the granting admin's.
   const { data, error } = await blogDb
     .from('blog_authors')
-    .select('*, profile:profiles(name, email)')
+    .select('*, profile:profiles!user_id(name, email)')
     .order('display_name');
   if (error) throw error;
   return (data ?? []) as unknown as BlogAuthorWithProfile[];
