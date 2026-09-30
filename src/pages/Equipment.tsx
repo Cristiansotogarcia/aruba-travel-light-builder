@@ -184,7 +184,8 @@ const Equipment = () => {
                   })
                 }
               />
-              <FaqAccordion />
+              {/* On phones the FAQ lives in the menu instead */}
+              <FaqAccordion className="hidden md:block" />
             </div>
           </div>
 
