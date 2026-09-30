@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { assertValidImageFile, uploadBlogImage } from './blogAdminApi';
+import { ImageCropDialog } from './ImageCropDialog';
 
 interface BlogAvatarUploadProps {
   /** The blogger this photo belongs to — uploads land under `<authorId>/avatars/...`. */
@@ -18,9 +19,11 @@ interface BlogAvatarUploadProps {
 export const BlogAvatarUpload = ({ authorId, avatarUrl, displayName, onUploaded, disabled }: BlogAvatarUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleFile = async (file: File | undefined) => {
+  const handleFile = (file: File | undefined) => {
     if (!file) return;
     try {
       assertValidImageFile(file);
@@ -32,10 +35,14 @@ export const BlogAvatarUpload = ({ authorId, avatarUrl, displayName, onUploaded,
       });
       return;
     }
+    setPendingFile(file);
+    setCropOpen(true);
+  };
 
+  const handleCropped = async (croppedFile: File) => {
     setUploading(true);
     try {
-      const url = await uploadBlogImage(authorId, file, 'avatars');
+      const url = await uploadBlogImage(authorId, croppedFile, 'avatars');
       onUploaded(url);
     } catch (error) {
       toast({
@@ -45,6 +52,7 @@ export const BlogAvatarUpload = ({ authorId, avatarUrl, displayName, onUploaded,
       });
     } finally {
       setUploading(false);
+      setPendingFile(null);
     }
   };
 
@@ -68,7 +76,11 @@ export const BlogAvatarUpload = ({ authorId, avatarUrl, displayName, onUploaded,
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
           className="hidden"
-          onChange={(event) => handleFile(event.target.files?.[0])}
+          onChange={(event) => {
+            handleFile(event.target.files?.[0]);
+            // Reset so picking the same file again after cancelling the crop still fires.
+            event.target.value = '';
+          }}
         />
         <Button
           type="button"
@@ -83,6 +95,17 @@ export const BlogAvatarUpload = ({ authorId, avatarUrl, displayName, onUploaded,
         </Button>
         <p className="mt-1 text-xs text-muted-foreground">JPEG, PNG, WebP, GIF, or AVIF. Up to 10MB.</p>
       </div>
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={(next) => {
+          setCropOpen(next);
+          if (!next) setPendingFile(null);
+        }}
+        file={pendingFile}
+        variant="avatar"
+        fileName="avatar"
+        onCropped={handleCropped}
+      />
     </div>
   );
 };

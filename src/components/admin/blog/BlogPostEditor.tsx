@@ -31,6 +31,7 @@ import type { BlogPostInput, BlogPostStatus } from '@/lib/blog/types';
 
 import { BlogAvatarUpload } from './BlogAvatarUpload';
 import { BlogPostPreview } from './BlogPostPreview';
+import { ImageCropDialog } from './ImageCropDialog';
 import { TagInput } from './TagInput';
 import { EditorToolbar } from './editor/EditorToolbar';
 import {
@@ -130,6 +131,8 @@ const BlogPostEditorForm = ({ initialPost, postId, mode, selfAuthorId, onClose, 
   const [scheduleValue, setScheduleValue] = useState('');
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+  const [coverCropOpen, setCoverCropOpen] = useState(false);
 
   const touch = () => setDirty(true);
   const currentStatus: BlogPostStatus = initialPost?.status ?? 'draft';
@@ -258,7 +261,7 @@ const BlogPostEditorForm = ({ initialPost, postId, mode, selfAuthorId, onClose, 
     },
   });
 
-  const handleCoverUpload = async (file: File | undefined) => {
+  const handleCoverFilePicked = (file: File | undefined) => {
     if (!file || !authorId) return;
     try {
       assertValidImageFile(file);
@@ -270,9 +273,15 @@ const BlogPostEditorForm = ({ initialPost, postId, mode, selfAuthorId, onClose, 
       });
       return;
     }
+    setPendingCoverFile(file);
+    setCoverCropOpen(true);
+  };
+
+  const handleCoverCropped = async (croppedFile: File) => {
+    if (!authorId) return;
     setCoverUploading(true);
     try {
-      const url = await uploadBlogImage(authorId, file, 'covers');
+      const url = await uploadBlogImage(authorId, croppedFile, 'covers');
       setCoverImageUrl(url);
       touch();
     } catch (error) {
@@ -283,6 +292,7 @@ const BlogPostEditorForm = ({ initialPost, postId, mode, selfAuthorId, onClose, 
       });
     } finally {
       setCoverUploading(false);
+      setPendingCoverFile(null);
     }
   };
 
@@ -449,7 +459,21 @@ const BlogPostEditorForm = ({ initialPost, postId, mode, selfAuthorId, onClose, 
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                 disabled={!authorId || coverUploading}
-                onChange={(event) => handleCoverUpload(event.target.files?.[0])}
+                onChange={(event) => {
+                  handleCoverFilePicked(event.target.files?.[0]);
+                  event.target.value = '';
+                }}
+              />
+              <ImageCropDialog
+                open={coverCropOpen}
+                onOpenChange={(next) => {
+                  setCoverCropOpen(next);
+                  if (!next) setPendingCoverFile(null);
+                }}
+                file={pendingCoverFile}
+                variant="cover"
+                fileName="cover"
+                onCropped={handleCoverCropped}
               />
               <div className="space-y-1.5">
                 <Label htmlFor="cover-alt">Alt text</Label>

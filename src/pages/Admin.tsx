@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/app-shell';
 import { getVisibleAdminNavigation } from '@/components/admin/adminNavigation';
@@ -18,7 +19,6 @@ import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { InvoicesList } from '@/components/admin/InvoicesList';
-import { BlogManagement } from '@/components/admin/blog/BlogManagement';
 
 interface AdminNavigateEventDetail {
   section: string;
@@ -32,13 +32,20 @@ const Admin = () => {
     return [dashboard, ...groups];
   }, [hasPermission]);
 
+  const navigate = useNavigate();
+
   const [activeSection, setActiveSection] = useState(() => {
-    // Initialize from sessionStorage if available
+    // Initialize from sessionStorage if available. 'blog' is never restored: it
+    // redirects to /blog-studio, so restoring it would bounce every return to /admin.
     const savedSection = sessionStorage.getItem('admin:activeSection');
-    return savedSection || 'dashboard';
+    return savedSection && savedSection !== 'blog' ? savedSection : 'dashboard';
   });
 
   const handleSectionChange = (section: string) => {
+    if (section === 'blog') {
+      navigate('/blog-studio');
+      return;
+    }
     setActiveSection(section);
     sessionStorage.setItem('admin:activeSection', section);
   };
@@ -117,7 +124,10 @@ const Admin = () => {
       case 'seo':
         return <SeoManager />;
       case 'blog':
-        return <BlogManagement />;
+        // Blog Studio (/blog-studio) is the single home for blog work; it shows
+        // the full admin surface (all posts + bloggers) for Admin/SuperUser, so
+        // Contents > Blog routes there instead of duplicating that UI here.
+        return <Navigate to="/blog-studio" replace />;
       case 'settings':
         return <SiteSettings />;
       default:

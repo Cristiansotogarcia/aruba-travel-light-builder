@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Newspaper, UserCircle2 } from 'lucide-react';
+import { ArrowLeft, FileText, Newspaper, Users, UserCircle2 } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageSkeleton } from '@/components/common/SkeletonLoader';
 import { useToast } from '@/components/ui/use-toast';
 import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
 import { useAuth } from '@/hooks/useAuth';
+import { getRoleHomeRoute } from '@/lib/navigation/roleHome';
+import { useNavigate } from 'react-router-dom';
 
 import { BlogAvatarUpload } from '@/components/admin/blog/BlogAvatarUpload';
 import { BlogBioField } from '@/components/admin/blog/BlogBioField';
+import { BlogBloggersTab } from '@/components/admin/blog/BlogBloggersTab';
 import { BlogPostEditor } from '@/components/admin/blog/BlogPostEditor';
 import { BlogPostsList } from '@/components/admin/blog/BlogPostsList';
 import { updateOwnBlogAuthorProfile } from '@/components/admin/blog/blogAdminApi';
@@ -18,9 +22,18 @@ import type { BlogAuthor } from '@/lib/blog/types';
 
 const STORAGE_KEY = 'blog-studio:activeSection';
 
-const STUDIO_NAV: AppNavEntry[] = [
+const BLOGGER_NAV: AppNavEntry[] = [
   { id: 'posts', label: 'My Posts', icon: FileText },
   { id: 'profile', label: 'My Blogger Profile', icon: UserCircle2 },
+];
+
+/** Admins get the same "all posts + bloggers" surface Contents > Blog used to
+ * duplicate (see BlogManagement, now removed); the studio is the one home for
+ * both an admin's and a blogger's blog work. */
+const buildAdminNav = (alsoBlogger: boolean): AppNavEntry[] => [
+  { id: 'posts', label: 'All Posts', icon: FileText },
+  { id: 'bloggers', label: 'Bloggers', icon: Users },
+  ...(alsoBlogger ? [{ id: 'profile', label: 'My Blogger Profile', icon: UserCircle2 }] : []),
 ];
 
 const ProfileCard = ({ author }: { author: BlogAuthor }) => {
@@ -77,8 +90,16 @@ const ProfileCard = ({ author }: { author: BlogAuthor }) => {
 };
 
 const BlogStudio = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { author, isBlogger, isLoading: accessLoading } = useBlogAuthorAccess();
+  const navigate = useNavigate();
+  const isAdmin = profile?.role === 'Admin' || profile?.role === 'SuperUser';
+
+  const nav = useMemo(
+    () => (isAdmin ? buildAdminNav(isBlogger) : BLOGGER_NAV),
+    [isAdmin, isBlogger],
+  );
+
   const [activeSection, setActiveSection] = useState(() => sessionStorage.getItem(STORAGE_KEY) || 'posts');
   const [editingPostId, setEditingPostId] = useState<string | undefined>(undefined);
   const [isEditing, setIsEditing] = useState(false);
@@ -89,11 +110,20 @@ const BlogStudio = () => {
     setIsEditing(false);
   };
 
+  const backButton = (
+    <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(getRoleHomeRoute(profile?.role))}>
+      <ArrowLeft className="h-4 w-4" />
+      Back
+    </Button>
+  );
+
   if (authLoading || accessLoading) {
     return <PageSkeleton />;
   }
 
-  if (!user || !isBlogger || !author) {
+  // A blogger's own profile only exists once they hold a blog_authors row; an
+  // admin with no such row still gets the full admin surface below.
+  if (!user || (!isAdmin && (!isBlogger || !author))) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
         <Card className="max-w-md text-center">
@@ -103,24 +133,28 @@ const BlogStudio = () => {
             <p className="text-muted-foreground">
               You don't have blogging access. Ask an administrator.
             </p>
+            <div className="flex justify-center pt-2">{backButton}</div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const editorMode = isAdmin ? 'admin' : 'blogger';
+  const editorSelfAuthorId = isAdmin ? user.id : (author as BlogAuthor).user_id;
+
   if (isEditing) {
     return (
       <AppShell
         panelName="Blog Studio"
-        nav={STUDIO_NAV}
+        nav={nav}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
       >
         <BlogPostEditor
           postId={editingPostId}
-          mode="blogger"
-          selfAuthorId={author.user_id}
+          mode={editorMode}
+          selfAuthorId={editorSelfAuthorId}
           onClose={() => setIsEditing(false)}
           onSaved={(id) => setEditingPostId(id)}
         />
@@ -128,30 +162,44 @@ const BlogStudio = () => {
     );
   }
 
+  const sectionCopy: Record<string, { title: string; description: string }> = {
+    posts: isAdmin
+      ? { title: 'All Posts', description: 'Every post, any author, any status.' }
+      : { title: 'My Posts', description: 'Write, publish, and manage the posts under your byline.' },
+    bloggers: {
+      title: 'Bloggers',
+      description: 'Manage everyone allowed to write a post.',
+    },
+    profile: {
+      title: 'My Blogger Profile',
+      description: 'Your public photo and bio. Only an administrator can change your byline name.',
+    },
+  };
+  const copy = sectionCopy[activeSection] ?? sectionCopy.posts;
+
   return (
     <AppShell
       panelName="Blog Studio"
-      nav={STUDIO_NAV}
+      nav={nav}
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
-      pageTitle={activeSection === 'posts' ? 'My Posts' : 'My Blogger Profile'}
-      pageDescription={
-        activeSection === 'posts'
-          ? 'Write, publish, and manage the posts under your byline.'
-          : 'Your public photo and bio. Only an administrator can change your byline name.'
-      }
+      pageTitle={copy.title}
+      pageDescription={copy.description}
+      pageActions={backButton}
     >
-      {activeSection === 'posts' ? (
+      {activeSection === 'bloggers' && isAdmin ? (
+        <BlogBloggersTab />
+      ) : activeSection === 'profile' && author ? (
+        <ProfileCard author={author} />
+      ) : (
         <BlogPostsList
-          scope="own"
-          authorId={author.user_id}
+          scope={isAdmin ? 'admin' : 'own'}
+          authorId={author?.user_id}
           onEdit={(postId) => {
             setEditingPostId(postId);
             setIsEditing(true);
           }}
         />
-      ) : (
-        <ProfileCard author={author} />
       )}
     </AppShell>
   );

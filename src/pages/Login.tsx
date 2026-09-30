@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useSiteAssets } from '@/hooks/useSiteAssets';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LoadingState from '@/components/common/LoadingState';
+import { getRoleHomeRoute } from '@/lib/navigation/roleHome';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -42,21 +43,8 @@ const Login = () => {
       if (redirectUrl) {
         console.log('[Login] Redirecting to:', redirectUrl);
         navigate(decodeURIComponent(redirectUrl));
-      } else if (userRole === 'Admin' || userRole === 'SuperUser') {
-        navigate('/admin');
-      } else if (userRole === 'Accounting') {
-        navigate('/accounting');
-      } else if (userRole === 'Driver') {
-        navigate('/driver-dashboard');
-      } else if (userRole === 'Booker') {
-        navigate('/booker');
-      } else if (userRole === 'StoreStaff') {
-        navigate('/depot');
-      } else if (userRole === 'Customer') {
-        navigate('/customer-dashboard');
       } else {
-        console.warn(`[Login] User role '${userRole}' not recognized, navigating to homepage.`);
-        navigate('/');
+        navigate(getRoleHomeRoute(userRole));
       }
     } else if (!auth.loading && auth.user && !auth.profile) {
       console.error("[Login] User authenticated, but profile not available.");

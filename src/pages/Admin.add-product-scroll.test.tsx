@@ -77,7 +77,7 @@ vi.mock('@/components/admin/NotificationBell', () => ({ NotificationBell: () => 
 
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Admin from './Admin';
 
@@ -169,5 +169,29 @@ describe('Admin Add Product dialog close path', () => {
     expect(main).toBeTruthy();
     expect(main?.className).toMatch(/h-screen/);
     expect(main?.className).toMatch(/overflow-y-auto/);
+  });
+});
+
+describe('Admin blog section persistence', () => {
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('does not restore the blog section, so returning to /admin cannot bounce back to Blog Studio', async () => {
+    sessionStorage.setItem('admin:activeSection', 'blog');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/admin']}>
+          <Routes>
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/blog-studio" element={<div>Blog Studio page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => expect(sessionStorage.getItem('admin:activeSection')).toBe('dashboard'));
+    expect(screen.queryByText('Blog Studio page')).toBeNull();
   });
 });
