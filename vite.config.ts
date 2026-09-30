@@ -47,7 +47,10 @@ export default defineConfig(async ({ mode }) => {
               (normalizedId.includes("/node_modules/react/") ||
                 normalizedId.includes("/node_modules/react-dom/") ||
                 normalizedId.includes("/node_modules/react-is/") ||
-                normalizedId.includes("/node_modules/scheduler/"))
+                normalizedId.includes("/node_modules/scheduler/") ||
+                // Shared by Radix and Tiptap; left unassigned it lands in admin-core
+                // and Radix then imports admin-core, a chunk cycle that blanks the page.
+                normalizedId.includes("/node_modules/use-sync-external-store/"))
             ) {
               return "react-vendor";
             }
