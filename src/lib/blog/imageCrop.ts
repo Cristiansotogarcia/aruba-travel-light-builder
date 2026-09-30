@@ -91,6 +91,9 @@ export async function cropImageToBlob(
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas is not supported in this browser.');
+  // JPEG has no alpha channel: transparent pixels would encode as black.
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
   ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height);
 
   return new Promise<Blob>((resolve, reject) => {

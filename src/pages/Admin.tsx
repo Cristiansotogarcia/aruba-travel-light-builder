@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/app-shell';
 import { getVisibleAdminNavigation } from '@/components/admin/adminNavigation';
@@ -32,13 +32,20 @@ const Admin = () => {
     return [dashboard, ...groups];
   }, [hasPermission]);
 
+  const navigate = useNavigate();
+
   const [activeSection, setActiveSection] = useState(() => {
-    // Initialize from sessionStorage if available
+    // Initialize from sessionStorage if available. 'blog' is never restored: it
+    // redirects to /blog-studio, so restoring it would bounce every return to /admin.
     const savedSection = sessionStorage.getItem('admin:activeSection');
-    return savedSection || 'dashboard';
+    return savedSection && savedSection !== 'blog' ? savedSection : 'dashboard';
   });
 
   const handleSectionChange = (section: string) => {
+    if (section === 'blog') {
+      navigate('/blog-studio');
+      return;
+    }
     setActiveSection(section);
     sessionStorage.setItem('admin:activeSection', section);
   };

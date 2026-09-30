@@ -76,7 +76,11 @@ export const BlogAvatarUpload = ({ authorId, avatarUrl, displayName, onUploaded,
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
           className="hidden"
-          onChange={(event) => handleFile(event.target.files?.[0])}
+          onChange={(event) => {
+            handleFile(event.target.files?.[0]);
+            // Reset so picking the same file again after cancelling the crop still fires.
+            event.target.value = '';
+          }}
         />
         <Button
           type="button"
