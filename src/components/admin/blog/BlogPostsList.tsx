@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { deletePost, listAllPostsAdmin, listOwnPosts, setPostStatus, type BlogPostListRow } from './blogAdminApi';
+import { deletePost, listAllPostsAdmin, listOwnPosts, publishNowTimestamp, setPostStatus, type BlogPostListRow } from './blogAdminApi';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'scheduled';
 
@@ -64,7 +64,7 @@ export const BlogPostsList = ({ scope, authorId, onEdit }: BlogPostsListProps) =
   };
 
   const publishMutation = useMutation({
-    mutationFn: (post: BlogPostListRow) => setPostStatus(post.id, 'published'),
+    mutationFn: (post: BlogPostListRow) => setPostStatus(post.id, 'published', publishNowTimestamp(post.published_at)),
     onSuccess: () => {
       toast({ title: 'Post published' });
       invalidate();

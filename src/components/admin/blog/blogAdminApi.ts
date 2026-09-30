@@ -101,6 +101,20 @@ export async function setPostStatus(
   return data as BlogPost;
 }
 
+/**
+ * The published_at to send with an immediate "Publish". The DB trigger only stamps
+ * published_at when it is NULL, so a post still carrying a future (scheduled) date
+ * would stay hidden from the public blog. Past dates are kept so a republished post
+ * keeps its original date.
+ */
+export function publishNowTimestamp(
+  currentPublishedAt: string | null | undefined,
+  now: Date = new Date(),
+): string | undefined {
+  if (!currentPublishedAt) return undefined;
+  return new Date(currentPublishedAt).getTime() > now.getTime() ? now.toISOString() : undefined;
+}
+
 const UNIQUE_VIOLATION = '23505';
 
 export function isUniqueSlugViolation(error: unknown): boolean {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertValidImageFile, friendlySaveError, isUniqueSlugViolation } from './blogAdminApi';
+import { assertValidImageFile, friendlySaveError, isUniqueSlugViolation, publishNowTimestamp } from './blogAdminApi';
 
 const makeFile = (type: string, size: number, name = 'photo.jpg') => {
   const file = new File([new Uint8Array(size)], name, { type });
@@ -58,5 +58,22 @@ describe('assertValidImageFile', () => {
   it('accepts a file exactly at the 10MB cap', () => {
     const atCap = makeFile('image/jpeg', 10 * 1024 * 1024);
     expect(() => assertValidImageFile(atCap)).not.toThrow();
+  });
+});
+
+describe('publishNowTimestamp', () => {
+  const now = new Date('2026-09-30T12:00:00.000Z');
+
+  it('replaces a future scheduled date with now so the post goes live', () => {
+    expect(publishNowTimestamp('2026-10-01T09:00:00.000Z', now)).toBe('2026-09-30T12:00:00.000Z');
+  });
+
+  it('keeps a past date so a republished post keeps its original date', () => {
+    expect(publishNowTimestamp('2026-09-01T09:00:00.000Z', now)).toBeUndefined();
+  });
+
+  it('leaves a never-published post to the database stamp', () => {
+    expect(publishNowTimestamp(null, now)).toBeUndefined();
+    expect(publishNowTimestamp(undefined, now)).toBeUndefined();
   });
 });

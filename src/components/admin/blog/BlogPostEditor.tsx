@@ -42,6 +42,7 @@ import {
   updatePost,
   uploadBlogImage,
   assertValidImageFile,
+  publishNowTimestamp,
   type BlogPostForEdit,
 } from './blogAdminApi';
 
@@ -324,7 +325,9 @@ const BlogPostEditorForm = ({ initialPost, postId, mode, selfAuthorId, onClose, 
               size="sm"
               className="gap-2 rounded-r-none"
               disabled={saveMutation.isPending}
-              onClick={() => saveMutation.mutate({ status: 'published' })}
+              onClick={() =>
+                saveMutation.mutate({ status: 'published', publishedAt: publishNowTimestamp(currentPublishedAt) })
+              }
             >
               <Send className="h-4 w-4" />
               Publish
