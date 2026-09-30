@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/app-shell';
 import { getVisibleAdminNavigation } from '@/components/admin/adminNavigation';
@@ -18,7 +19,6 @@ import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { InvoicesList } from '@/components/admin/InvoicesList';
-import { BlogManagement } from '@/components/admin/blog/BlogManagement';
 
 interface AdminNavigateEventDetail {
   section: string;
@@ -117,7 +117,10 @@ const Admin = () => {
       case 'seo':
         return <SeoManager />;
       case 'blog':
-        return <BlogManagement />;
+        // Blog Studio (/blog-studio) is the single home for blog work; it shows
+        // the full admin surface (all posts + bloggers) for Admin/SuperUser, so
+        // Contents > Blog routes there instead of duplicating that UI here.
+        return <Navigate to="/blog-studio" replace />;
       case 'settings':
         return <SiteSettings />;
       default:
