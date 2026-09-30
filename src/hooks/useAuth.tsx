@@ -37,6 +37,7 @@ const DEFAULT_PERMISSION_MATRIX: Record<UserRole, Record<string, boolean>> = {
     DriverTasks: true,
     TaskMaster: true,
     settings: true,
+    BlogManagement: true,
   },
   Admin: {
     ReportingAccess: true,
@@ -50,6 +51,7 @@ const DEFAULT_PERMISSION_MATRIX: Record<UserRole, Record<string, boolean>> = {
     DriverTasks: true,
     TaskMaster: true,
     settings: true,
+    BlogManagement: true,
   },
   Accounting: {
     ReportingAccess: true,

@@ -18,6 +18,7 @@ import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { InvoicesList } from '@/components/admin/InvoicesList';
+import { BlogManagement } from '@/components/admin/blog/BlogManagement';
 
 interface AdminNavigateEventDetail {
   section: string;
@@ -115,6 +116,8 @@ const Admin = () => {
         );
       case 'seo':
         return <SeoManager />;
+      case 'blog':
+        return <BlogManagement />;
       case 'settings':
         return <SiteSettings />;
       default:
