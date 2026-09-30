@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { assertValidImageFile, uploadBlogImage } from '../blogAdminApi';
+import { ImageCropDialog } from '../ImageCropDialog';
 
 interface ImageDialogProps {
   open: boolean;
@@ -18,13 +19,17 @@ interface ImageDialogProps {
 export const ImageDialog = ({ open, onOpenChange, editor, authorId }: ImageDialogProps) => {
   const { toast } = useToast();
   const [tab, setTab] = useState<'upload' | 'url'>('upload');
-  const [file, setFile] = useState<File | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [croppedFile, setCroppedFile] = useState<File | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [alt, setAlt] = useState('');
   const [uploading, setUploading] = useState(false);
 
   const reset = () => {
-    setFile(null);
+    setPendingFile(null);
+    setCroppedFile(null);
+    setCropOpen(false);
     setUrl('');
     setAlt('');
     setTab('upload');
@@ -36,13 +41,8 @@ export const ImageDialog = ({ open, onOpenChange, editor, authorId }: ImageDialo
     onOpenChange(false);
   };
 
-  const handleConfirm = async () => {
-    if (tab === 'url') {
-      if (!url.trim()) return;
-      insert(url.trim());
-      return;
-    }
-    if (!file || !authorId) return;
+  const handleFilePicked = (file: File | undefined) => {
+    if (!file) return;
     try {
       assertValidImageFile(file);
     } catch (error) {
@@ -53,9 +53,21 @@ export const ImageDialog = ({ open, onOpenChange, editor, authorId }: ImageDialo
       });
       return;
     }
+    setCroppedFile(null);
+    setPendingFile(file);
+    setCropOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    if (tab === 'url') {
+      if (!url.trim()) return;
+      insert(url.trim());
+      return;
+    }
+    if (!croppedFile || !authorId) return;
     setUploading(true);
     try {
-      const publicUrl = await uploadBlogImage(authorId, file);
+      const publicUrl = await uploadBlogImage(authorId, croppedFile);
       insert(publicUrl);
     } catch (error) {
       toast({
@@ -68,16 +80,17 @@ export const ImageDialog = ({ open, onOpenChange, editor, authorId }: ImageDialo
     }
   };
 
-  const canConfirm = tab === 'url' ? !!url.trim() : !!file && !uploading;
+  const canConfirm = tab === 'url' ? !!url.trim() : !!croppedFile && !uploading;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) reset();
-        onOpenChange(next);
-      }}
-    >
+    <Fragment>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) reset();
+          onOpenChange(next);
+        }}
+      >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Insert image</DialogTitle>
@@ -93,9 +106,20 @@ export const ImageDialog = ({ open, onOpenChange, editor, authorId }: ImageDialo
               id="editor-image-file"
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              onChange={(event) => {
+                handleFilePicked(event.target.files?.[0]);
+                event.target.value = '';
+              }}
             />
             <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, GIF, or AVIF. Up to 10MB.</p>
+            {croppedFile && (
+              <p className="text-xs text-emerald-600">
+                Cropped and ready —{' '}
+                <button type="button" className="underline" onClick={() => setCropOpen(true)}>
+                  crop again
+                </button>
+              </p>
+            )}
           </TabsContent>
           <TabsContent value="url" className="space-y-1.5">
             <Label htmlFor="editor-image-url">Image URL</Label>
@@ -125,7 +149,16 @@ export const ImageDialog = ({ open, onOpenChange, editor, authorId }: ImageDialo
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        file={pendingFile}
+        variant="body"
+        fileName="post-image"
+        onCropped={setCroppedFile}
+      />
+    </Fragment>
   );
 };
 
