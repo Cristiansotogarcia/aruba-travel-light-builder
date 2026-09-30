@@ -48,7 +48,7 @@ $$;
 CREATE TABLE public.blog_authors (
   user_id      uuid PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
   display_name text NOT NULL CHECK (char_length(btrim(display_name)) BETWEEN 1 AND 80),
-  bio          text CHECK (bio IS NULL OR char_length(bio) <= 600),
+  bio          text CHECK (bio IS NULL OR char_length(bio) <= 140),
   avatar_url   text,
   is_active    boolean NOT NULL DEFAULT true,
   granted_by   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -128,6 +128,38 @@ CREATE POLICY blog_authors_public_read ON public.blog_authors
 -- An author can always see their own row (also when revoked).
 CREATE POLICY blog_authors_self_read ON public.blog_authors
   FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+-- A blogger maintains their own photo and bio. The byline name, the active
+-- flag and who granted access stay admin-only (enforced by the trigger below).
+CREATE POLICY blog_authors_self_update ON public.blog_authors
+  FOR UPDATE TO authenticated
+  USING (user_id = auth.uid() AND is_active = true)
+  WITH CHECK (user_id = auth.uid() AND is_active = true);
+
+CREATE OR REPLACE FUNCTION public.blog_authors_guard_self_edit()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL OR public.blog_is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.user_id IS DISTINCT FROM OLD.user_id
+     OR NEW.display_name IS DISTINCT FROM OLD.display_name
+     OR NEW.is_active IS DISTINCT FROM OLD.is_active
+     OR NEW.granted_by IS DISTINCT FROM OLD.granted_by
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'Only an administrator can change the byline name or blogging access';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_blog_authors_guard_self_edit
+  BEFORE UPDATE ON public.blog_authors
+  FOR EACH ROW EXECUTE FUNCTION public.blog_authors_guard_self_edit();
 
 CREATE POLICY blog_authors_admin_all ON public.blog_authors
   FOR ALL TO authenticated

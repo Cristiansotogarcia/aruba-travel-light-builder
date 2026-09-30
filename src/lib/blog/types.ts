@@ -3,6 +3,9 @@
 
 export type BlogPostStatus = 'draft' | 'published';
 
+/** DB-enforced; the public byline shows the full bio. */
+export const BLOG_BIO_MAX = 140;
+
 export interface BlogAuthor {
   user_id: string;
   display_name: string;
