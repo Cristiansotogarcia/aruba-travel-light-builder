@@ -10,9 +10,16 @@ const SUPABASE_URL =
   process.env.VITE_PUBLIC_SUPABASE_URL || 'https://abofxrgdxfzrhjbvhdkj.supabase.co';
 const SUPABASE_ANON_KEY = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
+// Fallback origin only: used when a request somehow carries no host header at
+// all. Every real request (including test_environment) builds og:url/canonical
+// from the request's own host below, so a shared post always previews on the
+// host it was actually shared from instead of always pointing at production.
 const SITE_URL = 'https://travelightaruba.com';
 const LOGO_IMAGE =
   'https://imagedelivery.net/KE7oljFadxNqgUvpxIG0Zg/b0ed7b8f-a7a0-4a00-810f-8b0f02e46500/public';
+// Verified once via the live asset (200 image/png, 70827 bytes) — our own
+// static fallback, so unlike an author's upload its pixel size is actually known.
+const LOGO_IMAGE_SIZE = { width: 1366, height: 649, type: 'image/png' };
 
 // Mirrors src/utils/slugify.ts
 const slugify = (str) =>
@@ -34,14 +41,56 @@ const shareImage = (url) => {
   return m ? `${m[1]}/w=1200` : url;
 };
 
+// Supabase Storage image transformation (`/storage/v1/render/image/...`) would
+// let us shrink a large cover on the fly, but a read-only probe against this
+// project's own bucket returned 403 FeatureNotEnabled (checked 2026-09-30):
+//   curl '.../storage/v1/render/image/public/blog-images/.../covers/....jpg
+//         ?width=1200&height=630&resize=cover&quality=75'
+//   -> 403 {"error":"FeatureNotEnabled","message":"feature not enabled for this tenant"}
+// So existing large covers are served as-is (WhatsApp drops an og:image over
+// ~300KB — see cropImageToBlob in src/lib/blog/imageCrop.ts, which keeps every
+// *new* cover under that from now on). Re-probe if the project's plan changes.
+
+const EXTENSION_MIME = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  avif: 'image/avif',
+};
+
+/** Best-effort MIME type from the image URL's extension; falls back to JPEG,
+ * the format every cover/body image upload now exports as (see imageCrop.ts). */
+const imageMimeType = (url) => {
+  const match = String(url).match(/\.([a-z0-9]+)(?:[?#]|$)/i);
+  const ext = match ? match[1].toLowerCase() : '';
+  return EXTENSION_MIME[ext] || 'image/jpeg';
+};
+
+/** Builds the page's own origin from the request instead of a hardcoded
+ * production domain, so og:url/canonical match whatever host (production,
+ * test_environment, a preview deploy) the page was actually shared from. */
+const resolveOrigin = (req) => {
+  const headers = req?.headers || {};
+  const forwardedHost = headers['x-forwarded-host'];
+  const host = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) || headers.host;
+  if (!host) return SITE_URL;
+  const forwardedProto = headers['x-forwarded-proto'];
+  const proto = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || 'https';
+  return `${proto}://${host}`;
+};
+
 export default async function handler(req, res) {
   const slug = String(req.query.slug || '');
   const isBlog = req.query.kind === 'blog';
+  const origin = resolveOrigin(req);
 
   let title = 'TLA - Premium Beach & Baby Equipment Rentals in Aruba';
   let description = 'Premium Beach & Baby Equipment Rentals in Aruba';
   let image = LOGO_IMAGE;
-  let pageUrl = `${SITE_URL}/${isBlog ? 'blog' : 'equipment'}`;
+  let imageSize = LOGO_IMAGE_SIZE;
+  let pageUrl = `${origin}/${isBlog ? 'blog' : 'equipment'}`;
   let found = !isBlog;
   let unavailable = isBlog && !SUPABASE_ANON_KEY;
 
@@ -64,8 +113,16 @@ export default async function handler(req, res) {
           found = true;
           title = post.seo_title || post.title;
           description = post.seo_description || post.excerpt || post.title;
-          image = post.cover_image_url ? shareImage(post.cover_image_url) : LOGO_IMAGE;
-          pageUrl = `${SITE_URL}/blog/${slug}`;
+          if (post.cover_image_url) {
+            image = shareImage(post.cover_image_url);
+            // An author's own cover, not our static logo — its real pixel size
+            // isn't known here (see the transform-endpoint probe note above).
+            imageSize = null;
+          } else {
+            image = LOGO_IMAGE;
+            imageSize = LOGO_IMAGE_SIZE;
+          }
+          pageUrl = `${origin}/blog/${slug}`;
         }
       } else unavailable = true;
     } else if (!isBlog && slug && SUPABASE_ANON_KEY) {
@@ -84,8 +141,9 @@ export default async function handler(req, res) {
             : `Rent ${item.name} in Aruba. Premium beach and baby equipment rentals.`;
           if (item.images && item.images[0]) {
             image = shareImage(item.images[0]);
+            imageSize = null;
           }
-          pageUrl = `${SITE_URL}/equipment/${slug}`;
+          pageUrl = `${origin}/equipment/${slug}`;
         }
       }
     }
@@ -98,8 +156,14 @@ export default async function handler(req, res) {
     title = `${unavailable ? 'Story unavailable' : 'Story not found'} | Travel Light Aruba`;
     description = unavailable ? 'Please try again later.' : 'This story is not available.';
     image = LOGO_IMAGE;
-    pageUrl = `${SITE_URL}/blog`;
+    imageSize = LOGO_IMAGE_SIZE;
+    pageUrl = `${origin}/blog`;
   }
+
+  const imageType = imageSize?.type || imageMimeType(image);
+  const sizeTags = imageSize
+    ? `\n  <meta property="og:image:width" content="${imageSize.width}">\n  <meta property="og:image:height" content="${imageSize.height}">`
+    : '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -112,6 +176,8 @@ export default async function handler(req, res) {
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(image)}">
+  <meta property="og:image:secure_url" content="${escapeHtml(image)}">
+  <meta property="og:image:type" content="${escapeHtml(imageType)}">${sizeTags}
   <meta property="og:site_name" content="Travel Light Aruba">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
