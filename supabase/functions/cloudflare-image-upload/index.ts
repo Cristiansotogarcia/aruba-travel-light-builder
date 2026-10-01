@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireRole, OFFICE_ROLES } from '../_shared/auth.ts';
 
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -18,6 +19,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const auth = await requireRole(req, OFFICE_ROLES);
+    if (!auth.ok) return auth.response;
+
     // Get Cloudflare credentials from environment
     const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID');
     const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN');

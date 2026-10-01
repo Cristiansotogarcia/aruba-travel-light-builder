@@ -29,6 +29,17 @@ class CloudflareImageService {
     this.supabaseKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
   }
 
+  // The cloudflare-images-proxy function is staff-gated, so requests must carry
+  // the signed-in user's access token, not the public anon key. Resolve it from
+  // the current session at call time.
+  private async authHeader(): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('You must be signed in to manage images.');
+    }
+    return `Bearer ${session.access_token}`;
+  }
+
   async listImages(page = 1, perPage = 50, continuationToken?: string): Promise<CloudflareImagesResponse> {
     try {
       const params = new URLSearchParams({
@@ -47,7 +58,7 @@ class CloudflareImageService {
           headers: {
             'Content-Type': 'application/json',
             apikey: this.supabaseKey,
-            Authorization: `Bearer ${this.supabaseKey}`,
+            Authorization: await this.authHeader(),
           },
         }
       );
@@ -76,7 +87,7 @@ class CloudflareImageService {
           headers: {
             'Content-Type': 'application/json',
             apikey: this.supabaseKey,
-            Authorization: `Bearer ${this.supabaseKey}`,
+            Authorization: await this.authHeader(),
           },
         }
       );
