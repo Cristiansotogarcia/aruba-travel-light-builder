@@ -38,7 +38,7 @@ export function addToCartGate({
   return { ok: true, reason: 'ok' };
 }
 
-/** Availability for one item: the RPC omits rows it has no stock data for, which means none free. */
+/** Availability for one item. The RPC returns a row per equipment item; a missing key is treated as none free so the gate fails closed. */
 export function unitsFor(
   availabilityMap: Record<string, number> | undefined,
   equipmentId: string,
