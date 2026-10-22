@@ -3,6 +3,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useEffect } from 'react';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface PickupSlotSelectorProps {
   selectedDate: string;
@@ -24,7 +25,7 @@ export const PickupSlotSelector = ({
   disabled = false
 }: PickupSlotSelectorProps) => {
   // Check if selected date is Sunday
-  const isSunday = selectedDate && new Date(selectedDate).getDay() === 0;
+  const isSunday = selectedDate && parseDateOnly(selectedDate).getDay() === 0;
 
   const slots: SlotInfo[] = [
     { slot: 'morning', label: 'Morning', time: '8:00 AM - 10:00 AM' },
@@ -57,7 +58,7 @@ export const PickupSlotSelector = ({
       <div>
         <Label className="text-base font-semibold">Pickup Time Slot *</Label>
         <p className="text-sm text-gray-600 mt-1">
-          Choose your preferred pickup time for {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          Choose your preferred pickup time for {parseDateOnly(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
 

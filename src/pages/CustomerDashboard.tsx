@@ -25,6 +25,7 @@ import { BookingCardSkeleton } from '@/components/common/SkeletonLoader';
 import { Package, Truck, MapPin, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { BookingSelfServiceActions } from '@/components/customer/BookingSelfServiceActions';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 // Define interfaces for booking data
 interface CustomerBookingItem {
@@ -275,7 +276,7 @@ const CustomerDashboard = () => {
                   <div>
                     <p className="text-sm font-medium text-foreground">Dates:</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                      {parseDateOnly(booking.start_date).toLocaleDateString()} - {parseDateOnly(booking.end_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div>

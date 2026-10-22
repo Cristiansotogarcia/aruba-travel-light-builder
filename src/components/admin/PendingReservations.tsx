@@ -18,6 +18,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { BookingConfirmationModal } from './BookingConfirmationModal';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface PendingReservation {
   id: string;
@@ -135,7 +136,7 @@ export const PendingReservations = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return parseDateOnly(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

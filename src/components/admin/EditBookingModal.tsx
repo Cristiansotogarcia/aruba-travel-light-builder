@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStaffCatalog } from '@/components/staff/order-wizard/useStaffCatalog';
 import { Booking, BookingItem } from './calendar/types';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface EditBookingModalProps {
   booking: Booking;
@@ -42,8 +43,8 @@ export const EditBookingModal = ({ booking, onBookingUpdated, onClose, open }: E
 
   useEffect(() => {
     if (booking && open) {
-      setStartDate(new Date(booking.start_date));
-      setEndDate(new Date(booking.end_date));
+      setStartDate(parseDateOnly(booking.start_date));
+      setEndDate(parseDateOnly(booking.end_date));
       setCustomerInfo({
         name: booking.customer_name,
         email: booking.customer_email,

@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar, AlertCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { daysBetween, parseDateOnly, toDateOnly, todayDateOnly } from '@/lib/dateOnly';
 
 interface DateSelectionProps {
   startDate: string;
@@ -27,7 +28,7 @@ export const DateSelection = ({
   const [touched, setTouched] = useState({ startDate: false, endDate: false });
 
   // Validation constants
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayDateOnly();
   const maxAdvanceBookingDays = 365; // 1 year in advance
   const maxRentalDays = 30; // Maximum rental period
   const minRentalDays = 3; // Minimum rental period (3 days)
@@ -35,7 +36,7 @@ export const DateSelection = ({
   // Calculate max booking date (1 year from today)
   const maxBookingDate = new Date();
   maxBookingDate.setDate(maxBookingDate.getDate() + maxAdvanceBookingDays);
-  const maxBookingDateStr = maxBookingDate.toISOString().split('T')[0];
+  const maxBookingDateStr = toDateOnly(maxBookingDate);
   const maxBookingDateTime = maxBookingDate.getTime();
 
   const errors = useMemo(() => {
@@ -50,11 +51,10 @@ export const DateSelection = ({
     }
     
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const todayDate = new Date(today);
-      const diffTime = end.getTime() - start.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const start = parseDateOnly(startDate);
+      const end = parseDateOnly(endDate);
+      const todayDate = parseDateOnly(today);
+      const diffDays = daysBetween(startDate, endDate);
       const maxDate = new Date(maxBookingDateTime);
       
       // Check if start date is in the past
@@ -95,15 +95,14 @@ export const DateSelection = ({
     
     // Auto-adjust end date to maintain 3-day minimum if needed
     if (date && endDate) {
-      const start = new Date(date);
-      const end = new Date(endDate);
-      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      const start = parseDateOnly(date);
+      const diffDays = daysBetween(date, endDate);
       
       if (diffDays < minRentalDays) {
         // Automatically set end date to 3 days after start
         const newEnd = new Date(start);
         newEnd.setDate(newEnd.getDate() + minRentalDays);
-        onEndDateChange(newEnd.toISOString().split('T')[0]);
+        onEndDateChange(toDateOnly(newEnd));
       }
     }
   };
@@ -172,9 +171,9 @@ export const DateSelection = ({
               onChange={(e) => handleEndDateChange(e.target.value)}
               onBlur={() => setTouched(prev => ({ ...prev, endDate: true }))}
               min={startDate ? (() => {
-                const minEnd = new Date(startDate);
+                const minEnd = parseDateOnly(startDate);
                 minEnd.setDate(minEnd.getDate() + minRentalDays);
-                return minEnd.toISOString().split('T')[0];
+                return toDateOnly(minEnd);
               })() : today}
               max={maxBookingDateStr}
               required
@@ -188,7 +187,7 @@ export const DateSelection = ({
         
         {startDate && endDate && !hasErrors && (
           <div className="text-sm text-muted-foreground">
-            Rental period: {Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))} day(s)
+            Rental period: {daysBetween(startDate, endDate)} day(s)
           </div>
         )}
       </CardContent>

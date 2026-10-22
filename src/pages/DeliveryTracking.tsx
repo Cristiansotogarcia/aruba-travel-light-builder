@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDateOnly } from '@/lib/dateOnly';
 import {
   formatTaskDateTime,
   formatTaskTimeRange,
@@ -146,7 +147,7 @@ const DeliveryTracking = () => {
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="rounded-xl border border-border/60 bg-white px-4 py-3">
-              Booking confirmed for {new Date(payload.booking.start_date).toLocaleDateString()}.
+              Booking confirmed for {formatDateOnly(payload.booking.start_date)}.
             </div>
             <div className="rounded-xl border border-border/60 bg-white px-4 py-3">
               Driver expected between {trackingWindow || 'a time window that will be shared soon'}.

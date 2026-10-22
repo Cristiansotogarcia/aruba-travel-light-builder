@@ -14,6 +14,7 @@ import {
   buildDriverAssignmentUpdate,
   getAssignedDriverId,
 } from '@/lib/operations/bookingOperations';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface Driver {
   id: string;
@@ -220,7 +221,7 @@ export const BookingAssignment = () => {
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                        {parseDateOnly(booking.start_date).toLocaleDateString()} - {parseDateOnly(booking.end_date).toLocaleDateString()}
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
@@ -274,7 +275,7 @@ export const BookingAssignment = () => {
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                        {parseDateOnly(booking.start_date).toLocaleDateString()} - {parseDateOnly(booking.end_date).toLocaleDateString()}
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />

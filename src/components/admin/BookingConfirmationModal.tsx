@@ -22,6 +22,7 @@ import {
   Package
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { formatDateOnly } from '@/lib/dateOnly';
 
 interface BookingConfirmationModalProps {
   reservation: {
@@ -314,12 +315,12 @@ export const BookingConfirmationModal = ({
             <div className="bg-gray-50 rounded p-2 space-y-1 text-xs">
               <p>
                 <span className="font-medium">Delivery:</span>{' '}
-                {new Date(reservation.start_date).toLocaleDateString()} -{' '}
+                {formatDateOnly(reservation.start_date)} -{' '}
                 {reservation.delivery_slot === 'morning' ? 'Morning (9AM-12PM)' : 'Afternoon (1PM-5PM)'}
               </p>
               <p>
                 <span className="font-medium">Pickup:</span>{' '}
-                {new Date(reservation.end_date).toLocaleDateString()}
+                {formatDateOnly(reservation.end_date)}
               </p>
             </div>
           </div>

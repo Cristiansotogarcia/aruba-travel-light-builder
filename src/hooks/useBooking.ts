@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { useRentalDates } from '@/hooks/useRentalDates';
+import { daysBetween, isSundayDateOnly, parseDateOnly } from '@/lib/dateOnly';
 
 // All interfaces like Product, BookingFormData, BookingItem, CustomerInfo, 
 // SupabaseBookingData, SupabaseBookingItemData are now imported from '../types/types'.
@@ -142,8 +143,7 @@ const useBooking = () => {
 
   // Helper function to check if a date is Sunday
   const isSunday = (dateString: string): boolean => {
-    const date = new Date(dateString);
-    return date.getDay() === 0;
+    return isSundayDateOnly(dateString);
   };
 
   const hasCribOrPackAndPlay = () => {
@@ -155,9 +155,7 @@ const useBooking = () => {
 
   const calculateDays = () => {
     if (!bookingData.startDate || !bookingData.endDate) return 0;
-    const start = new Date(bookingData.startDate);
-    const end = new Date(bookingData.endDate);
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return daysBetween(bookingData.startDate, bookingData.endDate);
   };
 
   const calculateTotal = () => {
@@ -192,8 +190,8 @@ const useBooking = () => {
     }
     
     if (bookingData.startDate && bookingData.endDate) {
-      const start = new Date(bookingData.startDate);
-      const end = new Date(bookingData.endDate);
+      const start = parseDateOnly(bookingData.startDate);
+      const end = parseDateOnly(bookingData.endDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       

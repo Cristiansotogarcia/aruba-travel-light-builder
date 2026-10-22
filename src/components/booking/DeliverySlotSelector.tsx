@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface DeliverySlotSelectorProps {
   selectedDate: string;
@@ -36,7 +37,7 @@ export const DeliverySlotSelector = ({
   
   // Check if selected date is Sunday
   const isSunday = useMemo(
-    () => Boolean(selectedDate && new Date(selectedDate).getDay() === 0),
+    () => Boolean(selectedDate && parseDateOnly(selectedDate).getDay() === 0),
     [selectedDate]
   );
 
@@ -162,7 +163,7 @@ export const DeliverySlotSelector = ({
       <div>
         <Label className="text-base font-semibold">Delivery Time Slot *</Label>
         <p className="text-sm text-gray-600 mt-1">
-          Choose your preferred delivery time for {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          Choose your preferred delivery time for {parseDateOnly(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
 

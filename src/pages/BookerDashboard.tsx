@@ -17,6 +17,7 @@ import { BookingListSkeleton, DashboardStatsSkeleton } from '@/components/common
 import { supabase } from '@/integrations/supabase/client';
 import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
 import { DRIVER_ASSIGNABLE_STATUSES, getAssignedDriverId } from '@/lib/operations/bookingOperations';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface BookerBookingItem {
   equipment_name: string;
@@ -168,7 +169,7 @@ const BookerDashboard = () => {
                   <p className="truncate font-medium text-foreground">{booking.customer_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{booking.customer_email}</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                    {parseDateOnly(booking.start_date).toLocaleDateString()} - {parseDateOnly(booking.end_date).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:text-right">

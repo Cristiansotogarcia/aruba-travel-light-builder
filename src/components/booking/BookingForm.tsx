@@ -11,6 +11,7 @@ import { StoreLocationCard } from './StoreLocationCard';
 import useBooking from '@/hooks/useBooking';
 import { useCart } from '@/hooks/useCart';
 import { AlertCircle, Loader2, Calendar } from 'lucide-react';
+import { isSundayDateOnly, todayDateOnly } from '@/lib/dateOnly';
 
 interface FormValidationErrors {
   dates?: string;
@@ -44,8 +45,7 @@ export const BookingForm = () => {
   // Helper functions
   const isSunday = useCallback((dateString: string): boolean => {
     if (!dateString) return false;
-    const date = new Date(dateString);
-    return date.getDay() === 0;
+    return isSundayDateOnly(dateString);
   }, []);
 
   const hasCribOrPackAndPlay = useCallback((): boolean => {
@@ -62,9 +62,9 @@ export const BookingForm = () => {
     // Date validation
     if (!bookingData.startDate || !bookingData.endDate) {
       errors.dates = 'Please select both start and end dates';
-    } else if (new Date(bookingData.startDate) >= new Date(bookingData.endDate)) {
+    } else if (bookingData.startDate >= bookingData.endDate) {
       errors.dates = 'End date must be after start date';
-    } else if (new Date(bookingData.startDate) < new Date()) {
+    } else if (bookingData.startDate < todayDateOnly()) {
       errors.dates = 'Start date cannot be in the past';
     }
 

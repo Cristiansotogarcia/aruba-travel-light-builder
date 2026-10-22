@@ -1,6 +1,7 @@
 
 import { Booking } from '@/components/admin/calendar/types';
 import { isSameDay } from 'date-fns';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 export interface BookingsByType {
   deliveries: Booking[];
@@ -9,14 +10,14 @@ export interface BookingsByType {
 
 export const getDeliveriesForDate = (bookings: Booking[], date: Date): Booking[] => {
   return bookings.filter(booking => 
-    isSameDay(new Date(booking.start_date), date) && 
+    isSameDay(parseDateOnly(booking.start_date), date) && 
     booking.status !== 'undeliverable' // Exclude undeliverable bookings from calendar
   );
 };
 
 export const getPickupsForDate = (bookings: Booking[], date: Date): Booking[] => {
   return bookings.filter(booking => 
-    isSameDay(new Date(booking.end_date), date) &&
+    isSameDay(parseDateOnly(booking.end_date), date) &&
     booking.status !== 'undeliverable' // Exclude undeliverable bookings from calendar
   );
 };
