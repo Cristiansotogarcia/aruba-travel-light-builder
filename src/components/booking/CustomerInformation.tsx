@@ -3,9 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Mail, AlertCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  OTHER_COUNTRY_CODES,
+  PRIORITY_COUNTRY_CODES,
+  composeE164,
+  splitE164,
+} from '@/lib/phoneNumber';
 
 interface CustomerInfo {
   name: string;
@@ -81,6 +97,7 @@ export const CustomerInformation = ({
   onCustomerInfoChange 
 }: CustomerInformationProps): React.ReactElement => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
+  const [dialCode, setDialCode] = useState<string>(() => splitE164(customerInfo.phone).dial);
   const [touched, setTouched] = useState<FieldTouched>({
     name: false,
     email: false,
@@ -117,6 +134,19 @@ export const CustomerInformation = ({
 
   const handleFieldBlur = (field: keyof CustomerInfo) => {
     setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const localPhoneNumber = customerInfo.phone.startsWith(dialCode)
+    ? customerInfo.phone.slice(dialCode.length)
+    : splitE164(customerInfo.phone).local;
+
+  const handleDialCodeChange = (newDialCode: string) => {
+    setDialCode(newDialCode);
+    handleFieldChange('phone', composeE164(newDialCode, localPhoneNumber));
+  };
+
+  const handleLocalPhoneNumberChange = (rawLocalNumber: string) => {
+    handleFieldChange('phone', composeE164(dialCode, rawLocalNumber));
   };
 
   const getFieldError = (field: keyof CustomerInfo) => {
@@ -190,16 +220,41 @@ export const CustomerInformation = ({
             <Label htmlFor="phone" className={getFieldError('phone') ? 'text-destructive' : ''}>
               Phone Number *
             </Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={customerInfo.phone}
-              onChange={(e) => handleFieldChange('phone', e.target.value)}
-              onBlur={() => handleFieldBlur('phone')}
-              placeholder="+1 (555) 123-4567"
-              required
-              className={getFieldError('phone') ? 'border-destructive focus:border-destructive' : ''}
-            />
+            <div className="flex gap-2">
+              <Select value={dialCode} onValueChange={handleDialCodeChange}>
+                <SelectTrigger id="phone-dial-code" className="w-[7.5rem] shrink-0" aria-label="Country code">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {PRIORITY_COUNTRY_CODES.map((country) => (
+                      <SelectItem key={country.iso2} value={country.dial}>
+                        {country.dial} {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>All countries</SelectLabel>
+                    {OTHER_COUNTRY_CODES.map((country) => (
+                      <SelectItem key={country.iso2} value={country.dial}>
+                        {country.dial} {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Input
+                id="phone"
+                type="tel"
+                value={localPhoneNumber}
+                onChange={(e) => handleLocalPhoneNumberChange(e.target.value)}
+                onBlur={() => handleFieldBlur('phone')}
+                placeholder="555 123 4567"
+                required
+                className={getFieldError('phone') ? 'border-destructive focus:border-destructive' : ''}
+              />
+            </div>
             {getFieldError('phone') && (
               <p className="text-sm text-destructive mt-1">{getFieldError('phone')}</p>
             )}
@@ -243,14 +298,14 @@ export const CustomerInformation = ({
         
         <div>
           <Label htmlFor="comment" className={getFieldError('comment') ? 'text-destructive' : ''}>
-            Special Requests or Comments
+            Comments
           </Label>
           <Textarea
             id="comment"
             value={customerInfo.comment}
             onChange={(e) => handleFieldChange('comment', e.target.value)}
             onBlur={() => handleFieldBlur('comment')}
-            placeholder="Any special requests or additional information..."
+            placeholder="Any additional information..."
             rows={3}
             className={getFieldError('comment') ? 'border-destructive focus:border-destructive' : ''}
           />
