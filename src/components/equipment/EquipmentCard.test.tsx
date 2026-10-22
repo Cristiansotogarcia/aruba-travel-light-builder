@@ -15,8 +15,8 @@ vi.mock('@/components/ui/carousel', () => ({
   CarouselNext: () => null,
 }));
 
-vi.mock('@/hooks/useCart', () => ({
-  useCart: () => ({ addItem: vi.fn() }),
+vi.mock('@/hooks/useGatedAddToCart', () => ({
+  useGatedAddToCart: () => ({ tryAdd: vi.fn(), hasDates: false, check: vi.fn(), unitsForDates: () => null }),
 }));
 
 const equipment = {

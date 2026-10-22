@@ -8,7 +8,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import DOMPurify from 'dompurify';
 import { Share2, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { useCart } from '@/hooks/useCart';
+import { useGatedAddToCart } from '@/hooks/useGatedAddToCart';
 import { cardImage } from '@/lib/images';
 import type { AvailabilityStatus, Product } from '@/types/types';
 
@@ -37,7 +37,7 @@ interface EquipmentCardProps {
 export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps) => {
   const [open, setOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const { addItem } = useCart();
+  const { tryAdd, hasDates } = useGatedAddToCart();
 
   const sanitizedDescription = useMemo(
     () => DOMPurify.sanitize(equipment.description),
@@ -87,8 +87,7 @@ export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps)
       stock_quantity: equipment.stock_quantity,
       availability_status: equipment.availability_status,
     };
-    addItem(product, quantity);
-    toast({ title: 'Added to cart', description: `${quantity} × ${equipment.name}` });
+    tryAdd(product, quantity);
   };
 
   return (
@@ -193,7 +192,7 @@ export const EquipmentCard = ({ equipment, availableUnits }: EquipmentCardProps)
                     ? (availableUnits > 0
                       ? `${availableUnits} available for your dates`
                       : 'Not available for these dates')
-                    : `${equipment.stock_quantity} in stock`}
+                    : (hasDates ? 'Checking availability...' : 'Pick your dates to check availability')}
                 </span>
               </div>
               <Button

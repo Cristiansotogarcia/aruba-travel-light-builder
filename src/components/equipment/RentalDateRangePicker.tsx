@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CalendarIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
@@ -10,9 +10,23 @@ import { MIN_NIGHTS } from '@/lib/rentalDates';
 
 const toIso = (d: Date) => format(d, 'yyyy-MM-dd');
 
-export function RentalDateRangePicker() {
-  const { startDate, endDate, setRange, clear } = useRentalDates();
+interface RentalDateRangePickerProps {
+  /** Open this picker when an add-to-cart is refused for missing dates. One per page. */
+  respondToRequests?: boolean;
+}
+
+export function RentalDateRangePicker({ respondToRequests = false }: RentalDateRangePickerProps = {}) {
+  const { startDate, endDate, setRange, clear, pickerRequest } = useRentalDates();
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const seenRequest = useRef(pickerRequest);
+
+  useEffect(() => {
+    if (!respondToRequests || pickerRequest === seenRequest.current) return;
+    seenRequest.current = pickerRequest;
+    rootRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    setOpen(true);
+  }, [pickerRequest, respondToRequests]);
 
   const committed: DateRange | undefined =
     startDate && endDate ? { from: parseISO(startDate), to: parseISO(endDate) } : undefined;
@@ -47,7 +61,7 @@ export function RentalDateRangePicker() {
       : 'Select your rental dates';
 
   return (
-    <div className="flex items-center gap-2">
+    <div ref={rootRef} className="flex items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" className="justify-start text-left font-normal">

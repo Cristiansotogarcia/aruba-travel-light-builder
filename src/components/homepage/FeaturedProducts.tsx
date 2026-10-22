@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { getFeaturedProducts } from '@/lib/queries/products';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
+import { ShoppingCart } from 'lucide-react';
 import { cardImage } from '@/lib/images';
+import { useGatedAddToCart } from '@/hooks/useGatedAddToCart';
+import type { AvailabilityStatus, Product } from '@/types/types';
 
 export const FeaturedProducts = () => {
     const { data: products = [] } = useQuery({
@@ -13,6 +15,7 @@ export const FeaturedProducts = () => {
         staleTime: 5 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
     });
+    const { tryAdd, unitsForDates } = useGatedAddToCart();
 
     if (products.length === 0) return null;
 
@@ -71,18 +74,39 @@ export const FeaturedProducts = () => {
                                         }}
                                     />
                                 )}
-                                <Link
-                                    to={
-                                        product.equipment_category?.name
-                                            ? `/equipment?category=${encodeURIComponent(product.equipment_category.name)}`
-                                            : '/equipment'
-                                    }
-                                    className="block"
-                                >
-                                    <Button variant="secondary" className="w-full">
-                                        View Category
-                                    </Button>
-                                </Link>
+                                {(() => {
+                                    const units = unitsForDates(product.id);
+                                    const paused = product.availability_status === 'Temporarily Not Available';
+                                    const soldOut = paused || (units != null && units <= 0);
+                                    const item: Product = {
+                                        id: product.id,
+                                        name: product.name,
+                                        description: product.description,
+                                        price_per_day: Number(product.price_per_day),
+                                        price_per_week: product.price_per_week ?? undefined,
+                                        category: product.equipment_category?.name ?? '',
+                                        images: product.images ?? [],
+                                        stock_quantity: product.stock_quantity ?? 0,
+                                        availability_status: product.availability_status as AvailabilityStatus,
+                                    };
+                                    return (
+                                        <>
+                                            {units != null && (
+                                                <p className="text-xs text-muted-foreground mb-2">
+                                                    {units > 0 ? `${units} available for your dates` : 'Not available for these dates'}
+                                                </p>
+                                            )}
+                                            <Button
+                                                className="w-full"
+                                                disabled={soldOut}
+                                                onClick={() => tryAdd(item, 1)}
+                                            >
+                                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                                {paused ? 'Temporarily Not Available' : 'Add to Cart'}
+                                            </Button>
+                                        </>
+                                    );
+                                })()}
                             </CardContent>
                         </Card>
                     ))}
