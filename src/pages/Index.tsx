@@ -2,6 +2,7 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/homepage/HeroSection';
+import { RentalDatesBar } from '@/components/homepage/RentalDatesBar';
 import { FeaturedProducts } from '@/components/homepage/FeaturedProducts.jsx';
 import { HowItWorks } from '@/components/homepage/HowItWorks';
 import AboutUsSection from '@/components/homepage/AboutUsSection';
@@ -29,6 +30,7 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <HeroSection />
+        <RentalDatesBar />
         <FeaturedProducts />
         <HowItWorks />
         <AboutUsSection />

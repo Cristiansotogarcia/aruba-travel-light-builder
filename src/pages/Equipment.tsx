@@ -278,7 +278,7 @@ const Equipment = () => {
                 <p className="font-medium">Renting for specific dates?</p>
                 <p className="text-sm text-muted-foreground">Pick your dates to see real-time availability.</p>
               </div>
-              <RentalDateRangePicker />
+              <RentalDateRangePicker respondToRequests />
             </div>
             {Object.entries(groupedEquipment).map(([category, subCategories]) => (
               <div key={category}>

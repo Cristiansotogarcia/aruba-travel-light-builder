@@ -13,9 +13,8 @@ import { toast } from '@/components/ui/use-toast';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { SEO } from '@/components/common/SEO';
 import { useSEO } from '@/hooks/useSEO';
-import { useCart } from '@/hooks/useCart';
-import { useRentalDates } from '@/hooks/useRentalDates';
-import { useAvailability } from '@/hooks/useAvailability';
+import { useGatedAddToCart } from '@/hooks/useGatedAddToCart';
+import { RentalDateRangePicker } from '@/components/equipment/RentalDateRangePicker';
 import type { AvailabilityStatus, Product } from '@/types/types';
 
 const availabilityStatuses: AvailabilityStatus[] = [
@@ -40,9 +39,7 @@ const normalizeAvailabilityStatus = (
 const EquipmentItem = () => {
   const { slug } = useParams<{ slug: string }>();
   const { generateProductSEO } = useSEO();
-  const { addItem } = useCart();
-  const { startDate, endDate } = useRentalDates();
-  const { data: availabilityMap } = useAvailability(startDate, endDate);
+  const { tryAdd, hasDates, unitsForDates } = useGatedAddToCart();
   const [quantity, setQuantity] = useState(1);
 
   const { data: products = [], isLoading } = useQuery({
@@ -113,10 +110,7 @@ const EquipmentItem = () => {
     productData: undefined,
   };
 
-  const dateAvailable =
-    equipment && startDate && endDate
-      ? (availabilityMap?.[equipment.id] ?? null)
-      : null;
+  const dateAvailable = equipment ? unitsForDates(equipment.id) : null;
 
   const handleShare = async () => {
     if (!equipment) return;
@@ -163,8 +157,7 @@ const EquipmentItem = () => {
       stock_quantity: equipment.stock_quantity,
       availability_status: equipment.availability_status,
     };
-    addItem(product, quantity);
-    toast({ title: 'Added to cart', description: `${quantity} × ${equipment.name}` });
+    tryAdd(product, quantity);
   };
 
   if (isLoading) {
@@ -253,6 +246,11 @@ const EquipmentItem = () => {
                 </span>
               </div>
 
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium text-foreground">Your rental dates</p>
+                <RentalDateRangePicker respondToRequests />
+              </div>
+
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-2">
                   <label htmlFor="equipment-qty" className="text-sm text-muted-foreground">
@@ -273,7 +271,7 @@ const EquipmentItem = () => {
                       ? (dateAvailable > 0
                           ? `${dateAvailable} available for your dates`
                           : 'Not available for these dates')
-                      : `${equipment.stock_quantity} in stock`}
+                      : (hasDates ? 'Checking availability...' : 'Pick your dates to check availability')}
                   </span>
                 </div>
                 <Button

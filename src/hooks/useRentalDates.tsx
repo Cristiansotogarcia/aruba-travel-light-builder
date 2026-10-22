@@ -6,6 +6,9 @@ import { parseRangeFromParams, type RentalRange } from '@/lib/rentalDates';
 interface RentalDatesContextType extends RentalRange {
   setRange: (startDate: string, endDate: string) => void;
   clear: () => void;
+  /** Bumps whenever something asks the customer to pick dates; mounted pickers open on change. */
+  pickerRequest: number;
+  requestPicker: () => void;
 }
 
 const STORAGE_KEY = 'rentalDates';
@@ -38,6 +41,9 @@ export const RentalDatesProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range.startDate, range.endDate]);
 
+  const [pickerRequest, setPickerRequest] = useState(0);
+  const requestPicker = useCallback(() => setPickerRequest((n) => n + 1), []);
+
   const setRange = useCallback((startDate: string, endDate: string) => {
     setRangeState({ startDate, endDate });
   }, []);
@@ -51,7 +57,7 @@ export const RentalDatesProvider = ({ children }: { children: ReactNode }) => {
   }, [searchParams, setSearchParams]);
 
   return (
-    <RentalDatesContext.Provider value={{ ...range, setRange, clear }}>
+    <RentalDatesContext.Provider value={{ ...range, setRange, clear, pickerRequest, requestPicker }}>
       {children}
     </RentalDatesContext.Provider>
   );
