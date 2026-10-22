@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, BookingItem } from '@/types/types';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -16,9 +16,48 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// sessionStorage keeps the cart through a page reload and drops it when the tab
+// is closed. Checkout empties it through clearCart.
+export const CART_STORAGE_KEY = 'cart';
+
+interface StoredCart {
+  items: BookingItem[];
+  weeklyRates: Record<string, number | undefined>;
+}
+
+const readStoredCart = (): StoredCart => {
+  try {
+    const raw = sessionStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return { items: [], weeklyRates: {} };
+    const parsed = JSON.parse(raw) as Partial<StoredCart>;
+    const items = Array.isArray(parsed.items)
+      ? parsed.items.filter(i => i && typeof i.equipment_id === 'string' && typeof i.quantity === 'number')
+      : [];
+    const weeklyRates =
+      parsed.weeklyRates && typeof parsed.weeklyRates === 'object' ? parsed.weeklyRates : {};
+    return { items, weeklyRates };
+  } catch {
+    return { items: [], weeklyRates: {} };
+  }
+};
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<BookingItem[]>([]);
-  const [weeklyRates, setWeeklyRates] = useState<Record<string, number | undefined>>({});
+  const [items, setItems] = useState<BookingItem[]>(() => readStoredCart().items);
+  const [weeklyRates, setWeeklyRates] = useState<Record<string, number | undefined>>(
+    () => readStoredCart().weeklyRates
+  );
+
+  useEffect(() => {
+    try {
+      if (items.length === 0) {
+        sessionStorage.removeItem(CART_STORAGE_KEY);
+      } else {
+        sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ items, weeklyRates }));
+      }
+    } catch {
+      /* storage unavailable: the cart still works for this page */
+    }
+  }, [items, weeklyRates]);
   const { toast } = useToast();
 
   const addItem = (equipment: Product, quantity: number, _selectedDate?: Date) => {
