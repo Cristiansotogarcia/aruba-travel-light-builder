@@ -38,7 +38,8 @@ export function isValidRange(
   if (!startDate || !endDate || !isRealIsoDate(startDate) || !isRealIsoDate(endDate)) return false;
   const start = dayEpoch(startDate);
   const end = dayEpoch(endDate);
-  const todayEpoch = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  // local calendar day: at 20:00 in Aruba the UTC date is already tomorrow
+  const todayEpoch = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   if (start < todayEpoch) return false;
   const nights = (end - start) / 86_400_000;
   return nights >= MIN_NIGHTS;

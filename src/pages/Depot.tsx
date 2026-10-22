@@ -16,6 +16,7 @@ import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff, Plus } 
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useDepotSync } from '@/hooks/useDepotSync';
 import { cachePickups, getCachedPickups } from '@/lib/offline/depotDb';
+import { parseDateOnly, todayDateOnly } from '@/lib/dateOnly';
 
 const DEPOT_NAV: AppNavEntry[] = [
   { id: 'pickups', label: 'Self-pickup', icon: Package },
@@ -34,7 +35,7 @@ const Depot = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayDateOnly();
 
   const isOnline = useOnlineStatus();
   const { pendingCount, syncNow, refreshCount } = useDepotSync();
@@ -127,7 +128,7 @@ const Depot = () => {
 
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
+      return parseDateOnly(dateStr).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',

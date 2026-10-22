@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/types/supabase';
 import { getDeliverySlipDisplayNumber } from '@/lib/delivery/serviceTasks';
 import { getCollectionReceiptDisplayNumber } from '@/lib/delivery/collection';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 // `type` and `condition_notes` were added by the W3 collection migration and
 // are not in the generated Database types yet (regenerated at integration).
@@ -163,8 +164,8 @@ const DeliverySlip = () => {
                 <p>Driver: {deliverySlip.assigned_driver_name}</p>
               ) : null}
               <p>
-                Rental period {new Date(deliverySlip.rental_start_date).toLocaleDateString()} -{' '}
-                {new Date(deliverySlip.rental_end_date).toLocaleDateString()}
+                Rental period {parseDateOnly(deliverySlip.rental_start_date).toLocaleDateString()} -{' '}
+                {parseDateOnly(deliverySlip.rental_end_date).toLocaleDateString()}
               </p>
             </div>
           </div>

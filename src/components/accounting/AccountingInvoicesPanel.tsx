@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getInvoiceDisplayNumber } from '@/lib/accounting/invoices';
 import type { Database } from '@/types/supabase';
+import { formatDateOnly } from '@/lib/dateOnly';
 
 type InvoiceRow = Pick<
   Database['public']['Tables']['invoices']['Row'],
@@ -227,8 +228,8 @@ export const AccountingInvoicesPanel = () => {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm text-foreground">
-                          {new Date(invoice.rental_start_date).toLocaleDateString()} -{' '}
-                          {new Date(invoice.rental_end_date).toLocaleDateString()}
+                          {formatDateOnly(invoice.rental_start_date)} -{' '}
+                          {formatDateOnly(invoice.rental_end_date)}
                         </div>
                       </TableCell>
                       <TableCell>

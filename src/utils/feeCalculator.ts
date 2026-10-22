@@ -1,3 +1,4 @@
+import { todayDateOnly } from '@/lib/dateOnly';
 /**
  * Utility functions for calculating payment processor fees and net amounts
  * Used for accounting and financial reconciliation
@@ -115,7 +116,7 @@ export function createPaymentRecord(
     payment_method: options?.payment_method,
     card_last_four: options?.card_last_four,
     processor_transaction_id: options?.processor_transaction_id,
-    settlement_date: new Date().toISOString().split('T')[0],
+    settlement_date: todayDateOnly(),
     is_refund: options?.is_refund || false,
     refund_amount: options?.refund_amount || 0,
   };

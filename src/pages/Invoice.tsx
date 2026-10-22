@@ -13,6 +13,7 @@ import {
   type InvoiceSnapshot,
 } from '@/lib/accounting/invoices';
 import { computeInclusiveTax, parseTaxRate } from '@/utils/invoice';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface CreditNoteRow {
   id: string;
@@ -268,8 +269,8 @@ const Invoice = () => {
               <h3 className="text-sm font-semibold text-foreground mb-2">Rental Period</h3>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>
-                  {new Date(invoice.rental_start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} -
-                  {` ${new Date(invoice.rental_end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+                  {parseDateOnly(invoice.rental_start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} -
+                  {` ${parseDateOnly(invoice.rental_end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
                 </p>
               </div>
             </div>

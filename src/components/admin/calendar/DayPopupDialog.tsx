@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Booking } from '@/components/admin/calendar/types';
 import { getStatusColor } from './statusUtils';
 import { getBookingsByTypeForDate } from './bookingUtils';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface DayPopupDialogProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export const DayPopupDialog = ({
                 <div>
                   <h4 className="font-semibold">{booking.customer_name}</h4>
                   <p className="text-sm text-gray-500">
-                    {format(new Date(booking.start_date), 'dd/MM/yyyy')} - {format(new Date(booking.end_date), 'dd/MM/yyyy')}
+                    {format(parseDateOnly(booking.start_date), 'dd/MM/yyyy')} - {format(parseDateOnly(booking.end_date), 'dd/MM/yyyy')}
                   </p>
                 </div>
                 <div className="text-right flex items-center gap-2">

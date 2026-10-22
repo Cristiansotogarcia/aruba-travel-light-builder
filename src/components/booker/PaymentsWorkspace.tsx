@@ -26,6 +26,7 @@ import { BookingListSkeleton } from '@/components/common/SkeletonLoader';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 /** Statuses that still expect a customer payment (awaiting-payment funnel). */
 const AWAITING_PAYMENT_STATUSES = ['pending', 'confirmed'] as const;
@@ -149,8 +150,8 @@ export const PaymentsWorkspace = () => {
                   <p className="truncate font-medium text-foreground">{booking.customer_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{booking.customer_email}</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(booking.start_date).toLocaleDateString()} -{' '}
-                    {new Date(booking.end_date).toLocaleDateString()}
+                    {parseDateOnly(booking.start_date).toLocaleDateString()} -{' '}
+                    {parseDateOnly(booking.end_date).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:text-right">
@@ -291,8 +292,8 @@ const PaymentDetailDialog = ({
               </Badge>
             </div>
             <p className="text-muted-foreground">
-              {new Date(booking.start_date).toLocaleDateString()} -{' '}
-              {new Date(booking.end_date).toLocaleDateString()}
+              {parseDateOnly(booking.start_date).toLocaleDateString()} -{' '}
+              {parseDateOnly(booking.end_date).toLocaleDateString()}
             </p>
             <ul className="list-inside list-disc text-muted-foreground">
               {booking.booking_items?.map((item, index) => (

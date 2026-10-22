@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isSundayDateOnly } from '@/lib/dateOnly';
 
 type FulfillmentMethod = 'delivery' | 'pickup';
 
@@ -25,7 +26,7 @@ export const BookingSummary = ({
   const isPickup = fulfillmentMethod === 'pickup';
 
   // Check if it's Sunday
-  const isSunday = startDate && new Date(startDate).getDay() === 0;
+  const isSunday = !!startDate && isSundayDateOnly(startDate);
 
   // Calculate delivery fee (mirrors computeDeliveryFee logic for display purposes)
   const deliveryFee = isPickup ? 0 : (isSunday ? 20 : (days < 5 ? 10 : 0));

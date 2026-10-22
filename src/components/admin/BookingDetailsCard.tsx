@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { buildDriverAssignmentUpdate } from '@/lib/operations/bookingOperations';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface Driver {
   id: string;
@@ -108,7 +109,7 @@ export const BookingDetailsCard = ({ booking, onDriverAssigned }: BookingDetails
             <div className="flex items-center gap-2 mt-3 text-gray-600">
               <Calendar className="h-4 w-4" />
               <span>
-                {format(new Date(booking.start_date), 'dd/MM/yyyy')} - {format(new Date(booking.end_date), 'dd/MM/yyyy')}
+                {format(parseDateOnly(booking.start_date), 'dd/MM/yyyy')} - {format(parseDateOnly(booking.end_date), 'dd/MM/yyyy')}
               </span>
             </div>
           </div>

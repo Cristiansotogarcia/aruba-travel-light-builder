@@ -24,6 +24,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface CreditNoteRecord {
   id: string;
@@ -372,7 +373,7 @@ export const CreditNotesPanel = () => {
                         >
                           <p className="text-sm font-medium text-foreground">{booking.customer_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {booking.customer_email} · Starts {new Date(booking.start_date).toLocaleDateString()} · $
+                            {booking.customer_email} · Starts {parseDateOnly(booking.start_date).toLocaleDateString()} · $
                             {Number(booking.total_amount).toFixed(2)}
                           </p>
                         </button>

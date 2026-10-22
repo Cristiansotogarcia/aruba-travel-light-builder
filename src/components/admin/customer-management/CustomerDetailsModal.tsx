@@ -13,6 +13,7 @@ import { getStatusColor } from '../calendar/statusUtils';
 
 import { Booking } from '../calendar/types';
 import type { Database } from '@/types/supabase';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface Customer {
   id: string;
@@ -134,8 +135,8 @@ export const CustomerDetailsModal = ({
 
   const isCurrentBooking = (booking: Booking) => {
     const today = new Date();
-    const startDate = new Date(booking.start_date);
-    const endDate = new Date(booking.end_date);
+    const startDate = parseDateOnly(booking.start_date);
+    const endDate = parseDateOnly(booking.end_date);
     return today >= startDate && today <= endDate;
   };
 
@@ -261,7 +262,7 @@ export const CustomerDetailsModal = ({
                           Period:
                         </span>
                         <div className="font-medium">
-                          {format(new Date(booking.start_date), 'dd/MM/yyyy')} - {format(new Date(booking.end_date), 'dd/MM/yyyy')}
+                          {format(parseDateOnly(booking.start_date), 'dd/MM/yyyy')} - {format(parseDateOnly(booking.end_date), 'dd/MM/yyyy')}
                         </div>
                       </div>
                       <div>

@@ -6,6 +6,7 @@ import { Booking } from './calendar/types'; // Removed BookingItem
 import { Eye, Edit, Mail, Phone, MapPin, CalendarDays, MessageSquare } from 'lucide-react'; // Added icon imports, using CalendarDays for clarity
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils'; // Added back getStatusColor import
 import { isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface BookingCardProps {
   booking: Booking;
@@ -174,7 +175,7 @@ export const BookingCard = ({ booking, onStatusUpdate, onEdit, onView }: Booking
             <div className="flex items-center gap-2 text-gray-600">
               <CalendarDays className="h-4 w-4" /> {/* Changed to CalendarDays */}
               <span>
-                {new Date(booking.start_date).toLocaleDateString('en-GB')} - {new Date(booking.end_date).toLocaleDateString('en-GB')}
+                {parseDateOnly(booking.start_date).toLocaleDateString('en-GB')} - {parseDateOnly(booking.end_date).toLocaleDateString('en-GB')}
               </span>
             </div>
           </div>

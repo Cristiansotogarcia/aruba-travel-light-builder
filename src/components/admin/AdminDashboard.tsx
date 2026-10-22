@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getStatusColor, getStatusLabel } from './calendar/statusUtils';
 import type { Database } from '@/types/supabase';
 import { getInvoiceDisplayNumber, isSuccessfulBookingPaymentStatus } from '@/lib/accounting/invoices';
+import { parseDateOnly } from '@/lib/dateOnly';
 
 interface DashboardStats {
   totalBookings: number;
@@ -281,7 +282,7 @@ export const AdminDashboard = ({ onNavigate }: AdminDashboardProps) => {
                       <p className="font-medium text-foreground">{booking.customer_name}</p>
                       <p className="text-sm text-muted-foreground">{booking.customer_email}</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                        {parseDateOnly(booking.start_date).toLocaleDateString()} - {parseDateOnly(booking.end_date).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
