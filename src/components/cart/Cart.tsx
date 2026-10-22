@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Trash2, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { itemTotal, rentalDays } from '@/lib/pricing/bookingTotals';
 
 const Cart = () => {
-  const { items, removeItem, updateItemQuantity } = useCart();
+  const { items, weeklyRates, removeItem, updateItemQuantity } = useCart();
   const { startDate, endDate } = useRentalDates();
   const navigate = useNavigate();
 
@@ -28,8 +29,23 @@ const Cart = () => {
     );
   }
 
+  // Same rules as the booking (lib/pricing/bookingTotals). Delivery fee and the
+  // morning-delivery/afternoon-pickup extra day depend on choices made at booking,
+  // so the cart estimate covers the equipment over the selected nights only.
+  const days = startDate && endDate ? rentalDays(startDate, endDate) : 0;
+  const hasDates = days > 0;
+  const dayLabel = `${days} ${days === 1 ? 'day' : 'days'}`;
+
   const calculateSubtotal = (item: typeof items[0]) => {
-    return item.equipment_price * item.quantity;
+    if (!hasDates) return item.equipment_price * item.quantity;
+    return itemTotal(
+      {
+        price_per_day: item.equipment_price,
+        price_per_week: weeklyRates[item.equipment_id],
+        quantity: item.quantity,
+      },
+      days,
+    );
   };
 
   const calculateTotal = () => {
@@ -64,7 +80,7 @@ const Cart = () => {
                       ${item.equipment_price.toFixed(2)}/day
                     </div>
                     <div className="text-sm font-medium">
-                      Subtotal: ${calculateSubtotal(item).toFixed(2)}/day
+                      Subtotal: ${calculateSubtotal(item).toFixed(2)}{hasDates ? ` for ${dayLabel}` : '/day'}
                     </div>
                   </div>
                 </div>
@@ -101,10 +117,12 @@ const Cart = () => {
               <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Estimated Total:</span>
-                  <span className="text-primary">${calculateTotal().toFixed(2)}/day</span>
+                  <span className="text-primary">${calculateTotal().toFixed(2)}{hasDates ? '' : '/day'}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  * Final price will be calculated based on rental duration
+                  {hasDates
+                    ? `* Equipment for ${dayLabel}. Delivery fee and time slots are added at booking.`
+                    : '* Final price will be calculated based on rental duration'}
                 </p>
               </div>
               <div className="border-t pt-2 mt-2 text-xs text-gray-600">

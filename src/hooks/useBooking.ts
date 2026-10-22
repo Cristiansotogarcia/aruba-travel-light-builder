@@ -76,7 +76,7 @@ const useBooking = () => {
 
       const { data, error } = await supabase
         .from('equipment')
-        .select('id, name, description, price_per_day, category, images, stock_quantity, availability_status, created_at, updated_at');
+        .select('id, name, description, price_per_day, price_per_week, category, images, stock_quantity, availability_status, created_at, updated_at');
 
       if (error) {
         console.error('Error fetching products:', error);

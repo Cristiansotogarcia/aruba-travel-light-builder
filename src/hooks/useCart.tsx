@@ -5,6 +5,9 @@ import { useToast } from '@/components/ui/use-toast';
 
 interface CartContextType {
   items: BookingItem[];
+  /** Weekly rate per equipment_id, kept beside the items so the cart estimate can
+   *  use the same pricing rules as the booking without changing the line-item shape. */
+  weeklyRates: Record<string, number | undefined>;
   addItem: (equipment: Product, quantity: number, selectedDate?: Date) => void;
   removeItem: (equipmentId: string) => void;
   updateItemQuantity: (equipmentId: string, quantity: number) => void;
@@ -15,6 +18,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<BookingItem[]>([]);
+  const [weeklyRates, setWeeklyRates] = useState<Record<string, number | undefined>>({});
   const { toast } = useToast();
 
   const addItem = (equipment: Product, quantity: number, _selectedDate?: Date) => {
@@ -27,6 +31,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    setWeeklyRates(prev => ({ ...prev, [equipment.id]: equipment.price_per_week ?? undefined }));
     setItems(prev => {
       const existing = prev.find(item => item.equipment_id === equipment.id);
       if (existing) {
@@ -76,10 +81,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = () => {
+    setItems([]);
+    setWeeklyRates({});
+  };
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateItemQuantity, clearCart }}>
+    <CartContext.Provider value={{ items, weeklyRates, addItem, removeItem, updateItemQuantity, clearCart }}>
       {children}
     </CartContext.Provider>
   );
