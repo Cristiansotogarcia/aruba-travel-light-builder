@@ -57,7 +57,7 @@ export function StepDates({ startDate, endDate, onChange }: StepDatesProps) {
           numberOfMonths={1}
           selected={draft}
           onSelect={handleSelect}
-          min={2} // react-day-picker counts days; 2 days = 1 night minimum
+          min={1} // react-day-picker v9 compares calendar-day difference, i.e. nights
           disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
           autoFocus
           className="pointer-events-auto"
