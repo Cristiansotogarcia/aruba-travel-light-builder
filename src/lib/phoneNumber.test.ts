@@ -16,8 +16,9 @@ describe('composeE164', () => {
     expect(composeE164('+1', '(555) 123-4567')).toBe('+15551234567');
   });
 
-  it('returns just the dial code when the local number is empty', () => {
-    expect(composeE164('+297', '')).toBe('+297');
+  it('returns an empty string when the local number has no digits', () => {
+    expect(composeE164('+297', '')).toBe('');
+    expect(composeE164('+1', ' - ')).toBe('');
   });
 });
 

@@ -165,6 +165,8 @@ export function isValidE164Phone(value: string): boolean {
 
 export function composeE164(dial: string, localNumber: string): string {
   const digits = (localNumber || '').replace(/\D/g, '');
+  // No local digits means no callable number: keep the field empty so the required check fires.
+  if (!digits) return '';
   return `${dial}${digits}`;
 }
 
