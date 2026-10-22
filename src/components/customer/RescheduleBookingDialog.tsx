@@ -134,7 +134,7 @@ export function RescheduleBookingDialog({
           numberOfMonths={2}
           selected={draft}
           onSelect={handleSelect}
-          min={MIN_NIGHTS + 1} // react-day-picker min counts days; N nights = N+1 days
+          min={MIN_NIGHTS} // react-day-picker v9 compares calendar-day difference, i.e. nights
           disabled={{ before: new Date() }}
           autoFocus
         />
