@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireRole, OFFICE_ROLES } from '../_shared/auth.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_API_URL = 'https://api.resend.com/emails';
@@ -34,6 +35,9 @@ serve(async (req: Request) => {
   }
 
   try {
+    const auth = await requireRole(req, OFFICE_ROLES);
+    if (!auth.ok) return auth.response;
+
     const payload = await req.json() as AssignmentPayload;
     const { driver, booking } = payload;
 
