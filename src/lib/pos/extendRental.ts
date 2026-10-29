@@ -1,6 +1,6 @@
 // Pure validation for the counter's "extend a rental" action. Mirrors the
 // server-side guard in extend_booking_rental (migration
-// 20261029200000_pos_phase2_counter_ops.sql): the new end date must be a
+// 20261029210000_pos_phase2_counter_ops.sql): the new end date must be a
 // real date strictly after the booking's current end date. The RPC is
 // authoritative (it also re-checks stock and reprices); this only blocks an
 // obviously invalid pick before the round trip.

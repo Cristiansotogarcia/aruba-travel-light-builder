@@ -1,6 +1,6 @@
 // POS phase 2 (counter ops) RPC wrappers. Contract:
 // PLANS/TLB_ROXANNE_NOTES_AND_POS_PLAN.md lines 49-62. Pairs with
-// supabase/migrations/20261029200000_pos_phase2_counter_ops.sql and the pure
+// supabase/migrations/20261029210000_pos_phase2_counter_ops.sql and the pure
 // grouping/validation modules in src/lib/pos/{todayBoard,extendRental,refund}.ts.
 import { supabase } from '@/integrations/supabase/client';
 import type { TodayBoardBooking } from '@/lib/pos/todayBoard';
