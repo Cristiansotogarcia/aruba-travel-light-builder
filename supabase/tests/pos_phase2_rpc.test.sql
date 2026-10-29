@@ -137,39 +137,17 @@ begin
   perform test_assert(v_count = 0, 'neither refused credit-note attempt created a row');
 end $$;
 
--- 5. BUG, left red on purpose (same pattern as PR #107's RLS test 1a): every
---    authorized extend_booking_rental call on a booking that has any items
---    crashes before it ever reaches the availability check, so the
---    contract's "extend with no stock rolls back" and "a clean extend
---    reprices" behaviors are currently UNREACHABLE, not just the conflict
---    case. Root cause (supabase/migrations/20261029210000_pos_phase2_counter_ops.sql
---    line 169): the row-lock query
---      WHERE e.id IN (SELECT bi.equipment_id FROM public.booking_items bi ...)
---    compares public.equipment.id (uuid) against public.booking_items.equipment_id
---    (text - confirmed by 20260601000003_w1_fix_pending_hold_semantics.sql's
---    own equipment_available_units, which already casts
---    `bi.equipment_id = p_equipment_id::text` for exactly this reason) with
---    no cast on either side. Postgres has no uuid = text operator, so this
---    PERFORM raises "operator does not exist: uuid = text" for every
---    booking with items, unconditionally - confirmed below is role-gated
---    correctly (fails after the role check, not instead of it) and is NOT a
---    fixture artifact: pos_create_sale's equivalent lock query
---    (`e.id IN (SELECT (i->>'equipment_id')::uuid FROM jsonb_array_elements(p_items) i)`,
---    phase 1, already shipped and tested green) casts explicitly and has no
---    such bug. Likely fix: `e.id::text IN (...)` or cast the subquery's
---    column to uuid.
---
---    What IS proven below: the booking's state is left untouched by the
---    crash (transactional rollback holds), and the crash is reproducible on
---    an otherwise-conflict-free extend, not only the engineered-conflict
---    scenario - i.e. this is not a conflict-detection bug, it is a total
---    outage of the RPC.
+-- 5. A conflict-free extend succeeds and reprices through price_booking.
+--    Before 20261029210000 was fixed this crashed for every booking with
+--    items ("operator does not exist: uuid = text": booking_items.equipment_id
+--    is text, equipment.id is uuid), found by this suite. Stub pricing is
+--    price_per_day x quantity x nights, so 1 night at 25 becomes 3 nights at 75.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
 begin
   perform public.pos_create_sale(
-    '{"start_date":"2026-11-20","end_date":"2026-11-21","fulfillment_method":"pickup","customer_name":"Extend Bug Repro Target"}'::jsonb,
+    '{"start_date":"2026-11-20","end_date":"2026-11-21","fulfillment_method":"pickup","customer_name":"Extend Clean Target"}'::jsonb,
     '[{"equipment_id":"bbbbbbbb-0000-0000-0000-000000000001","quantity":1}]'::jsonb,
     '[]'::jsonb
   );
@@ -177,22 +155,68 @@ end $$;
 do $$
 declare
   v_booking_id uuid;
+  v_result jsonb;
 begin
-  select id into v_booking_id from public.bookings where customer_name = 'Extend Bug Repro Target';
+  select id into v_booking_id from public.bookings where customer_name = 'Extend Clean Target';
+  v_result := public.extend_booking_rental(v_booking_id, '2026-11-23');
+  perform test_assert((v_result->>'additional_amount')::numeric = 50, 'a clean extend returns the repriced difference (75 - 25 = 50)');
+end $$;
+reset role;
+do $$
+declare
+  v_end_date date;
+  v_total numeric;
+  v_audit int;
+begin
+  select end_date, total_amount into v_end_date, v_total from public.bookings where customer_name = 'Extend Clean Target';
+  perform test_assert(v_end_date = '2026-11-23', 'a clean extend moves end_date');
+  perform test_assert(v_total = 75, 'a clean extend stores the repriced total');
+  select count(*) into v_audit from public.booking_audit_log l join public.bookings b on b.id = l.booking_id
+    where b.customer_name = 'Extend Clean Target' and l.action = 'RENTAL_EXTENDED';
+  perform test_assert(v_audit = 1, 'a clean extend writes one RENTAL_EXTENDED audit row');
+end $$;
+
+-- 6. Extend with no stock rolls back. One unit of item 02; booking A holds it
+--    11-10..11-12, booking B holds it 11-13..11-15. Extending A to 11-14
+--    must raise AVAILABILITY_CONFLICT and leave A's end_date and total alone.
+insert into public.equipment (id, name, price_per_day, category, stock_quantity) values
+  ('bbbbbbbb-0000-0000-0000-000000000002', 'Single unit item', 25, 'Beach', 1);
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+do $$
+begin
+  perform public.pos_create_sale(
+    '{"start_date":"2026-11-10","end_date":"2026-11-12","fulfillment_method":"pickup","customer_name":"Extend Conflict A"}'::jsonb,
+    '[{"equipment_id":"bbbbbbbb-0000-0000-0000-000000000002","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  );
+  perform public.pos_create_sale(
+    '{"start_date":"2026-11-13","end_date":"2026-11-15","fulfillment_method":"pickup","customer_name":"Extend Conflict B"}'::jsonb,
+    '[{"equipment_id":"bbbbbbbb-0000-0000-0000-000000000002","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  );
+end $$;
+do $$
+declare
+  v_booking_id uuid;
+begin
+  select id into v_booking_id from public.bookings where customer_name = 'Extend Conflict A';
   begin
-    perform public.extend_booking_rental(v_booking_id, '2026-11-23');
-    perform test_assert(false, 'KNOWN BUG (line 169, uuid/text mismatch): a conflict-free extend currently crashes instead of succeeding - see comment above; flip this assertion back once fixed');
+    perform public.extend_booking_rental(v_booking_id, '2026-11-14');
+    perform test_assert(false, 'an extend into a fully booked range must be refused');
   exception when others then
-    perform test_assert(sqlerrm ilike '%operator does not exist: uuid = text%', 'extend_booking_rental reproducibly crashes on its own row-lock query (operator does not exist: uuid = text) for EVERY booking with items, not just conflicts - BLOCKS MERGE, see comment above');
+    perform test_assert(sqlerrm like 'AVAILABILITY_CONFLICT%', 'an extend into a fully booked range raises AVAILABILITY_CONFLICT (got: ' || sqlerrm || ')');
   end;
 end $$;
 reset role;
 do $$
 declare
   v_end_date date;
+  v_total numeric;
 begin
-  select end_date into v_end_date from public.bookings where customer_name = 'Extend Bug Repro Target';
-  perform test_assert(v_end_date = '2026-11-21', 'the crash still rolls back cleanly: end_date is untouched (this part of the transactional contract holds even though the RPC itself is broken)');
+  select end_date, total_amount into v_end_date, v_total from public.bookings where customer_name = 'Extend Conflict A';
+  perform test_assert(v_end_date = '2026-11-12', 'the refused extend leaves end_date untouched');
+  perform test_assert(v_total = 50, 'the refused extend leaves total_amount untouched');
 end $$;
 
 -- 7. A refund (credit note) within the booking's total is accepted.
