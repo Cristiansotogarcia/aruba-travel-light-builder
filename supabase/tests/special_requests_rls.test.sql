@@ -5,10 +5,12 @@
 -- session; see run-special-requests-rls.sh). Assertions encode the INTENDED
 -- contract ("anon and authenticated can insert; only staff can select and
 -- update; there is no delete"), including the shape the real client path
--- uses: supabase-js's `.insert(payload).select().single()` compiles to an
--- `INSERT ... RETURNING *`, which under RLS additionally requires the
--- inserting role to have a SELECT policy covering the new row — that is
--- deliberately tested here too (tests 1a/1b), not just a bare INSERT.
+-- uses: submitSpecialRequest() (src/lib/specialRequests/api.ts) generates the
+-- row's id with crypto.randomUUID() and does a bare `.insert(payload)` with no
+-- `.select()`, because anon has no SELECT policy and Postgres refuses
+-- RETURNING without one. Test 1a is that real path; 1b is a guard that
+-- `.insert(payload).select()` (INSERT ... RETURNING) stays refused for anon,
+-- so nobody re-adds .select() and silently breaks anonymous submissions again.
 --
 -- Raises an exception, and so a non-zero psql exit code, on the first
 -- failing assertion. Passing assertions print as NOTICE.
@@ -32,11 +34,29 @@ insert into public.profiles (id, name, role) values
   ('11111111-1111-1111-1111-111111111111', 'Staff Member', 'StoreStaff'),
   ('22222222-2222-2222-2222-222222222222', 'Driver Only', 'Driver');
 
--- 1a. anon can insert AND get the row back the way the real client does:
---     supabase-js's submitSpecialRequest() does
---     `.insert(payload).select().single()`, i.e. INSERT ... RETURNING *.
---     Under RLS this additionally requires a SELECT policy covering the
---     inserting role, which special_requests does not have for anon.
+-- 1a. The real path: anon inserts with a client-generated id (the way
+--     submitSpecialRequest() does with crypto.randomUUID()) and no
+--     RETURNING, and the row persists.
+set role anon;
+do $$
+begin
+  insert into public.special_requests (id, name, email, request_type, message)
+  values ('33333333-3333-3333-3333-333333333333', 'Anon Visitor', 'anon@example.com', 'general', 'Testing anon insert with client id');
+end $$;
+reset role;
+do $$
+declare
+  persisted boolean;
+begin
+  select exists(select 1 from public.special_requests where email = 'anon@example.com') into persisted;
+  perform test_assert(persisted, 'anon INSERT with a client-generated id and no RETURNING (the real submitSpecialRequest path) persists the row');
+end $$;
+
+-- 1b. Guard: anon INSERT ... RETURNING (i.e. `.insert(payload).select()`)
+--     stays refused, because anon has no SELECT policy on special_requests.
+--     This protects against someone re-adding .select() to
+--     submitSpecialRequest() and silently breaking anonymous submissions
+--     the way e392a72 fixed.
 set role anon;
 do $$
 declare
@@ -44,35 +64,14 @@ declare
 begin
   begin
     insert into public.special_requests (name, email, request_type, message)
-    values ('Anon Visitor', 'anon@example.com', 'general', 'Testing anon insert+select')
+    values ('Anon Visitor (RETURNING)', 'anon-returning@example.com', 'general', 'Testing anon insert+select is refused')
     returning id into new_id;
-    perform test_assert(new_id is not null,
-      'anon INSERT...RETURNING (the real insert().select() path) succeeds and persists the row');
+    perform test_assert(false, 'anon INSERT...RETURNING is refused (no SELECT policy for anon)');
   exception when others then
-    raise warning 'anon INSERT...RETURNING failed: % (%)', sqlerrm, sqlstate;
-    perform test_assert(false,
-      'anon INSERT...RETURNING (the real insert().select() path) succeeds and persists the row');
+    perform test_assert(true, 'anon INSERT...RETURNING is refused (no SELECT policy for anon)');
   end;
 end $$;
 reset role;
-
--- 1b. Lower-level check, isolating the WITH CHECK validation itself from the
---     1a RETURNING/SELECT-policy interaction: a bare INSERT with no
---     RETURNING, as anon, does persist a row.
-set role anon;
-do $$
-begin
-  insert into public.special_requests (name, email, request_type, message)
-  values ('Anon Visitor (bare insert)', 'anon-bare@example.com', 'general', 'Testing anon bare insert');
-end $$;
-reset role;
-do $$
-declare
-  persisted boolean;
-begin
-  select exists(select 1 from public.special_requests where email = 'anon-bare@example.com') into persisted;
-  perform test_assert(persisted, 'a bare anon INSERT (no RETURNING) persists the row');
-end $$;
 
 -- 2. anon insert is rejected when it tries to set a non-'new' status (RLS WITH CHECK).
 set role anon;
@@ -106,8 +105,8 @@ begin
   perform test_assert(persisted, 'authenticated non-staff (Driver) bare insert persists the row');
 end $$;
 
--- Rows committed so far: anon-bare@example.com, driver@example.com, and
--- (once 1a is fixed) anon@example.com. 'Bad Status' never committed.
+-- Rows committed so far: anon@example.com (1a) and driver@example.com (3).
+-- 'Bad Status' (2) and anon-returning@example.com (1b) never committed.
 
 -- 4. anon cannot select special_requests: no SELECT policy applies to it,
 --    so RLS filters every row out (anon has the Supabase-default table
