@@ -46,6 +46,10 @@ const Admin = () => {
       navigate('/blog-studio');
       return;
     }
+    if (section === 'pos') {
+      navigate('/pos');
+      return;
+    }
     setActiveSection(section);
     sessionStorage.setItem('admin:activeSection', section);
   };

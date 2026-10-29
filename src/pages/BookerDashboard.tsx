@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardCheck, Clock, CreditCard, LayoutDashboard, PackageCheck, Plus, UserCheck, UserPlus } from 'lucide-react';
+import { ClipboardCheck, Clock, CreditCard, LayoutDashboard, PackageCheck, Plus, ShoppingCart, UserCheck, UserPlus } from 'lucide-react';
 
 import { BookingAssignment } from '@/components/admin/BookingAssignment';
 import { PendingReservations } from '@/components/admin/PendingReservations';
@@ -45,6 +46,7 @@ const BOOKER_NAV: AppNavEntry[] = [
   { id: 'review', label: 'Pending Reservations', icon: Clock },
   { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'assignments', label: 'Assignments', icon: UserPlus },
+  { id: 'pos', label: 'Point of Sale', icon: ShoppingCart },
 ];
 
 const STAT_META: Record<string, { label: string; description: string }> = {
@@ -61,6 +63,17 @@ const BookerDashboard = () => {
   const [wizardOpen, setWizardOpen] = useState(false);
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // 'pos' is a cross-page link to the /pos counter-sale route, not a local
+  // section — same pattern Admin uses for 'blog'.
+  const handleSectionChange = (id: string) => {
+    if (id === 'pos') {
+      navigate('/pos');
+      return;
+    }
+    setActiveSection(id);
+  };
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, activeSection);
@@ -213,7 +226,7 @@ const BookerDashboard = () => {
       panelName="Booker Workspace"
       nav={nav}
       activeSection={activeSection}
-      onSectionChange={setActiveSection}
+      onSectionChange={handleSectionChange}
       headerAccessory={<NotificationBell />}
       pageTitle={meta.label}
       pageDescription={meta.description}
