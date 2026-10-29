@@ -3,7 +3,7 @@
 // Pickups / Store Returns due, Deliveries / Collections out)".
 //
 // Data comes from the get_pos_today_board RPC (migration
-// 20261029200000_pos_phase2_counter_ops.sql), which returns every active
+// 20261029210000_pos_phase2_counter_ops.sql), which returns every active
 // booking across BOTH fulfillment methods with its outbound/return task
 // completion flags. The grouping into the four buckets happens here, in pure
 // TS, against an explicit reference date — never `new Date()` directly — so

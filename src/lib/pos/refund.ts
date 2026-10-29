@@ -2,7 +2,7 @@
 // create_credit_note's server-side limit (contract: "a booking can never be
 // credited past its total across multiple notes" —
 // 20260704120000_w5_invoicing_accounting.sql, widened to Booker/StoreStaff by
-// 20261029200000_pos_phase2_counter_ops.sql). The RPC re-checks this under an
+// 20261029210000_pos_phase2_counter_ops.sql). The RPC re-checks this under an
 // advisory lock and is authoritative; this only blocks an obviously invalid
 // amount before the round trip.
 const EPSILON = 0.005;
