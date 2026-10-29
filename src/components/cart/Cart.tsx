@@ -30,7 +30,7 @@ const Cart = () => {
   }
 
   // Same rules as the booking (lib/pricing/bookingTotals). Delivery fee and the
-  // morning-delivery/afternoon-pickup extra day depend on choices made at booking,
+  // morning-delivery/afternoon-collection extra day depend on choices made at booking,
   // so the cart estimate covers the equipment over the selected nights only.
   const days = startDate && endDate ? rentalDays(startDate, endDate) : 0;
   const hasDates = days > 0;

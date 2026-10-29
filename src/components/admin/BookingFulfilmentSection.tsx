@@ -60,7 +60,7 @@ export const BookingFulfilmentSection = ({ bookingId }: BookingFulfilmentSection
             <Spinner size="sm" message="Loading tasks..." />
           </div>
         ) : tasks.length === 0 ? (
-          <p className="text-sm text-gray-500">No delivery or pickup tasks scheduled yet.</p>
+          <p className="text-sm text-gray-500">No delivery or collection tasks scheduled yet.</p>
         ) : (
           <div className="space-y-2">
             {tasks.map((task) => (

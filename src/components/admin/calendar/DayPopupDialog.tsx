@@ -56,7 +56,7 @@ export const DayPopupDialog = ({
   const getPickupStatusLabel = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'Picked Up';
+        return 'Collected';
       default:
         return 'Scheduled';
     }
@@ -114,7 +114,7 @@ export const DayPopupDialog = ({
             Equipment Schedule for {format(selectedDate, 'EEEE, dd/MM/yyyy')}
           </DialogTitle>
           <DialogDescription>
-            This dialog shows all the deliveries and pickups scheduled for the selected date.
+            This dialog shows all the deliveries and collections scheduled for the selected date.
           </DialogDescription>
         </DialogHeader>
         
@@ -135,17 +135,17 @@ export const DayPopupDialog = ({
               )}
             </div>
 
-            {/* Pickups Section */}
+            {/* Collections Section */}
             <div>
               <div className="flex items-center gap-2 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                 <Package className="h-5 w-5 text-orange-600" />
                 <h3 className="font-semibold text-lg text-orange-800">
-                  Pickups ({pickups.length})
+                  Collections ({pickups.length})
                 </h3>
               </div>
               {renderBookingSection(
-                pickups, 
-                "No pickups scheduled for this day",
+                pickups,
+                "No collections scheduled for this day",
                 false
               )}
             </div>
@@ -155,7 +155,7 @@ export const DayPopupDialog = ({
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No equipment activities</h3>
             <p className="text-gray-500 mb-4">
-              No deliveries or pickups scheduled for {format(selectedDate, 'dd/MM/yyyy')}
+              No deliveries or collections scheduled for {format(selectedDate, 'dd/MM/yyyy')}
             </p>
             <Button className="gap-2" onClick={() => setWizardOpen(true)}>
               <Plus className="h-4 w-4" />

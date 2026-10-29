@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isSundayDateOnly } from '@/lib/dateOnly';
+import { STORE_PICKUP_LABEL } from '@/lib/fulfillmentLabels';
 
 type FulfillmentMethod = 'delivery' | 'pickup';
 
@@ -52,7 +53,7 @@ export const BookingSummary = ({
           {hasTimeSlotAdjustment && (
             <div className="flex justify-between text-sm text-blue-600">
               <span>Time Slot Adjustment:</span>
-              <span>+1 day (afternoon pickup)</span>
+              <span>+1 day (afternoon collection)</span>
             </div>
           )}
 
@@ -70,7 +71,7 @@ export const BookingSummary = ({
             <div className="flex justify-between text-sm">
               <span>
                 {isPickup
-                  ? 'Delivery Fee (Pickup):'
+                  ? `Delivery Fee (${STORE_PICKUP_LABEL}):`
                   : isSunday
                   ? 'Sunday Delivery Fee:'
                   : days < 5
@@ -92,7 +93,7 @@ export const BookingSummary = ({
 
           {isPickup && (
             <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
-              Pickup at store — no delivery fee.
+              {STORE_PICKUP_LABEL} — no delivery fee.
             </div>
           )}
 

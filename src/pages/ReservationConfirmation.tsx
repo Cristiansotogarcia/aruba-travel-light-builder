@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { SEO } from '@/components/common/SEO';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { STORE_PICKUP_LABEL } from '@/lib/fulfillmentLabels';
 
 interface ConfirmationState {
   bookingId: string;
@@ -66,17 +67,17 @@ const ReservationConfirmation = () => {
             </CardContent>
           </Card>
 
-          {/* Pickup code card — only for pickup orders with a code */}
+          {/* Store Pickup code card — only for pickup orders with a code */}
           {isPickup && (
             <Card className="surface-card border-2 border-primary/30">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Store pickup details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Pickup code */}
+                {/* Store Pickup code */}
                 <div className="text-center space-y-1">
                   <p className="text-sm text-muted-foreground uppercase tracking-wide font-medium">
-                    Your pickup code
+                    Your {STORE_PICKUP_LABEL} code
                   </p>
                   <p className="text-4xl font-bold tracking-widest text-primary">
                     {pickupCode}

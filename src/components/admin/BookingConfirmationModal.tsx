@@ -319,7 +319,7 @@ export const BookingConfirmationModal = ({
                 {reservation.delivery_slot === 'morning' ? 'Morning (9AM-12PM)' : 'Afternoon (1PM-5PM)'}
               </p>
               <p>
-                <span className="font-medium">Pickup:</span>{' '}
+                <span className="font-medium">Collection:</span>{' '}
                 {formatDateOnly(reservation.end_date)}
               </p>
             </div>

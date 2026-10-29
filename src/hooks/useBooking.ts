@@ -286,7 +286,7 @@ const useBooking = () => {
         if (!bookingData.pickupSlot) {
           toast({
             title: 'Validation Error',
-            description: 'Please select a pickup time slot.',
+            description: 'Please select a collection time slot.',
             variant: 'destructive'
           });
           return;
@@ -304,7 +304,7 @@ const useBooking = () => {
         if (bookingData.endDate && isSunday(bookingData.endDate) && bookingData.pickupSlot !== 'morning') {
           toast({
             title: 'Validation Error',
-            description: 'Sunday pickups are only available in the morning.',
+            description: 'Sunday collections are only available in the morning.',
             variant: 'destructive'
           });
           return;

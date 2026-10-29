@@ -174,7 +174,7 @@ function generateDriverAssignmentEmail(data: {
             <td style="padding: 10px 0; color: #111827; font-weight: 500;">${startDateText}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6b7280;">Pickup Date:</td>
+            <td style="padding: 10px 0; color: #6b7280;">Collection Date:</td>
             <td style="padding: 10px 0; color: #111827; font-weight: 500;">${endDateText}</td>
           </tr>
         </table>

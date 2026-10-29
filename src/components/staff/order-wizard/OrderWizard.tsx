@@ -14,6 +14,7 @@ import { computeBookingTotals } from '@/lib/pricing/bookingTotals';
 import { createBookingAsStaff } from '@/lib/queries/booking-create-staff';
 import { parseAvailabilityConflict } from '@/lib/queries/booking-create';
 import { isValidRange } from '@/lib/rentalDates';
+import { STORE_PICKUP_LABEL } from '@/lib/fulfillmentLabels';
 
 import { StepDates } from './StepDates';
 import { StepCatalog } from './StepCatalog';
@@ -486,7 +487,7 @@ function SuccessPanel({
 
       {success.pickupCode && (
         <div className="mx-auto max-w-xs space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pickup code</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{STORE_PICKUP_LABEL} code</p>
           <p className="font-mono text-2xl font-bold tracking-widest text-primary">{success.pickupCode}</p>
           <Button
             type="button"
@@ -495,7 +496,7 @@ function SuccessPanel({
             className="gap-1.5"
             onClick={() => {
               void navigator.clipboard?.writeText(success.pickupCode as string);
-              toastCopy({ title: 'Pickup code copied' });
+              toastCopy({ title: `${STORE_PICKUP_LABEL} code copied` });
             }}
           >
             <Copy className="h-3.5 w-3.5" /> Copy code

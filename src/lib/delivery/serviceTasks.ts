@@ -1,4 +1,5 @@
 import type { Database } from '@/types/supabase';
+import { getServiceTaskTypeDisplayLabel } from '@/lib/fulfillmentLabels';
 
 export type ServiceTaskRow = Database['public']['Tables']['booking_service_tasks']['Row'];
 export type DeliverySlipRow = Database['public']['Tables']['delivery_slips']['Row'];
@@ -30,8 +31,10 @@ export const getServiceTaskStatusLabel = (status: string) => {
   }
 };
 
+// 'pickup' is the driver going to collect the equipment from the customer
+// (the Collection leg) — see src/lib/fulfillmentLabels.ts for the wording map.
 export const getServiceTaskTypeLabel = (taskType: string) =>
-  taskType === 'pickup' ? 'Pickup' : 'Delivery';
+  getServiceTaskTypeDisplayLabel(taskType) || 'Delivery';
 
 export const getServiceTaskBadgeClassName = (status: string) => {
   switch (status) {

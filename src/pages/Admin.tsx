@@ -109,7 +109,7 @@ const Admin = () => {
             scope="current-user"
             requiredPermission="DriverTasks"
             title="My Tasks"
-            description="Your assigned deliveries and pickups"
+            description="Your assigned deliveries and collections"
           />
         );
       case 'taskmaster':
@@ -118,7 +118,7 @@ const Admin = () => {
             scope="all-assigned"
             requiredPermission="TaskMaster"
             title="Task Management"
-            description="Monitor and manage assigned delivery and pickup work"
+            description="Monitor and manage assigned delivery and collection work"
           />
         );
       case 'seo':
