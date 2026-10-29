@@ -157,7 +157,10 @@ export default defineConfig(async ({ mode }) => {
       // .claude/worktrees holds parallel-agent checkouts whose tests resolve the
       // @ alias back to THIS tree — collecting them runs duplicates against the
       // wrong sources.
-      exclude: [...configDefaults.exclude, '**/.claude/**'],
+      // supabase/functions/**/*.test.ts are Deno tests (Deno.test, remote
+      // deno.land imports) run with `deno test`, not vitest — collecting them
+      // here fails to even parse the file.
+      exclude: [...configDefaults.exclude, '**/.claude/**', '**/supabase/functions/**'],
     },
   };
 });
