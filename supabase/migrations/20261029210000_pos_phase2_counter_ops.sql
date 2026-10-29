@@ -167,13 +167,13 @@ BEGIN
   PERFORM 1
   FROM public.equipment e
   WHERE e.id IN (
-    SELECT bi.equipment_id FROM public.booking_items bi WHERE bi.booking_id = p_booking_id
+    SELECT bi.equipment_id::uuid FROM public.booking_items bi WHERE bi.booking_id = p_booking_id
   )
   ORDER BY e.id
   FOR UPDATE;
 
   FOR v_item IN
-    SELECT bi.equipment_id AS equipment_id, bi.quantity AS quantity
+    SELECT bi.equipment_id::uuid AS equipment_id, bi.quantity AS quantity
     FROM public.booking_items bi
     WHERE bi.booking_id = p_booking_id
   LOOP
