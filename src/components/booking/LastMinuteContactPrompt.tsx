@@ -13,7 +13,7 @@ export const LastMinuteContactPrompt = () => {
     <div className="mb-8 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
       <p className="text-foreground">
         Need a last minute rental? Can&apos;t find your dates?{' '}
-        <Link to="/contact" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
+        <Link to="/contact?type=last_minute" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">
           Contact us here <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </p>
