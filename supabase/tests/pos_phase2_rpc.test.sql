@@ -235,6 +235,93 @@ begin
   perform test_assert(v_total = 50, 'the refused extend leaves total_amount untouched');
 end $$;
 
+-- 6b. extend_booking_rental passes the booking's own delivery_slot/
+--     pickup_slot into price_booking (62ad54c), so a morning/afternoon
+--     booking keeps its +1 day on extend too. The stub is slot-aware
+--     (pos_price_booking_stub.sql): nights = end-start, +1 when
+--     delivery_slot = 'morning' and pickup_slot = 'afternoon'. If the
+--     migration's v_priced call dropped the two slot keys again, the
+--     extend would reprice without the +1 day and this would go red.
+insert into public.equipment (id, name, price_per_day, category, stock_quantity) values
+  ('bbbbbbbb-0000-0000-0000-000000000004', 'Slot extend item', 10, 'Beach', 5);
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+do $$
+begin
+  -- 2026-11-02..11-04 is 2 raw nights, +1 slot bonus = 3 nights x 10 = 30.
+  perform public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","delivery_slot":"morning","pickup_slot":"afternoon","fulfillment_method":"delivery","customer_address":"1 Main St","customer_name":"Extend Slot Target"}'::jsonb,
+    '[{"equipment_id":"bbbbbbbb-0000-0000-0000-000000000004","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  );
+end $$;
+do $$
+declare
+  v_booking_id uuid;
+  v_result jsonb;
+begin
+  select id into v_booking_id from public.bookings where customer_name = 'Extend Slot Target';
+  -- 11-02..11-06 is 4 raw nights, +1 slot bonus = 5 nights x 10 = 50.
+  v_result := public.extend_booking_rental(v_booking_id, '2026-11-06');
+  perform test_assert((v_result->>'additional_amount')::numeric = 20,
+    'a morning/afternoon extend keeps its +1 day (50 - 30 = 20, not 40 - 30 = 10)');
+end $$;
+reset role;
+do $$
+declare
+  v_total numeric;
+begin
+  select total_amount into v_total from public.bookings where customer_name = 'Extend Slot Target';
+  perform test_assert(v_total = 50, 'the slot-aware extend stores the +1-day total (5 nights x 10)');
+end $$;
+
+-- 6c. A longer extend that reprices lower never lowers the booking's total:
+--     extend_booking_rental clamps to GREATEST(new_total, old_total) and
+--     charges 0 extra (Claudy's #109 review decision, 14f9767). The stub is
+--     linear in nights x price_per_day, so to make a LONGER range reprice
+--     LOWER we drop the equipment's price between create and extend - this
+--     reaches the exact same clamp the real tiered pricing would trigger
+--     crossing into a cheaper weekly rate; the clamp only looks at
+--     price_booking's two totals, not why one came out lower.
+insert into public.equipment (id, name, price_per_day, category, stock_quantity) values
+  ('bbbbbbbb-0000-0000-0000-000000000005', 'Reprice lower item', 50, 'Beach', 5);
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+do $$
+begin
+  -- old total: 2 nights x 50 = 100.
+  perform public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Extend Reprice Lower Target"}'::jsonb,
+    '[{"equipment_id":"bbbbbbbb-0000-0000-0000-000000000005","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  );
+end $$;
+reset role;
+update public.equipment set price_per_day = 10 where id = 'bbbbbbbb-0000-0000-0000-000000000005';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+do $$
+declare
+  v_booking_id uuid;
+  v_result jsonb;
+begin
+  select id into v_booking_id from public.bookings where customer_name = 'Extend Reprice Lower Target';
+  -- raw reprice at the new rate: 3 nights x 10 = 30, below the old total of 100.
+  v_result := public.extend_booking_rental(v_booking_id, '2026-11-05');
+  perform test_assert((v_result->>'additional_amount')::numeric = 0,
+    'an extend that reprices lower (30) than the current total (100) charges 0 extra');
+  perform test_assert((v_result->>'new_total')::numeric = 100,
+    'an extend that reprices lower keeps the current total (100), not the lower reprice (30)');
+end $$;
+reset role;
+do $$
+declare
+  v_total numeric;
+begin
+  select total_amount into v_total from public.bookings where customer_name = 'Extend Reprice Lower Target';
+  perform test_assert(v_total = 100, 'the reprice-lower extend leaves total_amount at the pre-extend amount');
+end $$;
+
 -- 7. A refund (credit note) within the booking's total is accepted.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
