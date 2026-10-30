@@ -202,14 +202,9 @@ BEGIN
   v_old_total := v_booking.total_amount;
 
   -- -------------------------------------------------------------------
-  -- Repricing gap (2026-10-29): public.price_booking is the shared pricing
-  -- seam owned by 1000Ton + Kev (contract TLB_POS_PHASE1_CONTRACT.md #3);
-  -- it does NOT exist in the migrations of this branch yet — the same gap
-  -- pos_create_sale already carries (20261029203000_pos_phase1_counter_sale.sql).
-  -- This is the ONE place extend_booking_rental reads a total; no separate
-  -- pricing formula is duplicated here, so this RPC starts pricing correctly
-  -- the moment price_booking lands, with nothing else to keep in sync. Until
-  -- then this call raises undefined_function, same as pos_create_sale does.
+  -- Priced by the shared seam public.price_booking
+  -- (20261030130000_price_booking.sql). This is the ONE place
+  -- extend_booking_rental reads a total; no pricing formula is duplicated here.
   v_priced := public.price_booking(
     jsonb_build_object(
       'start_date', v_booking.start_date,
@@ -228,8 +223,8 @@ BEGIN
 
   -- A longer rental can reprice lower (4 days daily + delivery fee costs more
   -- than a 5-day weekly rate). Extending never lowers what the booking costs:
-  -- the total stays where it is and nothing extra is charged (Claudy,
-  -- 2026-10-30, Elby #109 review; Cristian can overturn).
+  -- the total stays where it is and nothing extra is charged
+  -- and the stored total is never lowered.
   v_new_total := GREATEST(v_new_total, v_old_total);
 
   v_additional := ROUND(v_new_total - v_old_total, 2);
