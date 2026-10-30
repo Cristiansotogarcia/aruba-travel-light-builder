@@ -1,0 +1,124 @@
+[
+  {
+    "id": "1-4-days-daily",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 2}],
+    "expectedDays": 3, "expectedEquipmentTotal": 60, "expectedDeliveryFee": 0, "expectedTotal": 60
+  },
+  {
+    "id": "exactly-5-days-weekly",
+    "startDate": "2026-11-02", "endDate": "2026-11-07",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": 45, "quantity": 2}],
+    "expectedDays": 5, "expectedEquipmentTotal": 90, "expectedDeliveryFee": 0, "expectedTotal": 90
+  },
+  {
+    "id": "exactly-7-days-weekly",
+    "startDate": "2026-11-02", "endDate": "2026-11-09",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": 45, "quantity": 2}],
+    "expectedDays": 7, "expectedEquipmentTotal": 90, "expectedDeliveryFee": 0, "expectedTotal": 90
+  },
+  {
+    "id": "8plus-1to4-remainder",
+    "startDate": "2026-11-02", "endDate": "2026-11-11",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": 45, "quantity": 2}],
+    "expectedDays": 9, "expectedEquipmentTotal": 130, "expectedDeliveryFee": 0, "expectedTotal": 130
+  },
+  {
+    "id": "8plus-5to6-remainder",
+    "startDate": "2026-11-02", "endDate": "2026-11-14",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": 45, "quantity": 2}],
+    "expectedDays": 12, "expectedEquipmentTotal": 180, "expectedDeliveryFee": 0, "expectedTotal": 180
+  },
+  {
+    "id": "weekly-null-fallback",
+    "startDate": "2026-11-02", "endDate": "2026-11-07",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 5, "expectedEquipmentTotal": 50, "expectedDeliveryFee": 0, "expectedTotal": 50
+  },
+  {
+    "id": "weekly-zero-fallback",
+    "startDate": "2026-11-02", "endDate": "2026-11-07",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": 0, "quantity": 1}],
+    "expectedDays": 5, "expectedEquipmentTotal": 50, "expectedDeliveryFee": 0, "expectedTotal": 50
+  },
+  {
+    "id": "slot-plus-one-day",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": "morning", "pickupSlot": "afternoon", "fulfillmentMethod": "delivery",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 4, "expectedEquipmentTotal": 40, "expectedDeliveryFee": 10, "expectedTotal": 50
+  },
+  {
+    "id": "slot-no-add-morning-morning",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": "morning", "pickupSlot": "morning", "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 3, "expectedEquipmentTotal": 30, "expectedDeliveryFee": 0, "expectedTotal": 30
+  },
+  {
+    "id": "slot-no-add-afternoon-afternoon",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": "afternoon", "pickupSlot": "afternoon", "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 3, "expectedEquipmentTotal": 30, "expectedDeliveryFee": 0, "expectedTotal": 30
+  },
+  {
+    "id": "slot-no-add-afternoon-morning",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": "afternoon", "pickupSlot": "morning", "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 3, "expectedEquipmentTotal": 30, "expectedDeliveryFee": 0, "expectedTotal": 30
+  },
+  {
+    "id": "sunday-start-fee",
+    "startDate": "2026-11-01", "endDate": "2026-11-03",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "delivery",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 2, "expectedEquipmentTotal": 20, "expectedDeliveryFee": 20, "expectedTotal": 40
+  },
+  {
+    "id": "under-5-days-fee-10",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "delivery",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 3, "expectedEquipmentTotal": 30, "expectedDeliveryFee": 10, "expectedTotal": 40
+  },
+  {
+    "id": "5plus-days-fee-0",
+    "startDate": "2026-11-02", "endDate": "2026-11-09",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "delivery",
+    "items": [{"price_per_day": 10, "price_per_week": 45, "quantity": 1}],
+    "expectedDays": 7, "expectedEquipmentTotal": 45, "expectedDeliveryFee": 0, "expectedTotal": 45
+  },
+  {
+    "id": "pickup-fee-always-0",
+    "startDate": "2026-11-01", "endDate": "2026-11-03",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 2, "expectedEquipmentTotal": 20, "expectedDeliveryFee": 0, "expectedTotal": 20
+  },
+  {
+    "id": "missing-fulfillment-defaults-delivery",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": null,
+    "items": [{"price_per_day": 10, "price_per_week": null, "quantity": 1}],
+    "expectedDays": 3, "expectedEquipmentTotal": 30, "expectedDeliveryFee": 10, "expectedTotal": 40
+  },
+  {
+    "id": "several-lines-summed",
+    "startDate": "2026-11-02", "endDate": "2026-11-05",
+    "deliverySlot": null, "pickupSlot": null, "fulfillmentMethod": "pickup",
+    "items": [
+      {"price_per_day": 10, "price_per_week": null, "quantity": 2},
+      {"price_per_day": 5, "price_per_week": null, "quantity": 3}
+    ],
+    "expectedDays": 3, "expectedEquipmentTotal": 105, "expectedDeliveryFee": 0, "expectedTotal": 105
+  }
+]
