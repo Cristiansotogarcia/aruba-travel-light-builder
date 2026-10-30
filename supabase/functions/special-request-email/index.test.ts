@@ -247,3 +247,77 @@ Deno.test('without RESEND_API_KEY, honors STAFF_NOTIFICATION_EMAIL as the logged
     await pg.stop();
   }
 });
+
+// Fake Resend: answers every POST with `status` and `body`, and records what
+// the function sent.
+const RESEND_PORT = 8002;
+function startFakeResend(status: number, body: string) {
+  const seen: Record<string, unknown>[] = [];
+  const server = Deno.serve({ port: RESEND_PORT, hostname: '127.0.0.1', onListen() {} }, async (req) => {
+    seen.push(JSON.parse(await req.text()));
+    return new Response(body, { status });
+  });
+  return { seen, stop: () => server.shutdown() };
+}
+
+const resendEnv = {
+  RESEND_API_KEY: 'test-resend-key',
+  RESEND_API_URL: `http://127.0.0.1:${RESEND_PORT}/emails`,
+};
+
+Deno.test('a real send goes to staff with the reply-to and content taken from the stored row, and keeps the claim', async () => {
+  const pg = startFakePostgrest([storedRow]);
+  const resend = startFakeResend(200, JSON.stringify({ id: 'email-123' }));
+  const process = await startFunction({ ...dbEnv, ...resendEnv });
+  try {
+    const res = await post(JSON.stringify({ id: REQUEST_ID }));
+    assertEquals(res.status, 200);
+    assertEquals((await res.json()).emailId, 'email-123');
+
+    assertEquals(resend.seen.length, 1);
+    assertEquals(resend.seen[0].to, ['info@travelightaruba.com']);
+    assertEquals(resend.seen[0].reply_to, storedRow.email);
+    assert(String(resend.seen[0].html).includes(storedRow.message), 'email body renders the stored message');
+    // Only the claim, no release.
+    assertEquals(pg.seen.length, 1);
+  } finally {
+    await stopFunction(process);
+    await resend.stop();
+    await pg.stop();
+  }
+});
+
+Deno.test('Resend refusing the send returns 502 and releases the claim', async () => {
+  const pg = startFakePostgrest([storedRow]);
+  const resend = startFakeResend(500, 'upstream down');
+  const process = await startFunction({ ...dbEnv, ...resendEnv });
+  try {
+    const res = await post(JSON.stringify({ id: REQUEST_ID }));
+    assertEquals(res.status, 502);
+    await res.body?.cancel();
+    assertEquals(pg.seen.length, 2);
+    assertEquals(pg.seen[1].body, { notified_at: null });
+  } finally {
+    await stopFunction(process);
+    await resend.stop();
+    await pg.stop();
+  }
+});
+
+Deno.test('an accepted send with a non-JSON response still returns 200 and keeps the claim (no second email)', async () => {
+  const pg = startFakePostgrest([storedRow]);
+  const resend = startFakeResend(200, 'OK');
+  const process = await startFunction({ ...dbEnv, ...resendEnv });
+  try {
+    const res = await post(JSON.stringify({ id: REQUEST_ID }));
+    assertEquals(res.status, 200);
+    await res.body?.cancel();
+    assertEquals(resend.seen.length, 1);
+    // Only the claim, no release.
+    assertEquals(pg.seen.length, 1);
+  } finally {
+    await stopFunction(process);
+    await resend.stop();
+    await pg.stop();
+  }
+});

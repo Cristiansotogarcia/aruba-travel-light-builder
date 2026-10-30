@@ -18,7 +18,8 @@ import { corsHeaders } from '../_shared/cors.ts';
 // (already configured for sibling functions), optional STAFF_NOTIFICATION_EMAIL.
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-const RESEND_API_URL = 'https://api.resend.com/emails';
+// Overridable so tests can point the send at a local fake.
+const RESEND_API_URL = Deno.env.get('RESEND_API_URL') || 'https://api.resend.com/emails';
 const FROM_EMAIL = 'Travel Light Aruba <info@travelightaruba.com>';
 // Staff mailbox that triages special requests. Override with
 // STAFF_NOTIFICATION_EMAIL if a dedicated inbox is set up later.
@@ -157,10 +158,18 @@ serve(async (req: Request) => {
       return genericFailure(502);
     }
 
-    const emailResult = await emailResponse.json();
+    // Resend accepted the send, so the claim stays from here on: releasing it
+    // because the response body could not be read would let a retry email
+    // staff a second time.
+    let emailId: string | undefined;
+    try {
+      emailId = ((await emailResponse.json()) as { id?: string }).id;
+    } catch {
+      console.error('special-request-email: sent, but the Resend response was not JSON', specialRequest.id);
+    }
 
     return new Response(
-      JSON.stringify({ message: `Special request email sent to ${STAFF_EMAIL}`, emailId: emailResult.id }),
+      JSON.stringify({ message: `Special request email sent to ${STAFF_EMAIL}`, emailId }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
