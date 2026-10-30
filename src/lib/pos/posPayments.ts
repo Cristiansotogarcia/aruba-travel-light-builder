@@ -1,6 +1,6 @@
 // Pure POS payment logic: change due, per-line validity, and pay-button
 // enablement. Mirrors the server-side rules in migration
-// 20261029190000_pos_phase1_counter_sale.sql (pos_create_sale) so the UI and
+// 20261029203000_pos_phase1_counter_sale.sql (pos_create_sale) so the UI and
 // the RPC always agree on what counts as a valid payment set:
 //   * card requires a reference (last 4 or terminal slip no.).
 //   * tendered is cash-only and must be >= the applied amount; change_due =

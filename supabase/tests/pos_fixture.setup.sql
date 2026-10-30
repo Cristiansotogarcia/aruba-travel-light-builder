@@ -348,3 +348,28 @@ BEGIN
   RETURN v_status;
 END;
 $function$;
+
+-- test_assert_refused(stmt, code): run stmt (a SELECT, e.g. one that calls
+-- an RPC under test) and assert it raised an exception whose message
+-- contains code. The call to stmt happens inside its own handled block;
+-- test_assert only runs AFTER that block closes, with no handler left
+-- watching it, so a wrongly-successful call cannot have its own raised
+-- failure re-caught and misread as a pass (MF1, Elby, mutant-proven in
+-- pos_rpc.test.sql 00878ff: a label that carried the expected code let a
+-- synthetic 'FAIL: ...CODE)' message satisfy the handler's own
+-- `sqlerrm ilike '%CODE%'` check). Depends on test_assert, defined later in
+-- each *.test.sql file - not resolved until this function actually runs,
+-- by which point test_assert exists. See supabase/tests/README.md.
+create or replace function test_assert_refused(stmt text, code text) returns void
+language plpgsql as $$
+declare
+  refused boolean := false;
+begin
+  begin
+    execute stmt;
+  exception when others then
+    refused := sqlerrm ilike '%' || code || '%';
+  end;
+  perform test_assert(refused, code || ' is refused');
+end;
+$$;
