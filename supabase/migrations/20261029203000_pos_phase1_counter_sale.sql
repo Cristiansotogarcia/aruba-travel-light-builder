@@ -147,8 +147,8 @@ GRANT EXECUTE ON FUNCTION public.record_booking_payment(uuid, numeric, text, tex
 --    item price/subtotal (rejected outright if sent) and prices the sale via
 --    the shared seam public.price_booking(p_booking, p_items) — the SAME
 --    function create_booking_as_staff's sibling flows are meant to consume
---    once it lands (Plutus, 2026-10-29). price_booking does not exist on
---    this branch yet; its output keys are not final. The ONE place this RPC
+--    once it lands. price_booking is added by migration
+--    20261030130000_price_booking.sql. The ONE place this RPC
 --    reads a total from it is marked below. POS does not implement its own
 --    fee logic.
 --
