@@ -21,7 +21,7 @@
 -- equipment_category, system_settings, bookings, booking_items and
 -- booking_payments (pre-POS shape; the POS-only columns - card method,
 -- tendered, change_due, channel - are added by the REAL
--- 20261029190000_pos_phase1_counter_sale.sql migration, concatenated after
+-- 20261029203000_pos_phase1_counter_sale.sql migration, concatenated after
 -- this file by run-pos-tests.sh, not duplicated here). It intentionally
 -- omits every unrelated table/policy (accounting, delivery ops, blog,
 -- special_requests, etc).

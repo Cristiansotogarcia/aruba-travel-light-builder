@@ -1,6 +1,6 @@
 -- supabase/tests/pos_rpc.test.sql
 --
--- Exercises public.pos_create_sale (supabase/migrations/20261029190000_pos_phase1_counter_sale.sql,
+-- Exercises public.pos_create_sale (supabase/migrations/20261029203000_pos_phase1_counter_sale.sql,
 -- PLANS/TLB_POS_PHASE1_CONTRACT.md, goal tlb-pos) against a real Postgres
 -- (run after pos_fixture.setup.sql + the real migration + pos_price_booking_stub.sql
 -- in the same session; see run-pos-tests.sh). Covers exactly the contract's
