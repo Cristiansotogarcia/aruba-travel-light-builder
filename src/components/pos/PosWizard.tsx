@@ -9,6 +9,7 @@ import { getEquipmentAvailability } from '@/lib/queries/availability';
 import { computeBookingTotals } from '@/lib/pricing/bookingTotals';
 import { parseAvailabilityConflict } from '@/lib/queries/booking-create';
 import { createPosSale, type PosSaleResult } from '@/lib/queries/pos';
+import { fetchOpenDrawerSession } from '@/lib/queries/posCloseOut';
 import type { PosPaymentLine } from '@/lib/pos/posPayments';
 import type { CatalogItem, WizardCartLine } from '@/components/staff/order-wizard/types';
 import { todayDateOnly } from '@/lib/dateOnly';
@@ -82,6 +83,16 @@ export function PosWizard() {
     queryFn: () => getEquipmentAvailability(startDate, endDate),
     enabled: datesValid,
     staleTime: 60_000,
+  });
+
+  // Phase 3 (contract: PLANS/TLB_POS_PHASE3_CONTRACT.md): the Pay step shows
+  // a non-blocking "Drawer is not open" warning on a Cash line when no drawer
+  // is open. Only fetched while on the Pay step — the wizard never needs it
+  // earlier, and it's cheap enough to not bother gating on step === 'pay'.
+  const { data: drawerSession } = useQuery({
+    queryKey: ['pos-drawer-session'],
+    queryFn: fetchOpenDrawerSession,
+    staleTime: 15_000,
   });
 
   const totals = useMemo(
@@ -233,6 +244,7 @@ export function PosWizard() {
           onPayLater={() => void submitSale([])}
           submitting={submitting}
           errorMessage={errorMessage}
+          drawerOpen={!!drawerSession}
         />
       )}
 
