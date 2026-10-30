@@ -14,12 +14,23 @@
 -- over items, nights = GREATEST(1, end_date - start_date). It must be
 -- replaced with the real price_booking once it lands; nothing here is meant
 -- to describe the real pricing contract.
+--
+-- One contract check on the INPUT: the real price_booking defaults a missing
+-- fulfillment_method to delivery (and charges the delivery fee), while
+-- pos_create_sale defaults it to pickup. pos_create_sale must therefore always
+-- pass the resolved value. The stub refuses a call without the key, so a
+-- regression there fails the "fulfillment omitted" case in pos_rpc.test.sql
+-- instead of silently pricing a pickup sale as a delivery.
 CREATE OR REPLACE FUNCTION public.price_booking(p_booking jsonb, p_items jsonb)
 RETURNS jsonb
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 AS $$
-  SELECT jsonb_build_object(
+BEGIN
+  IF NOT (p_booking ? 'fulfillment_method') THEN
+    RAISE EXCEPTION 'STUB_FULFILLMENT_MISSING: caller must pass fulfillment_method';
+  END IF;
+  RETURN jsonb_build_object(
     'total',
     (
       SELECT COALESCE(SUM(e.price_per_day * (i->>'quantity')::int), 0)
@@ -28,4 +39,5 @@ AS $$
       JOIN public.equipment e ON e.id = (i->>'equipment_id')::uuid
     )
   );
+END;
 $$;

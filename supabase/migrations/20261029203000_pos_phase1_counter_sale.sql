@@ -277,7 +277,14 @@ BEGIN
   -- price_booking output key pending, contract TLB_POS_PHASE1_CONTRACT.md
   -- This is the ONE place pos_create_sale reads a total; it is the only
   -- total payments are checked against below.
-  v_priced := public.price_booking(p_booking, p_items);
+  -- Price the booking AS IT IS STORED: a missing fulfillment_method is
+  -- pickup here (v_fulfillment above), while price_booking defaults a
+  -- missing key to delivery, so pass the resolved value explicitly or a
+  -- pickup sale would be charged a delivery fee.
+  v_priced := public.price_booking(
+    jsonb_set(p_booking, '{fulfillment_method}', to_jsonb(v_fulfillment)),
+    p_items
+  );
   v_total := (v_priced->>'total')::numeric;
   -- ---------------------------------------------------------------------
   IF v_total IS NULL THEN

@@ -446,4 +446,29 @@ begin
   perform test_assert(valid_qty_booking_count = 1, 'a qty 5 line (within stock) is still accepted');
 end $$;
 
+-- Fulfillment omitted: pos_create_sale stores the booking as pickup, so it
+-- must price it as pickup too. The stub refuses a price_booking call without
+-- fulfillment_method, so this sale only succeeds if pos_create_sale passes
+-- the resolved value. 2 nights at 25 = 50, no delivery fee.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+do $$
+begin
+  perform public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","customer_name":"No Fulfillment Key Buyer"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000004","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  );
+end $$;
+reset role;
+do $$
+declare
+  b record;
+begin
+  select fulfillment_method, total_amount into b
+  from public.bookings where customer_name = 'No Fulfillment Key Buyer';
+  perform test_assert(b.fulfillment_method = 'pickup', 'a sale without fulfillment_method is stored as pickup');
+  perform test_assert(b.total_amount = 50, 'a sale without fulfillment_method is priced as pickup');
+end $$;
+
 \echo 'pos_create_sale RPC: assertions complete'
