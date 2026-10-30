@@ -195,7 +195,7 @@ export const BookingAssignment = () => {
       <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Booking Assignment</h1>
-        <p className="text-gray-600 mt-1">Assign bookings to drivers for delivery and pickup</p>
+        <p className="text-gray-600 mt-1">Assign bookings to drivers for delivery and collection</p>
       </div>
 
       {/* Unassigned Bookings */}

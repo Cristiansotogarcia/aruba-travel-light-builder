@@ -231,11 +231,11 @@ function generateConfirmationEmail(booking: BookingRow, items: BookingItemRow[])
             <td style="padding: 12px 0; color: #111827; font-weight: 500;">${deliverySlotText}</td>
           </tr>` : ''}
           <tr>
-            <td style="padding: 12px 0; color: #6b7280;">Pickup Date:</td>
+            <td style="padding: 12px 0; color: #6b7280;">Collection Date:</td>
             <td style="padding: 12px 0; color: #111827; font-weight: 500;">${formatDate(booking.end_date)}</td>
           </tr>
           ${pickupSlotText ? `<tr>
-            <td style="padding: 12px 0; color: #6b7280;">Pickup Time:</td>
+            <td style="padding: 12px 0; color: #6b7280;">Collection Time:</td>
             <td style="padding: 12px 0; color: #111827; font-weight: 500;">${pickupSlotText}</td>
           </tr>` : ''}
         </table>`;
@@ -243,7 +243,7 @@ function generateConfirmationEmail(booking: BookingRow, items: BookingItemRow[])
   const pickupSection = isPickup && booking.pickup_code
     ? `
       <div style="background-color: #ecfdf5; border: 2px solid #10b981; padding: 24px; border-radius: 8px; margin: 30px 0; text-align: center;">
-        <p style="margin: 0 0 10px; color: #065f46; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Your Pickup Code</p>
+        <p style="margin: 0 0 10px; color: #065f46; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Your Store Pickup Code</p>
         <p style="margin: 0 0 16px; color: #047857; font-size: 36px; font-weight: bold; font-family: monospace; letter-spacing: 4px;">${escapeHtml(booking.pickup_code)}</p>
         <p style="margin: 0 0 12px; color: #065f46; font-size: 14px; line-height: 1.6;">
           Please bring this code with you when collecting your equipment at our store.
@@ -264,7 +264,7 @@ function generateConfirmationEmail(booking: BookingRow, items: BookingItemRow[])
     : '';
 
   const nextStepFinal = isPickup
-    ? 'Collect your equipment at our store &mdash; bring your pickup code'
+    ? 'Collect your equipment at our store &mdash; bring your Store Pickup code'
     : "We'll deliver your equipment on the scheduled date";
 
   return `<!DOCTYPE html>

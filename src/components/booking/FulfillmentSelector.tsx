@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Truck, Store } from 'lucide-react';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { STORE_PICKUP_LABEL } from '@/lib/fulfillmentLabels';
 
 type FulfillmentMethod = 'delivery' | 'pickup';
 
@@ -20,7 +21,7 @@ export const FulfillmentSelector = ({ value, onChange }: FulfillmentSelectorProp
 
   return (
     <div className="space-y-2">
-      <p className="text-base font-semibold">Delivery or Pickup?</p>
+      <p className="text-base font-semibold">Delivery or {STORE_PICKUP_LABEL}?</p>
       <div className="flex gap-3">
         <Button
           type="button"
@@ -40,7 +41,7 @@ export const FulfillmentSelector = ({ value, onChange }: FulfillmentSelectorProp
           aria-pressed={value === 'pickup'}
         >
           <Store className="h-4 w-4" />
-          Store Pickup
+          {STORE_PICKUP_LABEL}
         </Button>
       </div>
       {value === 'delivery' && (
@@ -50,7 +51,7 @@ export const FulfillmentSelector = ({ value, onChange }: FulfillmentSelectorProp
       )}
       {value === 'pickup' && (
         <p className="text-sm text-muted-foreground">
-          Collect and return at our store — no delivery fee.
+          {STORE_PICKUP_LABEL} and Store Return at our store — no delivery fee.
         </p>
       )}
     </div>

@@ -20,7 +20,7 @@ const DriverDashboard = () => {
         scope="current-user"
         requiredPermission="DriverTasks"
         title="Driver Dashboard"
-        description="Manage today's deliveries and upcoming pickups"
+        description="Manage today's deliveries and upcoming collections"
       />
     </AppShell>
   );

@@ -258,7 +258,7 @@ function generateTrackingEmail(snapshot: DeliveryTrackingSnapshot) {
       <table style="width:100%;border-collapse:collapse;">
         <tr>
           <td style="padding:10px 0;color:#64748b;width:180px;">Task</td>
-          <td style="padding:10px 0;color:#0f172a;font-weight:600;">${snapshot.taskType === 'pickup' ? 'Pickup' : 'Delivery'}</td>
+          <td style="padding:10px 0;color:#0f172a;font-weight:600;">${snapshot.taskType === 'pickup' ? 'Collection' : 'Delivery'}</td>
         </tr>
         <tr>
           <td style="padding:10px 0;color:#64748b;">Status</td>

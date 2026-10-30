@@ -38,7 +38,7 @@ export const DriverTopBar = () => {
               </Badge>
             </div>
             <p className="truncate text-sm text-muted-foreground">
-              {profile?.name ? `${profile.name}'s assigned deliveries and pickups` : 'Assigned deliveries and pickups'}
+              {profile?.name ? `${profile.name}'s assigned deliveries and collections` : 'Assigned deliveries and collections'}
             </p>
           </div>
         </div>

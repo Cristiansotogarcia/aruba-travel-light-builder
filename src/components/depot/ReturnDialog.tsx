@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { DepotPickup } from './HandoverDialog';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { queueAction } from '@/lib/offline/depotDb';
+import { STORE_RETURN_LABEL } from '@/lib/fulfillmentLabels';
 
 interface ReturnDialogProps {
   pickup: DepotPickup;
@@ -81,7 +82,7 @@ export const ReturnDialog = ({
           });
         } else {
           toast({
-            title: 'Return Checked In',
+            title: `${STORE_RETURN_LABEL} Checked In`,
             description: `Equipment for booking ${pickup.pickup_code} has been checked in.`,
           });
         }
@@ -105,8 +106,8 @@ export const ReturnDialog = ({
     } catch (err) {
       console.error('Error completing depot return:', err);
       toast({
-        title: 'Return Failed',
-        description: err instanceof Error ? err.message : 'The return could not be checked in.',
+        title: `${STORE_RETURN_LABEL} Failed`,
+        description: err instanceof Error ? err.message : `The ${STORE_RETURN_LABEL.toLowerCase()} could not be checked in.`,
         variant: 'destructive',
       });
     } finally {
@@ -118,9 +119,9 @@ export const ReturnDialog = ({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Check In Return</DialogTitle>
+          <DialogTitle>Check In {STORE_RETURN_LABEL}</DialogTitle>
           <DialogDescription>
-            Record the return of equipment for booking{' '}
+            Record the {STORE_RETURN_LABEL.toLowerCase()} of equipment for booking{' '}
             <span className="font-mono font-semibold">{pickup.pickup_code}</span>.
             {!isOnline && (
               <span className="ml-1 text-amber-600">(Offline — action will be queued.)</span>
@@ -161,7 +162,7 @@ export const ReturnDialog = ({
             onClick={() => void handleSubmit()}
             disabled={submitting}
           >
-            {submitting ? 'Saving…' : 'Confirm Return'}
+            {submitting ? 'Saving…' : `Confirm ${STORE_RETURN_LABEL}`}
           </Button>
         </DialogFooter>
       </DialogContent>

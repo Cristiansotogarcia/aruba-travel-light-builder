@@ -8,6 +8,7 @@ import { useRentalDates } from '@/hooks/useRentalDates';
 import { useAvailability } from '@/hooks/useAvailability';
 import { FaqAccordion } from '@/components/common/FaqAccordion';
 import { EquipmentGridSkeleton } from '@/components/common/SkeletonLoader';
+import { SpecialRequestPrompt } from '@/components/common/SpecialRequestPrompt';
 import { getProducts } from '@/lib/queries/products';
 import { slugify } from '@/utils/slugify';
 import { Header } from '@/components/layout/Header';
@@ -295,6 +296,7 @@ const Equipment = () => {
                 ))}
               </div>
             ))}
+            <SpecialRequestPrompt />
           </div>
         </div>
       </main>

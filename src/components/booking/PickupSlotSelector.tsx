@@ -4,7 +4,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useEffect } from 'react';
 import { parseDateOnly } from '@/lib/dateOnly';
+import { COLLECTION_LABEL } from '@/lib/fulfillmentLabels';
 
+// This selector governs the Collection leg (TLA collecting the equipment
+// back from the customer at the end of the rental). The prop/identifier
+// names (`pickupSlot`, `PickupSlotSelector`) and the underlying wire value
+// stay as `pickup` on purpose — only the text shown to the customer changes.
+// See src/lib/fulfillmentLabels.ts and PLANS/TLB_ROXANNE_NOTES_AND_POS_PLAN.md.
 interface PickupSlotSelectorProps {
   selectedDate: string;
   selectedSlot?: 'morning' | 'afternoon';
@@ -42,11 +48,11 @@ export const PickupSlotSelector = ({
   if (!selectedDate) {
     return (
       <div className="space-y-2">
-        <Label className="text-base font-semibold">Pickup Time Slot</Label>
+        <Label className="text-base font-semibold">{COLLECTION_LABEL} Time Slot</Label>
         <Alert>
           <Clock className="h-4 w-4" />
           <AlertDescription>
-            Please select a pickup date first to view available time slots.
+            Please select a collection date first to view available time slots.
           </AlertDescription>
         </Alert>
       </div>
@@ -56,9 +62,9 @@ export const PickupSlotSelector = ({
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-base font-semibold">Pickup Time Slot *</Label>
+        <Label className="text-base font-semibold">{COLLECTION_LABEL} Time Slot *</Label>
         <p className="text-sm text-gray-600 mt-1">
-          Choose your preferred pickup time for {parseDateOnly(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          Choose your preferred collection time for {parseDateOnly(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
@@ -66,7 +72,7 @@ export const PickupSlotSelector = ({
         <Alert className="bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>Sunday Pickup:</strong> Sunday pickups are limited to the morning time slot.
+            <strong>Sunday {COLLECTION_LABEL}:</strong> Sunday collections are limited to the morning time slot.
           </AlertDescription>
         </Alert>
       )}
@@ -85,7 +91,7 @@ export const PickupSlotSelector = ({
           // On Sunday, disable afternoon slot
           const isSundayAfternoonSlot = isSunday && slot.slot === 'afternoon';
           const isSlotDisabled = disabled || isSundayAfternoonSlot;
-          
+
           return (
             <div
               key={slot.slot}
@@ -120,7 +126,7 @@ export const PickupSlotSelector = ({
                 </div>
                 {isSundayAfternoonSlot && (
                   <p className="text-sm text-blue-600 mt-2">
-                    Not available on Sundays. Please select morning pickup.
+                    Not available on Sundays. Please select morning collection.
                   </p>
                 )}
               </Label>
@@ -132,7 +138,7 @@ export const PickupSlotSelector = ({
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Note:</strong> If you select afternoon pickup after morning delivery, an additional day will be charged.
+          <strong>Note:</strong> If you select afternoon collection after morning delivery, an additional day will be charged.
         </AlertDescription>
       </Alert>
     </div>

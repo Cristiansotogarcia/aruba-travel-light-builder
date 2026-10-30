@@ -209,7 +209,7 @@ function generateReservationEmail(data: {
             <td style="padding: 12px 0; color: #111827; font-weight: 500;">${deliveryTime}</td>
           </tr>
           <tr>
-            <td style="padding: 12px 0; color: #6b7280;">Pickup Date:</td>
+            <td style="padding: 12px 0; color: #6b7280;">Collection Date:</td>
             <td style="padding: 12px 0; color: #111827; font-weight: 500;">${new Date(data.end_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
           </tr>
         </table>

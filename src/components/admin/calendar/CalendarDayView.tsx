@@ -24,7 +24,7 @@ export const CalendarDayView = ({ bookings, currentDate }: CalendarDayViewProps)
           <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
           <p className="text-gray-500">
-            No equipment deliveries or pickups scheduled for {format(currentDate, 'dd/MM/yyyy')}.
+            No equipment deliveries or collections scheduled for {format(currentDate, 'dd/MM/yyyy')}.
           </p>
           <p className="text-gray-500 mt-1">
             Try adjusting your search or filter criteria.
@@ -100,8 +100,8 @@ export const CalendarDayView = ({ bookings, currentDate }: CalendarDayViewProps)
       )}
       
       {renderBookingSection(
-        pickups, 
-        "Pickups", 
+        pickups,
+        "Collections",
         <Package className="h-5 w-5 text-orange-600" />,
         "bg-orange-50 border border-orange-200"
       )}

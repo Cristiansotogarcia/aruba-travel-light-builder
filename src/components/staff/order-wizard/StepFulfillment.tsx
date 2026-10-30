@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { StoreLocationCard } from '@/components/booking/StoreLocationCard';
 import { computeDeliveryFee } from '@/lib/pricing/deliveryFee';
 import { billableDays } from '@/lib/pricing/bookingTotals';
+import { STORE_PICKUP_LABEL } from '@/lib/fulfillmentLabels';
 import type { WizardFulfillment } from './types';
 
 type Slot = 'morning' | 'afternoon';
@@ -101,7 +102,7 @@ export function StepFulfillment({
             aria-pressed={fulfillment === 'pickup'}
           >
             <Store className="h-5 w-5" />
-            <span>Store pickup</span>
+            <span>{STORE_PICKUP_LABEL}</span>
           </Button>
         </div>
       )}
@@ -128,7 +129,7 @@ export function StepFulfillment({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <SlotToggle label="Delivery time" value={deliverySlot} onChange={onDeliverySlotChange} />
-            <SlotToggle label="Pickup time" value={pickupSlot} onChange={onPickupSlotChange} />
+            <SlotToggle label="Collection time" value={pickupSlot} onChange={onPickupSlotChange} />
           </div>
           <div
             className={cn(

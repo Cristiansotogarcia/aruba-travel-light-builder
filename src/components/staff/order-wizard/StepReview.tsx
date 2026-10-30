@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Truck, Store } from 'lucide-react';
 import { itemTotal, type BookingTotals } from '@/lib/pricing/bookingTotals';
+import { STORE_PICKUP_LABEL } from '@/lib/fulfillmentLabels';
 import type { WizardCartLine, WizardFulfillment, WizardInitialStatus } from './types';
 
 interface StepReviewProps {
@@ -38,7 +39,7 @@ export function StepReview({
         <h3 className="text-base font-semibold">Review &amp; confirm</h3>
         <p className="text-sm text-muted-foreground">
           {customerName ? `Order for ${customerName}. ` : ''}
-          {fulfillment === 'pickup' ? 'Store pickup.' : 'Delivery.'}
+          {fulfillment === 'pickup' ? `${STORE_PICKUP_LABEL}.` : 'Delivery.'}
         </p>
       </div>
 
@@ -77,7 +78,7 @@ export function StepReview({
         <div className="flex justify-between">
           <span className="flex items-center gap-1.5 text-muted-foreground">
             {fulfillment === 'pickup' ? <Store className="h-3.5 w-3.5" /> : <Truck className="h-3.5 w-3.5" />}
-            {fulfillment === 'pickup' ? 'Pickup' : 'Delivery fee'}
+            {fulfillment === 'pickup' ? STORE_PICKUP_LABEL : 'Delivery fee'}
           </span>
           <span className="tabular-nums">
             {totals.deliveryFee > 0 ? `$${totals.deliveryFee.toFixed(2)}` : 'Free'}

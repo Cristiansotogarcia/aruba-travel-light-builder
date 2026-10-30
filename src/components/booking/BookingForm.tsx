@@ -81,9 +81,9 @@ export const BookingForm = () => {
         errors.deliverySlot = 'Please select a delivery time slot';
       }
 
-      // Pickup slot validation
+      // Collection slot validation
       if (!bookingData.pickupSlot) {
-        errors.pickupSlot = 'Please select a pickup time slot';
+        errors.pickupSlot = 'Please select a collection time slot';
       }
     }
 
@@ -245,7 +245,7 @@ export const BookingForm = () => {
         {/* Store Location (pickup only) */}
         {isPickup && <StoreLocationCard />}
 
-        {/* Delivery & Pickup Slot Selection (delivery only) */}
+        {/* Delivery & Collection Slot Selection (delivery only) */}
         {!isPickup && bookingData.startDate && (
           <div className="space-y-2">
             <DeliverySlotSelector

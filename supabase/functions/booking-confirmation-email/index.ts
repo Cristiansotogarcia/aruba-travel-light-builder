@@ -254,7 +254,7 @@ function generateConfirmationEmail(booking: BookingEmailData): string {
           
           <p>Dear ${booking.customer_name},</p>
           
-          <p>We're excited to confirm your equipment rental booking. Your payment has been successfully processed, and your equipment will be ready for pickup/delivery as scheduled.</p>
+          <p>We're excited to confirm your equipment rental booking. Your payment has been successfully processed, and your equipment will be ready for delivery or collection as scheduled.</p>
           
           <div style="background: #f0f4ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #667eea;">📋 Booking Details</h3>
@@ -263,7 +263,7 @@ function generateConfirmationEmail(booking: BookingEmailData): string {
             <p><strong>Email:</strong> ${booking.customer_email}</p>
             <p><strong>Phone:</strong> ${booking.customer_phone || 'Not provided'}</p>
             <p><strong>Rental Period:</strong> ${startDate} to ${endDate}</p>
-            <p><strong>Delivery Address:</strong> ${booking.delivery_address || 'Pickup at store'}</p>
+            <p><strong>Delivery Address:</strong> ${booking.delivery_address || 'Store Pickup'}</p>
             ${booking.customer_comment ? `<p><strong>Special Instructions:</strong> ${booking.customer_comment}</p>` : ''}
           </div>
           
@@ -368,7 +368,7 @@ function generateStatusUpdateEmail(booking: BookingEmailData): string {
             <h3 style="margin-top: 0; color: #667eea;">📋 Booking Summary</h3>
             <p><strong>Rental Period:</strong> ${new Date(booking.start_date).toLocaleDateString()} to ${new Date(booking.end_date).toLocaleDateString()}</p>
             <p><strong>Equipment:</strong> ${booking.booking_items.length} item(s)</p>
-            <p><strong>Delivery Address:</strong> ${booking.delivery_address || 'Pickup at store'}</p>
+            <p><strong>Delivery Address:</strong> ${booking.delivery_address || 'Store Pickup'}</p>
           </div>
           
           <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -425,7 +425,7 @@ function generateReminderEmail(booking: BookingEmailData): string {
             <h3 style="margin-top: 0; color: #856404;">⏰ Reminder Details</h3>
             <p><strong>Booking ID:</strong> ${booking.id.slice(0, 8)}</p>
             <p><strong>Start Date:</strong> ${startDate}</p>
-            <p><strong>Delivery/Pickup:</strong> ${booking.delivery_address || 'Store pickup required'}</p>
+            <p><strong>Delivery/Collection:</strong> ${booking.delivery_address || 'Store Pickup required'}</p>
             <p><strong>Equipment:</strong> ${booking.booking_items.length} item(s) reserved</p>
           </div>
           

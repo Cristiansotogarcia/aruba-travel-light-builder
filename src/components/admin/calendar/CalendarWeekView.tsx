@@ -63,7 +63,7 @@ export const CalendarWeekView = ({ bookings, currentDate, onDayClick }: Calendar
                   {pickupCount > 0 && (
                     <Badge variant="secondary" className="w-full text-xs flex items-center justify-center gap-1 bg-orange-100 text-orange-800">
                       <Package className="h-3 w-3" />
-                      {pickupCount} pickup{pickupCount > 1 ? 's' : ''}
+                      {pickupCount} collection{pickupCount > 1 ? 's' : ''}
                     </Badge>
                   )}
                 </div>

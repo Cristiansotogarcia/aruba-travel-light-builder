@@ -17,9 +17,10 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useDepotSync } from '@/hooks/useDepotSync';
 import { cachePickups, getCachedPickups } from '@/lib/offline/depotDb';
 import { parseDateOnly, todayDateOnly } from '@/lib/dateOnly';
+import { STORE_PICKUP_LABEL, STORE_RETURN_LABEL } from '@/lib/fulfillmentLabels';
 
 const DEPOT_NAV: AppNavEntry[] = [
-  { id: 'pickups', label: 'Self-pickup', icon: Package },
+  { id: 'pickups', label: STORE_PICKUP_LABEL, icon: Package },
 ];
 
 const Depot = () => {
@@ -68,7 +69,7 @@ const Depot = () => {
             ? err.message
             : typeof err === 'object' && err !== null && 'message' in err
             ? String((err as { message: unknown }).message)
-            : 'Failed to load depot pickups.';
+            : `Failed to load depot ${STORE_PICKUP_LABEL.toLowerCase()}s.`;
         setError(msg);
       }
     } finally {
@@ -118,7 +119,7 @@ const Depot = () => {
       );
       if (!match) {
         toast({
-          title: `No active pickup found for ${code}`,
+          title: `No active ${STORE_PICKUP_LABEL.toLowerCase()} found for ${code}`,
           variant: 'destructive',
         });
       }
@@ -156,7 +157,7 @@ const Depot = () => {
                 }
                 variant="outline"
               >
-                {pickup.next_action === 'handover' ? 'Awaiting hand-over' : 'Awaiting return'}
+                {pickup.next_action === 'handover' ? 'Awaiting hand-over' : `Awaiting ${STORE_RETURN_LABEL}`}
               </Badge>
             </div>
 
@@ -209,7 +210,7 @@ const Depot = () => {
                 onClick={() => setReturnTarget(pickup)}
                 className="w-full"
               >
-                Check In Return
+                Check In {STORE_RETURN_LABEL}
               </Button>
             )}
           </div>
@@ -227,8 +228,8 @@ const Depot = () => {
       activeSection="pickups"
       onSectionChange={() => {}}
       contentClassName="max-w-4xl"
-      pageTitle="Self-pickup"
-      pageDescription="Process equipment hand-overs and returns for self-pickup bookings."
+      pageTitle={STORE_PICKUP_LABEL}
+      pageDescription={`Process equipment hand-overs and ${STORE_RETURN_LABEL.toLowerCase()}s for ${STORE_PICKUP_LABEL.toLowerCase()} bookings.`}
       pageActions={
         <Button onClick={() => setWizardOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -245,7 +246,7 @@ const Depot = () => {
               {!isOnline && pendingCount > 0
                 ? `Offline — ${pendingCount} action${pendingCount === 1 ? '' : 's'} queued, will sync when back online.`
                 : !isOnline
-                ? 'Offline — showing cached pickups.'
+                ? `Offline — showing cached ${STORE_PICKUP_LABEL.toLowerCase()}s.`
                 : `${pendingCount} action${pendingCount === 1 ? '' : 's'} queued — syncing…`}
             </span>
             {isOnline && pendingCount > 0 && (
@@ -264,7 +265,7 @@ const Depot = () => {
         {/* Cached data notice */}
         {fromCache && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
-            Showing cached pickups from the last successful load.
+            Showing cached {STORE_PICKUP_LABEL.toLowerCase()}s from the last successful load.
           </div>
         )}
 
@@ -273,7 +274,7 @@ const Depot = () => {
           <CardHeader className="pb-3 pt-4">
             <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Search className="h-4 w-4" />
-              Lookup by pickup code
+              Lookup by {STORE_PICKUP_LABEL.toLowerCase()} code
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
@@ -281,7 +282,7 @@ const Depot = () => {
               <Input
                 value={codeFilter}
                 onChange={(e) => setCodeFilter(e.target.value)}
-                placeholder="Enter pickup code…"
+                placeholder={`Enter ${STORE_PICKUP_LABEL.toLowerCase()} code…`}
                 className="max-w-xs font-mono"
               />
               {!showScanner && (
@@ -315,7 +316,7 @@ const Depot = () => {
 
             {codeFilter && filteredPickups.length === 0 && !loading && (
               <p className="mt-2 text-sm text-muted-foreground">
-                No active pickup found for code &ldquo;{codeFilter}&rdquo;.
+                No active {STORE_PICKUP_LABEL.toLowerCase()} found for code &ldquo;{codeFilter}&rdquo;.
               </p>
             )}
           </CardContent>
@@ -323,13 +324,13 @@ const Depot = () => {
 
         {/* Body */}
         {loading ? (
-          <div className="py-16 text-center text-muted-foreground">Loading pickups…</div>
+          <div className="py-16 text-center text-muted-foreground">Loading {STORE_PICKUP_LABEL.toLowerCase()}s…</div>
         ) : error ? (
           <Card className="border-destructive/40 bg-destructive/5">
             <CardContent className="flex items-start gap-3 p-5">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
               <div>
-                <p className="font-medium text-destructive">Could not load pickups</p>
+                <p className="font-medium text-destructive">Could not load {STORE_PICKUP_LABEL.toLowerCase()}s</p>
                 <p className="mt-1 text-sm text-muted-foreground">{error}</p>
                 <Button
                   size="sm"
@@ -354,8 +355,8 @@ const Depot = () => {
               <>
                 <p className="text-sm text-muted-foreground">
                   {pickups.length === 0
-                    ? 'No active self-pickup bookings at this time.'
-                    : `${pickups.length} active pickup${pickups.length === 1 ? '' : 's'}`}
+                    ? `No active ${STORE_PICKUP_LABEL.toLowerCase()} bookings at this time.`
+                    : `${pickups.length} active ${STORE_PICKUP_LABEL.toLowerCase()}${pickups.length === 1 ? '' : 's'}`}
                 </p>
                 {pickups.map(renderPickupCard)}
               </>

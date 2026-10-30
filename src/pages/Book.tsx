@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { BookingForm } from '@/components/booking/BookingForm';
 import { QuickBooking } from '@/components/booking/QuickBooking';
+import { LastMinuteContactPrompt } from '@/components/booking/LastMinuteContactPrompt';
 
 const Book = () => {
   return (
@@ -17,6 +18,8 @@ const Book = () => {
               Select your rental dates, choose your equipment, and we'll deliver everything to your location in Aruba
             </p>
           </div>
+
+          <LastMinuteContactPrompt />
 
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Quick Booking Sidebar - Shows first on mobile, sidebar on desktop */}

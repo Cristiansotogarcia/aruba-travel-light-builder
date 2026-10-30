@@ -264,7 +264,7 @@ export const PendingReservations = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          Pickup Date
+                          Collection Date
                         </p>
                         <p className="text-sm text-gray-900">{formatDate(reservation.end_date)}</p>
                       </div>

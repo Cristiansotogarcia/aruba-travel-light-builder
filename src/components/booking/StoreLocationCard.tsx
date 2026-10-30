@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Clock, Store } from 'lucide-react';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { STORE_PICKUP_LABEL, STORE_RETURN_LABEL } from '@/lib/fulfillmentLabels';
 
 export const StoreLocationCard = () => {
   const { getSetting } = useSystemSettings();
@@ -14,7 +15,7 @@ export const StoreLocationCard = () => {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Store className="h-5 w-5 text-primary" />
-          Collect &amp; return at our store
+          {STORE_PICKUP_LABEL} &amp; {STORE_RETURN_LABEL} at our store
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -33,7 +34,7 @@ export const StoreLocationCard = () => {
             <span>{storeHours}</span>
           </div>
         )}
-        <p className="text-green-700 font-medium pt-1">No delivery fee for store pickup.</p>
+        <p className="text-green-700 font-medium pt-1">No delivery fee for {STORE_PICKUP_LABEL}.</p>
       </CardContent>
     </Card>
   );

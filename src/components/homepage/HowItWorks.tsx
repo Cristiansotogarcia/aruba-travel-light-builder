@@ -32,7 +32,7 @@ const steps = [
       "Full name",
       "Phone number",
       "Rental dates",
-      "Preferred delivery and pickup time slots",
+      "Preferred delivery and collection time slots",
       "Accommodation address",
     ],
   },
@@ -44,9 +44,9 @@ const steps = [
   },
   {
     step: "04",
-    title: "Delivery and Pickup",
+    title: "Delivery and Collection",
     description:
-      "We deliver your equipment directly to your stay and pick it up when you are done.",
+      "We deliver your equipment directly to your stay and collect it when you are done.",
   },
   {
     step: "05",
