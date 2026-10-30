@@ -160,6 +160,51 @@ begin
     'no invalid-float attempt created a drawer session');
 end $$;
 
+-- 3b. NO_OPEN_DRAWER: the booking_payments trigger
+--     (trg_booking_payments_pos_cash_needs_open_drawer) refuses a pos-channel
+--     cash payment while no drawer is open; card, other and office-channel
+--     payments are unaffected (contract: "Refuse POS cash payments while no
+--     cash drawer is open").
+do $$
+begin
+  insert into public.bookings (id, customer_name, customer_email, customer_phone, customer_address, start_date, end_date, total_amount, status, fulfillment_method)
+  values ('cccccccc-0000-0000-0000-000000000001', 'No Drawer Cash Attempt', 'no-drawer-cash@example.com', '0000', 'n/a', '2026-11-01', '2026-11-02', 30, 'confirmed', 'pickup');
+  begin
+    insert into public.booking_payments (booking_id, amount, method, channel, recorded_by)
+    values ('cccccccc-0000-0000-0000-000000000001', 30, 'cash', 'pos', '44444444-4444-4444-4444-444444444441');
+    perform test_assert(false, 'a pos cash payment is refused while no drawer is open (NO_OPEN_DRAWER)');
+  exception when others then
+    perform test_assert(sqlerrm ilike '%NO_OPEN_DRAWER%', 'a pos cash payment is refused while no drawer is open (NO_OPEN_DRAWER)');
+  end;
+end $$;
+
+do $$
+begin
+  perform test_assert(
+    (select count(*) from public.booking_payments where booking_id = 'cccccccc-0000-0000-0000-000000000001') = 0,
+    'the refused no-drawer pos cash payment left no row behind');
+end $$;
+
+do $$
+begin
+  insert into public.bookings (id, customer_name, customer_email, customer_phone, customer_address, start_date, end_date, total_amount, status, fulfillment_method) values
+    ('cccccccc-0000-0000-0000-000000000002', 'No Drawer Card',   'no-drawer-card@example.com',   '0000', 'n/a', '2026-11-01', '2026-11-02', 30, 'confirmed', 'pickup'),
+    ('cccccccc-0000-0000-0000-000000000003', 'No Drawer Other',  'no-drawer-other@example.com',  '0000', 'n/a', '2026-11-01', '2026-11-02', 30, 'confirmed', 'pickup'),
+    ('cccccccc-0000-0000-0000-000000000004', 'No Drawer Office', 'no-drawer-office@example.com', '0000', 'n/a', '2026-11-01', '2026-11-02', 30, 'confirmed', 'pickup');
+
+  insert into public.booking_payments (booking_id, amount, method, reference, channel, recorded_by)
+  values ('cccccccc-0000-0000-0000-000000000002', 30, 'card', 'CARD-REF-NO-DRAWER', 'pos', '44444444-4444-4444-4444-444444444441');
+  insert into public.booking_payments (booking_id, amount, method, channel, recorded_by)
+  values ('cccccccc-0000-0000-0000-000000000003', 30, 'other', 'pos', '44444444-4444-4444-4444-444444444441');
+  insert into public.booking_payments (booking_id, amount, method, channel, recorded_by)
+  values ('cccccccc-0000-0000-0000-000000000004', 30, 'cash', 'office', '44444444-4444-4444-4444-444444444441');
+
+  perform test_assert(
+    (select count(*) from public.booking_payments where booking_id in (
+      'cccccccc-0000-0000-0000-000000000002', 'cccccccc-0000-0000-0000-000000000003', 'cccccccc-0000-0000-0000-000000000004')) = 3,
+    'a pos card payment, a pos other payment and an office cash payment are all unaffected by NO_OPEN_DRAWER');
+end $$;
+
 -- 4. Open the real drawer (StoreStaff, float 100), checking the return shape.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '44444444-4444-4444-4444-444444444441', false);
