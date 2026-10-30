@@ -60,7 +60,7 @@ end $$;
 --     stays refused, because anon has no SELECT policy on special_requests.
 --     This protects against someone re-adding .select() to
 --     submitSpecialRequest() and silently breaking anonymous submissions
---     the way e392a72 fixed.
+--     the way #107 fixed.
 set role anon;
 do $$
 declare

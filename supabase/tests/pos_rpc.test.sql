@@ -4,7 +4,7 @@
 -- PLANS/TLB_POS_PHASE1_CONTRACT.md, goal tlb-pos) against a real Postgres
 -- (run after pos_fixture.setup.sql + the real migration + pos_price_booking_stub.sql
 -- in the same session; see run-pos-tests.sh). Covers exactly the contract's
--- "Tests (Kev)" RPC list: role gate (Customer/Driver refused), a forged
+-- "Tests" RPC list: role gate (Customer/Driver refused), a forged
 -- price/total is ignored or refused, a stock conflict rolls back the booking
 -- AND the payments, overpay is refused, a card without a reference is
 -- refused, cash change is right, a partial payment gives partial, no payment
@@ -47,32 +47,28 @@ insert into public.equipment (id, name, price_per_day, category, stock_quantity)
 
 -- 2-night rental throughout: total = 25 * quantity * 2.
 --
--- MF1 (Elby, mutant-proven): "is refused" checks set a flag INSIDE the
--- handled block and assert on the flag AFTER it. Calling
+-- MF1 (review finding, mutant-proven): "is refused" checks used to set a flag
+-- INSIDE the handled block and assert on the flag AFTER it. Calling
 -- test_assert(false, ...) inside a block that has its own exception handler
--- lets that handler swallow the assertion's own FAIL -- and since the label
+-- let that handler swallow the assertion's own FAIL -- and since the label
 -- used to carry the expected code in parens, e.g. "...(NOT_AUTHORIZED)",
 -- the raised 'FAIL: ...NOT_AUTHORIZED)' message itself satisfied the
 -- `sqlerrm ilike '%NOT_AUTHORIZED%'` check in the exception branch, so a
--- guard that let the call through silently reported PASS. Labels below no
--- longer carry the code so a FAIL can never re-satisfy its own check.
+-- guard that let the call through silently reported PASS. Every "is refused"
+-- check below now uses test_assert_refused(stmt, code)
+-- (pos_fixture.setup.sql; see supabase/tests/README.md), which runs stmt in
+-- its own handled block and asserts only after that block closes, where no
+-- handler can intercept the assertion's own FAIL.
 -- 1. Role gate: Customer is refused.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Role Test"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000001","quantity":1}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%NOT_AUTHORIZED%';
-  end;
-  perform test_assert(refused, 'Customer is refused by pos_create_sale');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Role Test"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000001","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'NOT_AUTHORIZED');
 end $$;
 reset role;
 
@@ -80,19 +76,12 @@ reset role;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Role Test"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000001","quantity":1}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%NOT_AUTHORIZED%';
-  end;
-  perform test_assert(refused, 'Driver is refused by pos_create_sale');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Role Test"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000001","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'NOT_AUTHORIZED');
 end $$;
 reset role;
 
@@ -108,19 +97,12 @@ end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Forged Total","total_amount":1}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000002","quantity":1}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%PRICING_IS_SERVER_DERIVED%';
-  end;
-  perform test_assert(refused, 'a forged booking total_amount is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Forged Total","total_amount":1}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000002","quantity":1}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'PRICING_IS_SERVER_DERIVED');
 end $$;
 reset role;
 
@@ -128,19 +110,12 @@ reset role;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Forged Item Price"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000002","quantity":1,"unit_price":1}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%PRICING_IS_SERVER_DERIVED%';
-  end;
-  perform test_assert(refused, 'a forged item unit_price is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Forged Item Price"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000002","quantity":1,"unit_price":1}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'PRICING_IS_SERVER_DERIVED');
 end $$;
 reset role;
 
@@ -167,19 +142,12 @@ begin
   );
 end $$;
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Second Buyer (conflict)"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000003","quantity":1}]'::jsonb,
-      '[{"amount":50,"method":"cash","tendered":50}]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%AVAILABILITY_CONFLICT%';
-  end;
-  perform test_assert(refused, 'a stock conflict is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Second Buyer (conflict)"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000003","quantity":1}]'::jsonb,
+    '[{"amount":50,"method":"cash","tendered":50}]'::jsonb
+  )$sql$, 'AVAILABILITY_CONFLICT');
 end $$;
 reset role;
 do $$
@@ -202,19 +170,12 @@ end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Overpay Buyer"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000004","quantity":1}]'::jsonb,
-      '[{"amount":1000,"method":"cash","tendered":1000}]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%OVERPAY%';
-  end;
-  perform test_assert(refused, 'overpay (sum of payments exceeds total) is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Overpay Buyer"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000004","quantity":1}]'::jsonb,
+    '[{"amount":1000,"method":"cash","tendered":1000}]'::jsonb
+  )$sql$, 'OVERPAY');
 end $$;
 reset role;
 do $$
@@ -229,19 +190,12 @@ end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Card No Reference"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000004","quantity":1}]'::jsonb,
-      '[{"amount":50,"method":"card"}]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%CARD_REFERENCE_REQUIRED%';
-  end;
-  perform test_assert(refused, 'a card payment without a reference is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Card No Reference"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000004","quantity":1}]'::jsonb,
+    '[{"amount":50,"method":"card"}]'::jsonb
+  )$sql$, 'CARD_REFERENCE_REQUIRED');
 end $$;
 reset role;
 
@@ -311,19 +265,12 @@ reset role;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Duplicate Line Buyer"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000005","quantity":3},{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000005","quantity":3}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%DUPLICATE_ITEM%';
-  end;
-  perform test_assert(refused, 'two lines of the same equipment (3 + 3 on stock 5) is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Duplicate Line Buyer"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000005","quantity":3},{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000005","quantity":3}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'DUPLICATE_ITEM');
 end $$;
 reset role;
 do $$
@@ -341,76 +288,48 @@ end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Missing Quantity Buyer"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000006"}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%INVALID_QUANTITY%';
-  end;
-  perform test_assert(refused, 'an item with no quantity is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Missing Quantity Buyer"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000006"}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'INVALID_QUANTITY');
 end $$;
 reset role;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Missing Equipment Id Buyer"}'::jsonb,
-      '[{"quantity":1}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%INVALID_QUANTITY%';
-  end;
-  perform test_assert(refused, 'an item with no equipment_id is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Missing Equipment Id Buyer"}'::jsonb,
+    '[{"quantity":1}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'INVALID_QUANTITY');
 end $$;
 reset role;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Zero Quantity Buyer"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000006","quantity":0}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%INVALID_QUANTITY%';
-  end;
-  perform test_assert(refused, 'an item with quantity 0 is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Zero Quantity Buyer"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000006","quantity":0}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'INVALID_QUANTITY');
 end $$;
 reset role;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.pos_create_sale(
-      '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Negative Quantity Buyer"}'::jsonb,
-      '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000006","quantity":-2}]'::jsonb,
-      '[]'::jsonb
-    );
-  exception when others then
-    refused := sqlerrm ilike '%INVALID_QUANTITY%';
-  end;
-  perform test_assert(refused, 'an item with quantity -2 is refused');
+  perform test_assert_refused($sql$select public.pos_create_sale(
+    '{"start_date":"2026-11-02","end_date":"2026-11-04","fulfillment_method":"pickup","customer_name":"Negative Quantity Buyer"}'::jsonb,
+    '[{"equipment_id":"aaaaaaaa-0000-0000-0000-000000000006","quantity":-2}]'::jsonb,
+    '[]'::jsonb
+  )$sql$, 'INVALID_QUANTITY');
 end $$;
 reset role;
 

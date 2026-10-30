@@ -21,7 +21,7 @@
 -- asserted on its error code via test_assert_refused(stmt, code) -
 -- price_booking_fixture.setup.sql, see supabase/tests/README.md - never a
 -- hand-rolled begin/exception block with the code echoed in the label, the
--- MF1 self-confirming shape, Elby, mutant-proven), and the
+-- MF1 self-confirming shape, review finding, mutant-proven), and the
 -- service_role-only EXECUTE grant.
 --
 -- Raises an exception, and so a non-zero psql exit code, on the first
@@ -110,7 +110,7 @@ end $$;
 --    (price_booking_fixture.setup.sql; see supabase/tests/README.md) - never
 --    a hand-rolled begin/exception block that calls test_assert(false, label)
 --    with the code echoed in the label, the MF1 self-confirming shape
---    (Elby, mutant-proven, third strike after pos_rpc.test.sql).
+--    (review finding, mutant-proven, third strike after pos_rpc.test.sql).
 do $$
 begin
   perform test_assert_refused(

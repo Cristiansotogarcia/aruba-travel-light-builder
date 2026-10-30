@@ -1,8 +1,8 @@
 -- supabase/tests/pos_price_booking_stub.sql
 --
 -- public.price_booking(p_booking jsonb, p_items jsonb) does not exist on any
--- branch yet (Claudy, PR #108: "price_booking does not exist on this branch
--- yet; its output keys are not final... Plutus, 2026-10-29"). pos_create_sale
+-- branch yet (PR #108: price_booking did not exist on that branch and its
+-- output keys were not final). pos_create_sale
 -- reads exactly one key from its result, {"total"}, and nothing else in this
 -- RPC depends on price_booking's real pricing rules (fees, weekly rates,
 -- delivery surcharges) - those are out of scope for pos_create_sale's own
@@ -14,8 +14,8 @@
 -- over items, nights = GREATEST(1, end_date - start_date), +1 when
 -- delivery_slot = 'morning' and pickup_slot = 'afternoon' (the same +1 rule
 -- computeBookingTotals/the real price_booking apply). The slot term was
--- added for #109's extend regression test (Claudy found extend_booking_rental
--- was not passing the booking's slots into price_booking at all; 62ad54c
+-- added for #109's extend regression test (review found extend_booking_rental
+-- was not passing the booking's slots into price_booking at all; #109
 -- fixed it) - without it this stub could not tell a slot-dropping regression
 -- apart from a correct call. It must be replaced with the real price_booking
 -- once it lands; nothing here is meant to describe the real pricing

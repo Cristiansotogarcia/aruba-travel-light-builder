@@ -5,7 +5,7 @@
 -- goal tlb-pos) against a real Postgres (run after pos_fixture.setup.sql +
 -- the real phase 1 migration + pos_price_booking_stub.sql +
 -- pos_phase2_fixture.setup.sql + the real phase 2 migration in the same
--- session; see run-pos-phase2-tests.sh). Covers exactly what Claudy asked
+-- session; see run-pos-phase2-tests.sh). Covers exactly what the review asked
 -- for #109: role gates, extend-with-no-stock rolls back, a refund over
 -- what's creditable is refused, and get_pos_today_board's role gate
 -- (Customer, Driver and anon refused; staff gets an answer).
@@ -13,14 +13,22 @@
 -- Raises an exception, and so a non-zero psql exit code, on the first
 -- failing assertion. Passing assertions print as NOTICE.
 --
--- MF1 (Elby, mutant-proven, same bug as PR #108's pos_rpc.test.sql): "is
--- refused" checks set a flag INSIDE the handled block and assert on the
--- flag AFTER it. Calling test_assert(false, ...) inside a block that has
--- its own exception handler lets that handler swallow the assertion's own
--- FAIL, and a label that carries the expected code in parens lets the
+-- MF1 (review finding, mutant-proven, same bug as PR #108's pos_rpc.test.sql): "is
+-- refused" checks used to set a flag INSIDE the handled block and assert on
+-- the flag AFTER it. Calling test_assert(false, ...) inside a block that has
+-- its own exception handler let that handler swallow the assertion's own
+-- FAIL, and a label that carries the expected code in parens let the
 -- raised 'FAIL: ...CODE)' message re-satisfy the handler's own
 -- `sqlerrm ilike '%CODE%'` check, so a guard that let the call through
--- silently reported PASS.
+-- silently reported PASS. Every "is refused" check below that can be
+-- expressed as a statement-plus-expected-substring now uses
+-- test_assert_refused(stmt, code) (pos_fixture.setup.sql; see
+-- supabase/tests/README.md) instead. The one exception is the anon check on
+-- get_pos_today_board, which asserts on the SQLSTATE insufficient_privilege
+-- (Postgres's own permission-denied error for a function with no EXECUTE
+-- grant), not on a message substring -- that is a different (and
+-- MF1-immune, since it never calls test_assert inside the handled block)
+-- shape the helper does not cover, so it is left as its own handled block.
 
 create or replace function test_assert(cond boolean, label text) returns void
 language plpgsql as $$
@@ -66,15 +74,11 @@ select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222
 do $$
 declare
   v_booking_id uuid;
-  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
-  begin
-    perform public.extend_booking_rental(v_booking_id, '2026-11-06');
-  exception when others then
-    refused := sqlerrm ilike '%NOT_AUTHORIZED%';
-  end;
-  perform test_assert(refused, 'Customer is refused by extend_booking_rental');
+  perform test_assert_refused(
+    format('select public.extend_booking_rental(%L, %L)', v_booking_id, '2026-11-06'),
+    'NOT_AUTHORIZED');
 end $$;
 reset role;
 
@@ -84,15 +88,11 @@ select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333
 do $$
 declare
   v_booking_id uuid;
-  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
-  begin
-    perform public.extend_booking_rental(v_booking_id, '2026-11-06');
-  exception when others then
-    refused := sqlerrm ilike '%NOT_AUTHORIZED%';
-  end;
-  perform test_assert(refused, 'Driver is refused by extend_booking_rental');
+  perform test_assert_refused(
+    format('select public.extend_booking_rental(%L, %L)', v_booking_id, '2026-11-06'),
+    'NOT_AUTHORIZED');
 end $$;
 reset role;
 
@@ -110,15 +110,11 @@ select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222
 do $$
 declare
   v_booking_id uuid;
-  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
-  begin
-    perform public.create_credit_note(v_booking_id, 10, 'test');
-  exception when others then
-    refused := sqlerrm ilike '%not authorized%';
-  end;
-  perform test_assert(refused, 'Customer is refused by create_credit_note');
+  perform test_assert_refused(
+    format('select public.create_credit_note(%L, %L, %L)', v_booking_id, 10, 'test'),
+    'not authorized');
 end $$;
 reset role;
 
@@ -128,15 +124,11 @@ select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333
 do $$
 declare
   v_booking_id uuid;
-  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
-  begin
-    perform public.create_credit_note(v_booking_id, 10, 'test');
-  exception when others then
-    refused := sqlerrm ilike '%not authorized%';
-  end;
-  perform test_assert(refused, 'Driver is refused by create_credit_note');
+  perform test_assert_refused(
+    format('select public.create_credit_note(%L, %L, %L)', v_booking_id, 10, 'test'),
+    'not authorized');
 end $$;
 reset role;
 
@@ -212,17 +204,11 @@ end $$;
 do $$
 declare
   v_booking_id uuid;
-  refused boolean := false;
-  v_sqlerrm text;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Conflict A';
-  begin
-    perform public.extend_booking_rental(v_booking_id, '2026-11-14');
-  exception when others then
-    v_sqlerrm := sqlerrm;
-    refused := v_sqlerrm like 'AVAILABILITY_CONFLICT%';
-  end;
-  perform test_assert(refused, 'an extend into a fully booked range raises AVAILABILITY_CONFLICT (got: ' || coalesce(v_sqlerrm, 'no error') || ')');
+  perform test_assert_refused(
+    format('select public.extend_booking_rental(%L, %L)', v_booking_id, '2026-11-14'),
+    'AVAILABILITY_CONFLICT');
 end $$;
 reset role;
 do $$
@@ -236,7 +222,7 @@ begin
 end $$;
 
 -- 6b. extend_booking_rental passes the booking's own delivery_slot/
---     pickup_slot into price_booking (62ad54c), so a morning/afternoon
+--     pickup_slot into price_booking (fixed in #109), so a morning/afternoon
 --     booking keeps its +1 day on extend too. The stub is slot-aware
 --     (pos_price_booking_stub.sql): nights = end-start, +1 when
 --     delivery_slot = 'morning' and pickup_slot = 'afternoon'. If the
@@ -277,7 +263,7 @@ end $$;
 
 -- 6c. A longer extend that reprices lower never lowers the booking's total:
 --     extend_booking_rental clamps to GREATEST(new_total, old_total) and
---     charges 0 extra (Claudy's #109 review decision, 14f9767). The stub is
+--     charges 0 extra (#109 review decision). The stub is
 --     linear in nights x price_per_day, so to make a LONGER range reprice
 --     LOWER we drop the equipment's price between create and extend - this
 --     reaches the exact same clamp the real tiered pricing would trigger
@@ -349,15 +335,11 @@ end $$;
 do $$
 declare
   v_booking_id uuid;
-  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Credit Note Target';
-  begin
-    perform public.create_credit_note(v_booking_id, 40, 'Second refund, pushes cumulative over total');
-  exception when others then
-    refused := sqlerrm ilike '%exceeds remaining creditable amount%';
-  end;
-  perform test_assert(refused, 'a credit note that would push cumulative credits over the booking total is refused');
+  perform test_assert_refused(
+    format('select public.create_credit_note(%L, %L, %L)', v_booking_id, 40, 'Second refund, pushes cumulative over total'),
+    'exceeds remaining creditable amount');
 end $$;
 reset role;
 do $$
@@ -381,33 +363,26 @@ end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.get_pos_today_board();
-  exception when others then
-    refused := sqlerrm ilike '%not authorized%';
-  end;
-  perform test_assert(refused, 'Customer is refused by get_pos_today_board');
+  perform test_assert_refused($sql$select public.get_pos_today_board()$sql$, 'not authorized');
 end $$;
 reset role;
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
 do $$
-declare
-  refused boolean := false;
 begin
-  begin
-    perform public.get_pos_today_board();
-  exception when others then
-    refused := sqlerrm ilike '%not authorized%';
-  end;
-  perform test_assert(refused, 'Driver is refused by get_pos_today_board');
+  perform test_assert_refused($sql$select public.get_pos_today_board()$sql$, 'not authorized');
 end $$;
 reset role;
 
+-- Left as its own handled block rather than test_assert_refused: this
+-- asserts on the SQLSTATE insufficient_privilege (Postgres's own
+-- permission-denied error, since anon has no EXECUTE grant at all), not on
+-- a message substring, so the helper's `sqlerrm ilike '%code%'` shape
+-- doesn't fit without asserting something different from what this check
+-- proves. It is also not the MF1 shape: test_assert is never called inside
+-- the handled block, so its own FAIL can't be re-caught here.
 set role anon;
 do $$
 declare
