@@ -41,7 +41,7 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 
-cat pos_fixture.setup.sql ../migrations/20261029190000_pos_phase1_counter_sale.sql pos_price_booking_stub.sql \
+cat pos_fixture.setup.sql ../migrations/20261029203000_pos_phase1_counter_sale.sql pos_price_booking_stub.sql \
     pos_phase2_fixture.setup.sql ../migrations/20261029210000_pos_phase2_counter_ops.sql \
     ../migrations/20261029220000_pos_phase3_close_out.sql \
   | docker exec -i "$CONTAINER_NAME" psql -v ON_ERROR_STOP=1 -U postgres
