@@ -214,6 +214,8 @@ BEGIN
     jsonb_build_object(
       'start_date', v_booking.start_date,
       'end_date', p_new_end_date,
+      'delivery_slot', v_booking.delivery_slot,
+      'pickup_slot', v_booking.pickup_slot,
       'fulfillment_method', v_booking.fulfillment_method
     ),
     v_items

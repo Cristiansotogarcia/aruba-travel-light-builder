@@ -1,5 +1,5 @@
 // POS phase 1 (counter rental) queries. Contract: PLANS/TLB_POS_PHASE1_CONTRACT.md
-// (Buzz Nest, goal tlb-pos). Pairs with supabase/migrations/20261029190000_pos_phase1_counter_sale.sql
+// (Buzz Nest, goal tlb-pos). Pairs with supabase/migrations/20261029203000_pos_phase1_counter_sale.sql
 // and src/lib/pos/posPayments.ts (pure payment validation shared with the Pay screen).
 import { supabase } from '@/integrations/supabase/client';
 import type { PosPaymentLine } from '@/lib/pos/posPayments';
