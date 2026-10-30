@@ -2,12 +2,12 @@
 # supabase/tests/run-pos-tests.sh
 #
 # Runs pos_fixture.setup.sql + the real pos_create_sale migration
-# (20261029190000_pos_phase1_counter_sale.sql) + pos_price_booking_stub.sql +
+# (20261029203000_pos_phase1_counter_sale.sql) + pos_price_booking_stub.sql +
 # pos_rpc.test.sql against a throwaway, real Postgres container (no mocking)
 # and tears it down afterwards, pass or fail. Requires Docker.
 #
 # A literal replay of all real migrations in filename order (through
-# 20261029190000) was tried first and abandoned: this repo's migration
+# 20261029203000) was tried first and abandoned: this repo's migration
 # filenames are not reliably chronological (e.g.
 # 20250122000001_enhance_booking_system.sql ALTERs public.equipment, which
 # 20250704000000_create_equipment_table.sql only creates later - a real,
@@ -41,6 +41,6 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 
-cat pos_fixture.setup.sql ../migrations/20261029190000_pos_phase1_counter_sale.sql pos_price_booking_stub.sql \
+cat pos_fixture.setup.sql ../migrations/20261029203000_pos_phase1_counter_sale.sql pos_price_booking_stub.sql \
   | docker exec -i "$CONTAINER_NAME" psql -v ON_ERROR_STOP=1 -U postgres
 docker exec -i "$CONTAINER_NAME" psql -v ON_ERROR_STOP=1 -U postgres < pos_rpc.test.sql

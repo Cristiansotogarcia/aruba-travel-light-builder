@@ -214,6 +214,13 @@ BEGIN
        OR v_item ? 'unit_price' OR v_item ? 'total_price' THEN
       RAISE EXCEPTION 'PRICING_IS_SERVER_DERIVED: item prices/subtotals must not be sent by the client';
     END IF;
+    -- A zero or negative quantity would pass the availability check below
+    -- (available < -2 is never true) and persist a negative line and total.
+    IF NULLIF(v_item->>'equipment_id', '') IS NULL
+       OR NULLIF(v_item->>'quantity', '') IS NULL
+       OR (v_item->>'quantity')::int < 1 THEN
+      RAISE EXCEPTION 'INVALID_QUANTITY: every item needs an equipment_id and a quantity of at least 1';
+    END IF;
   END LOOP;
 
   -- Basic shape validation (mirrors create_booking_as_staff).
@@ -222,6 +229,13 @@ BEGIN
   END IF;
   IF jsonb_array_length(p_items) = 0 THEN
     RAISE EXCEPTION 'No items provided';
+  END IF;
+  -- Availability is checked per line, so two lines of the same equipment
+  -- would each pass against the same free stock and together oversell it.
+  -- One line per equipment, carrying the total quantity.
+  IF (SELECT count(*) FROM jsonb_array_elements(p_items))
+     <> (SELECT count(DISTINCT (i->>'equipment_id')::uuid) FROM jsonb_array_elements(p_items) i) THEN
+    RAISE EXCEPTION 'DUPLICATE_ITEM: each equipment may appear on one line only, with the total quantity';
   END IF;
   IF v_fulfillment NOT IN ('delivery', 'pickup') THEN
     RAISE EXCEPTION 'Invalid fulfillment_method: %', v_fulfillment;
