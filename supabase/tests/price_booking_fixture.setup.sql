@@ -43,8 +43,8 @@ create table public.equipment (
 -- contains code. The call to stmt happens inside its own handled block;
 -- test_assert only runs AFTER that block closes, with no handler left
 -- watching it, so a wrongly-successful call cannot have its own raised
--- failure re-caught and misread as a pass (MF1, Elby, mutant-proven in
--- pos_rpc.test.sql 00878ff: a label that carried the expected code let a
+-- failure re-caught and misread as a pass (MF1, review finding, mutant-proven in
+-- pos_rpc.test.sql: a label that carried the expected code let a
 -- synthetic 'FAIL: ...CODE)' message satisfy the handler's own
 -- `sqlerrm ilike '%CODE%'` check). Depends on test_assert, defined later in
 -- each *.test.sql file - not resolved until this function actually runs, by

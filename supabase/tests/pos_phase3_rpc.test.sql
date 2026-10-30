@@ -5,13 +5,13 @@
 -- goal tlb-pos) against a real Postgres (run after pos_fixture.setup.sql +
 -- the real phase 1 migration + pos_price_booking_stub.sql +
 -- pos_phase2_fixture.setup.sql + the real phase 2 migration + the real
--- phase 3 migration, 20261029220000_pos_phase3_close_out.sql, in the same
--- session; see run-pos-phase3-tests.sh).
+-- phase 3 migration, 20261029220000_pos_phase3_close_out.sql, + the real
+-- followup migration, 20261030200000_pos_cash_close_race.sql (goal
+-- tlb-pos-followups), in the same session; see run-pos-phase3-tests.sh).
 --
 -- Written against the contract before the real migration exists on this
--- branch (Claudy, travellight 2026-10-29 23:37: "You can write the RPC tests
--- from the contract's Tests section now, on your phase 2 harness. The
--- function names, error codes and return keys in the contract are fixed.").
+-- branch, from the contract's Tests section (the function names, error codes
+-- and return keys in the contract were fixed before the code).
 -- This file will not run until 20261029220000_pos_phase3_close_out.sql lands.
 --
 -- The four named error codes (DRAWER_ALREADY_OPEN, INVALID_FLOAT,
@@ -19,7 +19,7 @@
 -- literally via test_assert_refused(stmt, code) (pos_fixture.setup.sql;
 -- see supabase/tests/README.md) - never a hand-rolled begin/exception block
 -- that calls test_assert(false, label) with the code echoed in the label,
--- the MF1 self-confirming shape (Elby, mutant-proven, third strike after
+-- the MF1 self-confirming shape (review finding, mutant-proven, third strike after
 -- pos_rpc.test.sql and price_booking.test.sql). The role-gate refusal text
 -- is NOT one of those fixed codes, so test_assert_not_authorized() below
 -- accepts either convention already used in this migration family
@@ -31,7 +31,10 @@
 -- never depend on wall-clock timing. Section B (end-of-day report) is built
 -- entirely from direct fixture rows dated to a fixed Aruba day (2026-11-02),
 -- independent of Section A's live timestamps, so the report assertions are
--- deterministic regardless of when this file is actually run.
+-- deterministic regardless of when this file is actually run. Section C
+-- is the followup migration's single-connection check (search_path); its
+-- two-connection concurrency check runs separately, after this file, from
+-- run-pos-phase3-tests.sh.
 --
 -- Raises an exception, and so a non-zero psql exit code, on the first
 -- failing assertion. Passing assertions print as NOTICE.
@@ -160,7 +163,7 @@ end $$;
 --     payments are unaffected (contract: "Refuse POS cash payments while no
 --     cash drawer is open").
 --
--- MUST-FIX (Elby, mutant-proven): the insert attempt and the "is refused"
+-- MUST-FIX (review finding, mutant-proven): the insert attempt and the "is refused"
 -- assertion used to share one begin/exception block. Mutating the trigger
 -- condition to IF FALSE let the insert through for real, but the very next
 -- statement in that same block, test_assert(false, label-with-code), raised
@@ -562,5 +565,31 @@ begin
   perform test_assert((v_report->'sessions'->0->>'id') = 'ffffffff-0000-0000-0000-000000000001', 'the listed session is the one opened on 2026-11-02');
 end $$;
 reset role;
+
+-- =====================================================================
+-- SECTION C: followup migration 20261030200000_pos_cash_close_race.sql
+-- (goal tlb-pos-followups). The search_path check runs here, against the
+-- same single connection as everything above; the close-vs-payment race
+-- itself needs two real backend connections and so is run by
+-- run-pos-phase3-tests.sh after this file, against this same container.
+-- =====================================================================
+
+-- pos_cash_requires_open_drawer used to run with search_path = public; the
+-- followup migration pins it to search_path = '' like every other
+-- SECURITY DEFINER function in the POS stack (its body is already fully
+-- schema-qualified). pg_proc.proconfig stores that as a one-element text[]
+-- whose element is the literal text search_path="" (confirmed against a
+-- sibling pinned the same way, e.g. pos_open_drawer).
+do $$
+begin
+  perform test_assert(
+    (select proconfig from pg_proc where oid = 'public.pos_cash_requires_open_drawer()'::regprocedure)
+      = array['search_path=""']::text[],
+    'pos_cash_requires_open_drawer.proconfig is {search_path=""}');
+  perform test_assert(
+    (select proconfig from pg_proc where oid = 'public.pos_cash_requires_open_drawer()'::regprocedure)
+      = (select proconfig from pg_proc where oid = 'public.pos_open_drawer(numeric, text)'::regprocedure),
+    'pos_cash_requires_open_drawer is pinned the same way as its SECURITY DEFINER sibling pos_open_drawer');
+end $$;
 
 \echo 'pos_open_drawer / pos_close_drawer / pos_end_of_day_report RPC: assertions complete'

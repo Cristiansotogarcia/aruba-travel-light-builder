@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { addDays, format } from 'date-fns';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ import { fetchOpenDrawerSession } from '@/lib/queries/posCloseOut';
 import type { PosPaymentLine } from '@/lib/pos/posPayments';
 import type { CatalogItem, WizardCartLine } from '@/components/staff/order-wizard/types';
 import { todayDateOnly } from '@/lib/dateOnly';
+import { areWizardDatesValid, defaultWizardEndDate } from '@/lib/pos/wizardDates';
 
 import { PosStepRental } from './PosStepRental';
 import { PosStepCustomer } from './PosStepCustomer';
@@ -35,7 +35,7 @@ const STEP_LABELS: Record<PosStepId, string> = {
 };
 
 const defaultStartDate = () => todayDateOnly();
-const defaultEndDate = () => format(addDays(new Date(), 1), 'yyyy-MM-dd');
+const defaultEndDate = () => defaultWizardEndDate();
 
 // Error prefixes raised by pos_create_sale (see the migration) that we strip
 // before showing the message to staff — the AVAILABILITY_CONFLICT one is
@@ -76,7 +76,7 @@ export function PosWizard() {
   const [result, setResult] = useState<PosSaleResult | null>(null);
 
   const step = POS_STEPS[stepIndex];
-  const datesValid = !!startDate && !!endDate && new Date(endDate) > new Date(startDate);
+  const datesValid = areWizardDatesValid(startDate, endDate);
 
   const { data: availability, isLoading: availabilityLoading } = useQuery({
     queryKey: ['pos-equipment-availability', startDate, endDate],

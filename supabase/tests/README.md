@@ -21,8 +21,8 @@ perform test_assert_refused(
 Do not hand-roll a `begin ... exception when others ... end` block for a
 refusal check, and never call `test_assert(false, label)` or
 `test_assert(sqlerrm ilike ..., label)` from inside the same block that
-caught the error. That shape is the MF1 bug (Elby, mutant-proven, fixed in
-`pos_rpc.test.sql` `00878ff`, recurred in `price_booking.test.sql` and
+caught the error. That shape is the MF1 bug (review finding, mutant-proven, fixed first in
+`pos_rpc.test.sql`, recurred in `price_booking.test.sql` and
 `pos_phase3_rpc.test.sql`, third strike): the assertion's own raised
 `FAIL: <label>` exception is caught by the same handler, and when the label
 carries the expected code in parens the synthetic failure message satisfies
