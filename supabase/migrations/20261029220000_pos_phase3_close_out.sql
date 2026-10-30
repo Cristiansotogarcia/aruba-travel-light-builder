@@ -8,7 +8,7 @@
 -- all writes go through the SECURITY DEFINER RPCs below, same pattern as
 -- pos_cash_sessions's siblings (booking_payments, credit_notes).
 --
--- Deviation from the contract's RPC list (noted for Elby/Cristian): the
+-- Deviation from the contract's RPC list: the
 -- contract lists three RPCs (pos_open_drawer, pos_close_drawer,
 -- pos_end_of_day_report). A fourth, pos_drawer_cash_so_far(), is added below.
 -- Reason: the UI contract's Drawer tab must show "cash sales so far / expected"
