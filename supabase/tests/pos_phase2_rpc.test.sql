@@ -6,12 +6,21 @@
 -- the real phase 1 migration + pos_price_booking_stub.sql +
 -- pos_phase2_fixture.setup.sql + the real phase 2 migration in the same
 -- session; see run-pos-phase2-tests.sh). Covers exactly what Claudy asked
--- for #109: role gates, extend-with-no-stock rolls back, and a refund over
--- what's creditable is refused. get_pos_today_board is out of scope (see
--- pos_phase2_fixture.setup.sql header).
+-- for #109: role gates, extend-with-no-stock rolls back, a refund over
+-- what's creditable is refused, and get_pos_today_board's role gate
+-- (Customer, Driver and anon refused; staff gets an answer).
 --
 -- Raises an exception, and so a non-zero psql exit code, on the first
 -- failing assertion. Passing assertions print as NOTICE.
+--
+-- MF1 (Elby, mutant-proven, same bug as PR #108's pos_rpc.test.sql): "is
+-- refused" checks set a flag INSIDE the handled block and assert on the
+-- flag AFTER it. Calling test_assert(false, ...) inside a block that has
+-- its own exception handler lets that handler swallow the assertion's own
+-- FAIL, and a label that carries the expected code in parens lets the
+-- raised 'FAIL: ...CODE)' message re-satisfy the handler's own
+-- `sqlerrm ilike '%CODE%'` check, so a guard that let the call through
+-- silently reported PASS.
 
 create or replace function test_assert(cond boolean, label text) returns void
 language plpgsql as $$
@@ -57,14 +66,15 @@ select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222
 do $$
 declare
   v_booking_id uuid;
+  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
   begin
     perform public.extend_booking_rental(v_booking_id, '2026-11-06');
-    perform test_assert(false, 'Customer is refused by extend_booking_rental (NOT_AUTHORIZED)');
   exception when others then
-    perform test_assert(sqlerrm ilike '%NOT_AUTHORIZED%', 'Customer is refused by extend_booking_rental (NOT_AUTHORIZED)');
+    refused := sqlerrm ilike '%NOT_AUTHORIZED%';
   end;
+  perform test_assert(refused, 'Customer is refused by extend_booking_rental');
 end $$;
 reset role;
 
@@ -74,14 +84,15 @@ select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333
 do $$
 declare
   v_booking_id uuid;
+  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
   begin
     perform public.extend_booking_rental(v_booking_id, '2026-11-06');
-    perform test_assert(false, 'Driver is refused by extend_booking_rental (NOT_AUTHORIZED)');
   exception when others then
-    perform test_assert(sqlerrm ilike '%NOT_AUTHORIZED%', 'Driver is refused by extend_booking_rental (NOT_AUTHORIZED)');
+    refused := sqlerrm ilike '%NOT_AUTHORIZED%';
   end;
+  perform test_assert(refused, 'Driver is refused by extend_booking_rental');
 end $$;
 reset role;
 
@@ -99,14 +110,15 @@ select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222
 do $$
 declare
   v_booking_id uuid;
+  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
   begin
     perform public.create_credit_note(v_booking_id, 10, 'test');
-    perform test_assert(false, 'Customer is refused by create_credit_note (Not authorized)');
   exception when others then
-    perform test_assert(sqlerrm ilike '%not authorized%', 'Customer is refused by create_credit_note (Not authorized)');
+    refused := sqlerrm ilike '%not authorized%';
   end;
+  perform test_assert(refused, 'Customer is refused by create_credit_note');
 end $$;
 reset role;
 
@@ -116,14 +128,15 @@ select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333
 do $$
 declare
   v_booking_id uuid;
+  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
   begin
     perform public.create_credit_note(v_booking_id, 10, 'test');
-    perform test_assert(false, 'Driver is refused by create_credit_note (Not authorized)');
   exception when others then
-    perform test_assert(sqlerrm ilike '%not authorized%', 'Driver is refused by create_credit_note (Not authorized)');
+    refused := sqlerrm ilike '%not authorized%';
   end;
+  perform test_assert(refused, 'Driver is refused by create_credit_note');
 end $$;
 reset role;
 
@@ -199,14 +212,17 @@ end $$;
 do $$
 declare
   v_booking_id uuid;
+  refused boolean := false;
+  v_sqlerrm text;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Extend Conflict A';
   begin
     perform public.extend_booking_rental(v_booking_id, '2026-11-14');
-    perform test_assert(false, 'an extend into a fully booked range must be refused');
   exception when others then
-    perform test_assert(sqlerrm like 'AVAILABILITY_CONFLICT%', 'an extend into a fully booked range raises AVAILABILITY_CONFLICT (got: ' || sqlerrm || ')');
+    v_sqlerrm := sqlerrm;
+    refused := v_sqlerrm like 'AVAILABILITY_CONFLICT%';
   end;
+  perform test_assert(refused, 'an extend into a fully booked range raises AVAILABILITY_CONFLICT (got: ' || coalesce(v_sqlerrm, 'no error') || ')');
 end $$;
 reset role;
 do $$
@@ -246,14 +262,15 @@ end $$;
 do $$
 declare
   v_booking_id uuid;
+  refused boolean := false;
 begin
   select id into v_booking_id from public.bookings where customer_name = 'Credit Note Target';
   begin
     perform public.create_credit_note(v_booking_id, 40, 'Second refund, pushes cumulative over total');
-    perform test_assert(false, 'a credit note that would push cumulative credits over the booking total is refused');
   exception when others then
-    perform test_assert(sqlerrm ilike '%exceeds remaining creditable amount%', 'a credit note that would push cumulative credits over the booking total is refused');
+    refused := sqlerrm ilike '%exceeds remaining creditable amount%';
   end;
+  perform test_assert(refused, 'a credit note that would push cumulative credits over the booking total is refused');
 end $$;
 reset role;
 do $$
@@ -268,4 +285,76 @@ begin
   perform test_assert(v_sum = 20, 'persisted credit total is still exactly 20');
 end $$;
 
-\echo 'extend_booking_rental / create_credit_note RPC: assertions complete'
+-- 9. get_pos_today_board role gate (MF4): Customer and Driver are refused
+--    with the function's own 'Not authorized' message; anon never reaches
+--    the function body at all (no EXECUTE grant), so Postgres itself
+--    refuses with insufficient_privilege. None of the three needs
+--    booking_service_tasks to exist - the role check raises before the
+--    query that joins it ever runs.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+do $$
+declare
+  refused boolean := false;
+begin
+  begin
+    perform public.get_pos_today_board();
+  exception when others then
+    refused := sqlerrm ilike '%not authorized%';
+  end;
+  perform test_assert(refused, 'Customer is refused by get_pos_today_board');
+end $$;
+reset role;
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+do $$
+declare
+  refused boolean := false;
+begin
+  begin
+    perform public.get_pos_today_board();
+  exception when others then
+    refused := sqlerrm ilike '%not authorized%';
+  end;
+  perform test_assert(refused, 'Driver is refused by get_pos_today_board');
+end $$;
+reset role;
+
+set role anon;
+do $$
+declare
+  refused boolean := false;
+begin
+  begin
+    perform public.get_pos_today_board();
+  exception when insufficient_privilege then
+    refused := true;
+  end;
+  perform test_assert(refused, 'anon is refused by get_pos_today_board (no EXECUTE grant)');
+end $$;
+reset role;
+
+-- 10. Staff gets an answer: a jsonb array, containing the one active
+--     booking seeded for the role-gate tests above (still 'confirmed'),
+--     with no booking_service_tasks row so both done flags default false.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+do $$
+declare
+  v_result jsonb;
+  v_booking_id uuid;
+  v_entry jsonb;
+begin
+  v_result := public.get_pos_today_board();
+  perform test_assert(jsonb_typeof(v_result) = 'array', 'staff gets a jsonb array back from get_pos_today_board');
+
+  select id into v_booking_id from public.bookings where customer_name = 'Extend Role Gate Target';
+  select e into v_entry from jsonb_array_elements(v_result) e where (e->>'booking_id')::uuid = v_booking_id;
+  perform test_assert(v_entry is not null, 'the seeded confirmed booking appears on the board');
+  perform test_assert(v_entry->>'outbound_done' = 'false', 'with no service-task row, outbound_done defaults false');
+  perform test_assert(v_entry->>'return_done' = 'false', 'with no service-task row, return_done defaults false');
+end $$;
+reset role;
+
+\echo 'extend_booking_rental / create_credit_note / get_pos_today_board RPC: assertions complete'
