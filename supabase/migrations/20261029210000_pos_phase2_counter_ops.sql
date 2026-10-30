@@ -226,10 +226,11 @@ BEGIN
     RAISE EXCEPTION 'PRICING_UNAVAILABLE: price_booking did not return a total';
   END IF;
 
-  IF v_new_total < v_old_total THEN
-    RAISE EXCEPTION 'REPRICE_BELOW_CURRENT_TOTAL: repriced total % is less than the current total %',
-      ROUND(v_new_total, 2), ROUND(v_old_total, 2);
-  END IF;
+  -- A longer rental can reprice lower (4 days daily + delivery fee costs more
+  -- than a 5-day weekly rate). Extending never lowers what the booking costs:
+  -- the total stays where it is and nothing extra is charged (Claudy,
+  -- 2026-10-30, Elby #109 review; Cristian can overturn).
+  v_new_total := GREATEST(v_new_total, v_old_total);
 
   v_additional := ROUND(v_new_total - v_old_total, 2);
 
