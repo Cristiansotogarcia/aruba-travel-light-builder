@@ -112,7 +112,9 @@ BEGIN
     IF NOT FOUND THEN
       RAISE EXCEPTION 'UNKNOWN_EQUIPMENT: %', v_equipment_id;
     END IF;
-    IF v_per_day IS NULL THEN
+    -- price_per_day is NOT NULL DEFAULT 0 on the real table, so a row saved
+    -- without a price reads as 0. Refuse it rather than rent it for free.
+    IF v_per_day IS NULL OR v_per_day <= 0 THEN
       RAISE EXCEPTION 'UNPRICED_EQUIPMENT: %', v_equipment_id;
     END IF;
 
