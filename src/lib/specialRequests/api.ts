@@ -50,7 +50,9 @@ export async function submitSpecialRequest(
 
   try {
     const { error: notifyError } = await specialRequestsDb.functions.invoke('special-request-email', {
-      body: { special_request: record },
+      // Only the id: the function re-reads the stored row with the service
+      // role and renders the email from that, never from caller input.
+      body: { id: record.id },
     });
     if (notifyError) {
       console.warn('special-request-email function returned an error:', notifyError);

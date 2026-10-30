@@ -1,11 +1,21 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Staff notification for a Special Request submitted at /contact
 // (public.special_requests, migration 20261029200000_special_requests.sql).
-// Mirrors supabase/functions/driver-assignment-email: the caller already has
-// the full row (just inserted it), so this function only renders and sends —
-// it never queries the database itself, and it holds no service-role key.
+// Invoked fire-and-forget from the client with { id } only. The row is
+// re-read server-side with the service role and the email is rendered from
+// the stored row, so the caller cannot influence the content or reply-to,
+// and every email is backed by a persisted, RLS- and CHECK-validated record.
+// Same model as send-booking-confirmation.
+//
+// One row sends at most one email: the row is claimed by setting
+// notified_at with a conditional update (notified_at IS NULL), and the claim
+// is released again only if nothing was sent.
+//
+// Secrets: RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// (already configured for sibling functions), optional STAFF_NOTIFICATION_EMAIL.
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_API_URL = 'https://api.resend.com/emails';
@@ -13,10 +23,18 @@ const FROM_EMAIL = 'Travel Light Aruba <info@travelightaruba.com>';
 // Staff mailbox that triages special requests. Override with
 // STAFF_NOTIFICATION_EMAIL if a dedicated inbox is set up later.
 const STAFF_EMAIL = Deno.env.get('STAFF_NOTIFICATION_EMAIL') || 'info@travelightaruba.com';
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : null;
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type SpecialRequestType = 'general' | 'last_minute' | 'special_arrangement';
 
-interface SpecialRequestPayload {
+interface SpecialRequestRow {
   id: string;
   name: string;
   email: string;
@@ -40,17 +58,59 @@ serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Never leak internals to the caller: generic failure body only.
+  const genericFailure = (status: number) =>
+    new Response(JSON.stringify({ error: 'Could not send special request email' }), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  let id: unknown;
   try {
-    const payload = (await req.json()) as { special_request?: SpecialRequestPayload };
-    const specialRequest = payload.special_request;
+    id = ((await req.json()) as { id?: unknown })?.id;
+  } catch {
+    return genericFailure(400);
+  }
 
-    if (!specialRequest || !specialRequest.id || !specialRequest.email) {
-      return new Response(JSON.stringify({ error: 'Missing special_request details' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+  if (typeof id !== 'string' || !UUID_PATTERN.test(id)) {
+    return genericFailure(400);
+  }
+
+  if (!supabase) {
+    console.error('special-request-email: Supabase service role is not configured');
+    return genericFailure(500);
+  }
+
+  // Claim the row: only a stored request that has not been notified yet.
+  const { data: claimed, error: claimError } = await supabase
+    .from('special_requests')
+    .update({ notified_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('notified_at', null)
+    .select('id, name, email, phone, request_type, message, preferred_dates, created_at');
+
+  if (claimError) {
+    console.error('special-request-email: claim failed', id, claimError.message);
+    return genericFailure(500);
+  }
+
+  const specialRequest = (claimed as SpecialRequestRow[] | null)?.[0];
+  if (!specialRequest) {
+    // Unknown id, or this request was already notified. Same answer for both.
+    return genericFailure(404);
+  }
+
+  const releaseClaim = async () => {
+    const { error } = await supabase
+      .from('special_requests')
+      .update({ notified_at: null })
+      .eq('id', specialRequest.id);
+    if (error) {
+      console.error('special-request-email: failed to release claim', specialRequest.id, error.message);
     }
+  };
 
+  try {
     const typeLabel = REQUEST_TYPE_LABELS[specialRequest.request_type] ?? specialRequest.request_type;
     const subject = `New Special Request (${typeLabel}) - ${specialRequest.name}`;
     const emailHtml = generateStaffNotificationEmail(specialRequest, typeLabel);
@@ -60,6 +120,8 @@ serve(async (req: Request) => {
       console.log('=== SPECIAL REQUEST EMAIL (NOT SENT - NO API KEY) ===');
       console.log(`To: ${STAFF_EMAIL}`);
       console.log(`Subject: ${subject}`);
+      // Nothing was sent, so the row stays eligible for a real send later.
+      await releaseClaim();
 
       return new Response(
         JSON.stringify({
@@ -90,12 +152,9 @@ serve(async (req: Request) => {
     });
 
     if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error('Resend API error:', errorText);
-      return new Response(JSON.stringify({ error: 'Failed to send email', details: errorText }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('Resend API error:', await emailResponse.text());
+      await releaseClaim();
+      return genericFailure(502);
     }
 
     const emailResult = await emailResponse.json();
@@ -109,10 +168,8 @@ serve(async (req: Request) => {
     );
   } catch (error) {
     console.error('Error processing special request email:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    await releaseClaim();
+    return genericFailure(500);
   }
 });
 
@@ -124,7 +181,7 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function generateStaffNotificationEmail(data: SpecialRequestPayload, typeLabel: string): string {
+function generateStaffNotificationEmail(data: SpecialRequestRow, typeLabel: string): string {
   const submittedAt = new Date(data.created_at).toLocaleString('en-US', {
     weekday: 'long',
     year: 'numeric',

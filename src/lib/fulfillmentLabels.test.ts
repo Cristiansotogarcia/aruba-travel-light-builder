@@ -37,6 +37,10 @@ describe('getLegLabel', () => {
     expect(getLegLabel(null, 'outbound')).toBe(DELIVERY_LABEL);
     expect(getLegLabel(undefined, 'return')).toBe(COLLECTION_LABEL);
   });
+  it('falls back to the delivery mapping for an unknown method string instead of throwing', () => {
+    expect(getLegLabel('split', 'outbound')).toBe(DELIVERY_LABEL);
+    expect(getLegLabel('split', 'return')).toBe(COLLECTION_LABEL);
+  });
 });
 
 describe('getServiceTaskTypeDisplayLabel', () => {

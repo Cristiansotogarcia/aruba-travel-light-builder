@@ -87,6 +87,43 @@ begin
 end $$;
 reset role;
 
+-- 2b. anon cannot backdate a request (created_at/updated_at must be the
+--     insert time), so a submitter cannot bury it in a created_at-sorted view.
+set role anon;
+do $$
+begin
+  begin
+    insert into public.special_requests (name, email, request_type, message, created_at)
+    values ('Backdated', 'backdated@example.com', 'general', 'test', now() - interval '30 days');
+    perform test_assert(false, 'anon insert with a backdated created_at is rejected');
+  exception when others then
+    perform test_assert(true, 'anon insert with a backdated created_at is rejected');
+  end;
+  begin
+    insert into public.special_requests (name, email, request_type, message, updated_at)
+    values ('Backdated Upd', 'backdated-upd@example.com', 'general', 'test', now() - interval '30 days');
+    perform test_assert(false, 'anon insert with a backdated updated_at is rejected');
+  exception when others then
+    perform test_assert(true, 'anon insert with a backdated updated_at is rejected');
+  end;
+end $$;
+reset role;
+
+-- 2c. anon cannot pre-set notified_at (only the email function claims a
+--     row), which would otherwise suppress the staff email for that row.
+set role anon;
+do $$
+begin
+  begin
+    insert into public.special_requests (name, email, request_type, message, notified_at)
+    values ('Pre-notified', 'prenotified@example.com', 'general', 'test', now());
+    perform test_assert(false, 'anon insert with notified_at set is rejected');
+  exception when others then
+    perform test_assert(true, 'anon insert with notified_at set is rejected');
+  end;
+end $$;
+reset role;
+
 -- 3. authenticated, non-staff (Driver) can insert the same way a staff
 --    member later triages it, via a bare insert.
 set role authenticated;

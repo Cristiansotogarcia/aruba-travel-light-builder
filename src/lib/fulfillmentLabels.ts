@@ -48,7 +48,9 @@ export function getFulfillmentMethodLabel(method: FulfillmentMethod | string | n
 }
 
 export function getLegLabel(method: FulfillmentMethod | string | null | undefined, leg: RentalLeg): string {
-  return LEG_LABELS[(method as FulfillmentMethod) ?? 'delivery'][leg];
+  // An unknown method string falls back to the delivery labels instead of
+  // throwing, same as getFulfillmentMethodLabel.
+  return (LEG_LABELS[method as FulfillmentMethod] ?? LEG_LABELS.delivery)[leg];
 }
 
 /**

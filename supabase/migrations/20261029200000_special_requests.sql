@@ -17,6 +17,9 @@ CREATE TABLE public.special_requests (
   message         text NOT NULL CHECK (char_length(btrim(message)) BETWEEN 1 AND 2000),
   preferred_dates text CHECK (preferred_dates IS NULL OR char_length(btrim(preferred_dates)) <= 200),
   status          text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'in_progress', 'resolved', 'closed')),
+  -- Set by the special-request-email function (service role) when it claims
+  -- the row for the staff notification, so each row sends at most one email.
+  notified_at     timestamptz,
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
@@ -43,6 +46,9 @@ ALTER TABLE public.special_requests ENABLE ROW LEVEL SECURITY;
 -- Anyone (anon or signed in) may submit a request. The WITH CHECK duplicates
 -- the column CHECK constraints so a malformed row is rejected by RLS before
 -- it ever reaches the constraint, and status can only be created as 'new'.
+-- notified_at must start NULL (only the email function sets it), and the
+-- timestamps must be the insert time, so a submitter cannot backdate a
+-- request to bury it in a triage view sorted by created_at.
 CREATE POLICY "Anyone can submit a special request" ON public.special_requests
 FOR INSERT TO anon, authenticated
 WITH CHECK (
@@ -53,6 +59,9 @@ WITH CHECK (
   AND char_length(btrim(message)) BETWEEN 1 AND 2000
   AND (preferred_dates IS NULL OR char_length(btrim(preferred_dates)) <= 200)
   AND status = 'new'
+  AND notified_at IS NULL
+  AND created_at = now()
+  AND updated_at = now()
 );
 
 -- Staff-only read: Admin/SuperUser (full access), Booker and StoreStaff (the
