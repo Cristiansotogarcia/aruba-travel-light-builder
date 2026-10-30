@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/app-shell';
@@ -41,14 +41,14 @@ const Admin = () => {
     return savedSection && savedSection !== 'blog' ? savedSection : 'dashboard';
   });
 
-  const handleSectionChange = (section: string) => {
+  const handleSectionChange = useCallback((section: string) => {
     if (section === 'blog') {
       navigate('/blog-studio');
       return;
     }
     setActiveSection(section);
     sessionStorage.setItem('admin:activeSection', section);
-  };
+  }, [navigate]);
 
   useEffect(() => {
     // Save current section to sessionStorage whenever it changes
@@ -75,7 +75,7 @@ const Admin = () => {
     return () => {
       window.removeEventListener('admin:navigate', handleAdminNavigate as EventListener);
     };
-  }, []);
+  }, [handleSectionChange]);
 
   const renderActiveSection = () => {
     switch (activeSection) {

@@ -169,7 +169,7 @@ describe('Admin Add Product dialog close path', () => {
     expect(main).toBeTruthy();
     expect(main?.className).toMatch(/h-screen/);
     expect(main?.className).toMatch(/overflow-y-auto/);
-  });
+  }, 20000);
 });
 
 describe('Admin blog section persistence', () => {

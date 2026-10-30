@@ -8,7 +8,7 @@ import { listPublishedPosts } from '@/lib/blog/api';
 
 const PAGE_SIZE = 9;
 
-export function parseBlogPage(value: string | null) {
+function parseBlogPage(value: string | null) {
   if (!value || !/^[1-9]\d*$/.test(value)) return 1;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) ? parsed : 1;
