@@ -16,11 +16,15 @@
 --
 -- The four named error codes (DRAWER_ALREADY_OPEN, INVALID_FLOAT,
 -- DRAWER_NOT_OPEN, VARIANCE_NOTE_REQUIRED) are contract-fixed and asserted
--- literally. The role-gate refusal text is NOT one of those fixed codes, so
--- test_assert_not_authorized() below accepts either convention already used
--- in this migration family ('NOT_AUTHORIZED: ...' from
--- extend_booking_rental/pos_create_sale, or 'Not authorized...' from
--- create_credit_note) rather than pinning to one.
+-- literally via test_assert_refused(stmt, code) (pos_fixture.setup.sql;
+-- see supabase/tests/README.md) - never a hand-rolled begin/exception block
+-- that calls test_assert(false, label) with the code echoed in the label,
+-- the MF1 self-confirming shape (Elby, mutant-proven, third strike after
+-- pos_rpc.test.sql and price_booking.test.sql). The role-gate refusal text
+-- is NOT one of those fixed codes, so test_assert_not_authorized() below
+-- accepts either convention already used in this migration family
+-- ('NOT_AUTHORIZED: ...' from extend_booking_rental/pos_create_sale, or
+-- 'Not authorized...' from create_credit_note) rather than pinning to one.
 --
 -- Section A (drawer lifecycle) runs pos_open_drawer/pos_close_drawer live and
 -- reads opened_at back from the row so "before/after opened_at" comparisons
@@ -135,21 +139,11 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', '44444444-4444-4444-4444-444444444441', false);
 do $$
 begin
-  begin
-    perform public.pos_open_drawer(-1, null);
-    perform test_assert(false, 'a negative opening float is refused (INVALID_FLOAT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_FLOAT%', 'a negative opening float is refused (INVALID_FLOAT)');
-  end;
+  perform test_assert_refused($sql$select public.pos_open_drawer(-1, null)$sql$, 'INVALID_FLOAT');
 end $$;
 do $$
 begin
-  begin
-    perform public.pos_open_drawer(null, null);
-    perform test_assert(false, 'a NULL opening float is refused (INVALID_FLOAT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_FLOAT%', 'a NULL opening float is refused (INVALID_FLOAT)');
-  end;
+  perform test_assert_refused($sql$select public.pos_open_drawer(null, null)$sql$, 'INVALID_FLOAT');
 end $$;
 reset role;
 
@@ -165,17 +159,42 @@ end $$;
 --     cash payment while no drawer is open; card, other and office-channel
 --     payments are unaffected (contract: "Refuse POS cash payments while no
 --     cash drawer is open").
+--
+-- MUST-FIX (Elby, mutant-proven): the insert attempt and the "is refused"
+-- assertion used to share one begin/exception block. Mutating the trigger
+-- condition to IF FALSE let the insert through for real, but the very next
+-- statement in that same block, test_assert(false, label-with-code), raised
+-- its own FAIL and was caught by the SAME exception handler - and plpgsql's
+-- implicit savepoint rollback for a caught exception undoes every statement
+-- since that block's BEGIN, including the insert that just succeeded. So
+-- the leaked row vanished before the later "left no row behind" count ran,
+-- and BOTH assertions passed on a broken trigger.
+--
+-- Fixed shape: the insert attempt lives in its own block that never itself
+-- raises (it only sets a flag), so it commits exactly what really happened;
+-- the flag is handed to the next statement via a GUC (plpgsql variables
+-- don't survive across top-level statements); the refusal assertion and the
+-- row-count assertion are each their own statement after it, so neither can
+-- roll back what the insert attempt actually did.
 do $$
+declare
+  refused boolean := false;
 begin
   insert into public.bookings (id, customer_name, customer_email, customer_phone, customer_address, start_date, end_date, total_amount, status, fulfillment_method)
   values ('cccccccc-0000-0000-0000-000000000001', 'No Drawer Cash Attempt', 'no-drawer-cash@example.com', '0000', 'n/a', '2026-11-01', '2026-11-02', 30, 'confirmed', 'pickup');
   begin
     insert into public.booking_payments (booking_id, amount, method, channel, recorded_by)
     values ('cccccccc-0000-0000-0000-000000000001', 30, 'cash', 'pos', '44444444-4444-4444-4444-444444444441');
-    perform test_assert(false, 'a pos cash payment is refused while no drawer is open (NO_OPEN_DRAWER)');
   exception when others then
-    perform test_assert(sqlerrm ilike '%NO_OPEN_DRAWER%', 'a pos cash payment is refused while no drawer is open (NO_OPEN_DRAWER)');
+    refused := sqlerrm ilike '%NO_OPEN_DRAWER%';
   end;
+  perform set_config('app.no_open_drawer_refused', refused::text, false);
+end $$;
+
+do $$
+begin
+  perform test_assert(current_setting('app.no_open_drawer_refused')::boolean,
+    'a pos cash payment is refused while no drawer is open');
 end $$;
 
 do $$
@@ -221,12 +240,7 @@ end $$;
 -- 5. DRAWER_ALREADY_OPEN: a second open while one is already open is refused.
 do $$
 begin
-  begin
-    perform public.pos_open_drawer(50, null);
-    perform test_assert(false, 'a second open while one is already open is refused (DRAWER_ALREADY_OPEN)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%DRAWER_ALREADY_OPEN%', 'a second open while one is already open is refused (DRAWER_ALREADY_OPEN)');
-  end;
+  perform test_assert_refused($sql$select public.pos_open_drawer(50, null)$sql$, 'DRAWER_ALREADY_OPEN');
 end $$;
 reset role;
 
@@ -320,12 +334,9 @@ declare
   v_session_id uuid;
 begin
   select id into v_session_id from public.pos_cash_sessions where status = 'open';
-  begin
-    perform public.pos_close_drawer(v_session_id, 150, null);
-    perform test_assert(false, 'a non-zero variance without a note is refused (VARIANCE_NOTE_REQUIRED)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%VARIANCE_NOTE_REQUIRED%', 'a non-zero variance without a note is refused (VARIANCE_NOTE_REQUIRED)');
-  end;
+  perform test_assert_refused(
+    format('select public.pos_close_drawer(%L, 150, null)', v_session_id),
+    'VARIANCE_NOTE_REQUIRED');
 end $$;
 reset role;
 
@@ -367,12 +378,9 @@ declare
   v_session_id uuid;
 begin
   select id into v_session_id from public.pos_cash_sessions where opened_by = '44444444-4444-4444-4444-444444444441';
-  begin
-    perform public.pos_close_drawer(v_session_id, 150, 'Till over by 10, pending recount');
-    perform test_assert(false, 'closing an already-closed session is refused (DRAWER_NOT_OPEN)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%DRAWER_NOT_OPEN%', 'closing an already-closed session is refused (DRAWER_NOT_OPEN)');
-  end;
+  perform test_assert_refused(
+    format('select public.pos_close_drawer(%L, 150, %L)', v_session_id, 'Till over by 10, pending recount'),
+    'DRAWER_NOT_OPEN');
 end $$;
 reset role;
 
