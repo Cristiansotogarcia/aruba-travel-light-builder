@@ -15,6 +15,10 @@
 -- Raises an exception, and so a non-zero psql exit code, on the first
 -- failing assertion. Passing assertions print as NOTICE.
 --
+-- "Is refused" checks catch insufficient_privilege (what RLS raises) and
+-- assert on a flag AFTER the inner block. Asserting inside a block that has
+-- an exception handler lets the handler swallow the assertion's own FAIL.
+--
 -- Session-level set_config (is_local = false) is used throughout instead of
 -- the transaction-local default, so a claim survives across the separate
 -- autocommitted statements/DO blocks this script runs as.
@@ -60,30 +64,35 @@ end $$;
 set role anon;
 do $$
 declare
+  refused boolean;
   new_id uuid;
 begin
+  refused := false;
   begin
     insert into public.special_requests (name, email, request_type, message)
-    values ('Anon Visitor (RETURNING)', 'anon-returning@example.com', 'general', 'Testing anon insert+select is refused')
-    returning id into new_id;
-    perform test_assert(false, 'anon INSERT...RETURNING is refused (no SELECT policy for anon)');
-  exception when others then
-    perform test_assert(true, 'anon INSERT...RETURNING is refused (no SELECT policy for anon)');
+    values ('Anon Visitor (RETURNING)', 'anon-returning@example.com', 'general', 'Testing anon insert+select is refused') returning id into new_id;
+  exception when insufficient_privilege then
+    refused := true;
   end;
+  perform test_assert(refused, 'anon INSERT...RETURNING is refused (no SELECT policy for anon)');
 end $$;
 reset role;
 
 -- 2. anon insert is rejected when it tries to set a non-'new' status (RLS WITH CHECK).
 set role anon;
 do $$
+declare
+  refused boolean;
+  new_id uuid;
 begin
+  refused := false;
   begin
     insert into public.special_requests (name, email, request_type, message, status)
     values ('Bad Status', 'bad-status@example.com', 'general', 'test', 'resolved');
-    perform test_assert(false, 'anon insert with status != new is rejected');
-  exception when others then
-    perform test_assert(true, 'anon insert with status != new is rejected');
+  exception when insufficient_privilege then
+    refused := true;
   end;
+  perform test_assert(refused, 'anon insert with status != new is rejected');
 end $$;
 reset role;
 
@@ -91,21 +100,26 @@ reset role;
 --     insert time), so a submitter cannot bury it in a created_at-sorted view.
 set role anon;
 do $$
+declare
+  refused boolean;
+  new_id uuid;
 begin
+  refused := false;
   begin
     insert into public.special_requests (name, email, request_type, message, created_at)
     values ('Backdated', 'backdated@example.com', 'general', 'test', now() - interval '30 days');
-    perform test_assert(false, 'anon insert with a backdated created_at is rejected');
-  exception when others then
-    perform test_assert(true, 'anon insert with a backdated created_at is rejected');
+  exception when insufficient_privilege then
+    refused := true;
   end;
+  perform test_assert(refused, 'anon insert with a backdated created_at is rejected');
+  refused := false;
   begin
     insert into public.special_requests (name, email, request_type, message, updated_at)
     values ('Backdated Upd', 'backdated-upd@example.com', 'general', 'test', now() - interval '30 days');
-    perform test_assert(false, 'anon insert with a backdated updated_at is rejected');
-  exception when others then
-    perform test_assert(true, 'anon insert with a backdated updated_at is rejected');
+  exception when insufficient_privilege then
+    refused := true;
   end;
+  perform test_assert(refused, 'anon insert with a backdated updated_at is rejected');
 end $$;
 reset role;
 
@@ -113,14 +127,18 @@ reset role;
 --     row), which would otherwise suppress the staff email for that row.
 set role anon;
 do $$
+declare
+  refused boolean;
+  new_id uuid;
 begin
+  refused := false;
   begin
     insert into public.special_requests (name, email, request_type, message, notified_at)
     values ('Pre-notified', 'prenotified@example.com', 'general', 'test', now());
-    perform test_assert(false, 'anon insert with notified_at set is rejected');
-  exception when others then
-    perform test_assert(true, 'anon insert with notified_at set is rejected');
+  exception when insufficient_privilege then
+    refused := true;
   end;
+  perform test_assert(refused, 'anon insert with notified_at set is rejected');
 end $$;
 reset role;
 
