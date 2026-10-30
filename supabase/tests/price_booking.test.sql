@@ -18,8 +18,11 @@
 --
 -- Sections 2-4 cover what the shared cases can't: client-supplied
 -- total/price_per_day/subtotal being ignored, the refusal paths (each
--- asserted on its error code, refused-flag pattern per pos_rpc.test.sql),
--- and the service_role-only EXECUTE grant.
+-- asserted on its error code via test_assert_refused(stmt, code) -
+-- price_booking_fixture.setup.sql, see supabase/tests/README.md - never a
+-- hand-rolled begin/exception block with the code echoed in the label, the
+-- MF1 self-confirming shape, Elby, mutant-proven), and the
+-- service_role-only EXECUTE grant.
 --
 -- Raises an exception, and so a non-zero psql exit code, on the first
 -- failing assertion. Passing assertions print as NOTICE.
@@ -103,178 +106,80 @@ begin
     'client-supplied total/price_per_day/subtotal keys are ignored (real price: 30)');
 end $$;
 
--- 3. Refusals, each asserted on its error code (refused-flag pattern per
---    pos_rpc.test.sql).
+-- 3. Refusals, each asserted on its error code via test_assert_refused
+--    (price_booking_fixture.setup.sql; see supabase/tests/README.md) - never
+--    a hand-rolled begin/exception block that calls test_assert(false, label)
+--    with the code echoed in the label, the MF1 self-confirming shape
+--    (Elby, mutant-proven, third strike after pos_rpc.test.sql).
 do $$
 begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-02', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'end_date = start_date is refused (INVALID_DATES)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_DATES%', 'end_date = start_date is refused (INVALID_DATES)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-02', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'INVALID_DATES');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-05', 'end_date', '2026-11-02', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'end_date < start_date is refused (INVALID_DATES)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_DATES%', 'end_date < start_date is refused (INVALID_DATES)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-05', 'end_date', '2026-11-02', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'INVALID_DATES');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', 'not-a-date', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'unparseable start_date text is refused (INVALID_DATES)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_DATES%', 'unparseable start_date text is refused (INVALID_DATES)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', 'not-a-date', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'INVALID_DATES');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'delivery_slot', 'evening', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'an invalid delivery_slot is refused (INVALID_SLOT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_SLOT%', 'an invalid delivery_slot is refused (INVALID_SLOT)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'delivery_slot', 'evening', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'INVALID_SLOT');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'pickup_slot', 'evening', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'an invalid pickup_slot is refused (INVALID_SLOT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_SLOT%', 'an invalid pickup_slot is refused (INVALID_SLOT)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'pickup_slot', 'evening', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'INVALID_SLOT');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'mail'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'an unknown fulfillment_method is refused (INVALID_FULFILLMENT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_FULFILLMENT%', 'an unknown fulfillment_method is refused (INVALID_FULFILLMENT)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'mail'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'INVALID_FULFILLMENT');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      '[]'::jsonb
-    );
-    perform test_assert(false, 'an empty items array is refused (INVALID_ITEMS)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_ITEMS%', 'an empty items array is refused (INVALID_ITEMS)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), '[]'::jsonb)$sql$,
+    'INVALID_ITEMS');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid()))
-    );
-    perform test_assert(false, 'a missing quantity is refused (INVALID_ITEMS)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_ITEMS%', 'a missing quantity is refused (INVALID_ITEMS)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid())))$sql$,
+    'INVALID_ITEMS');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 0))
-    );
-    perform test_assert(false, 'quantity 0 is refused (INVALID_ITEMS)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_ITEMS%', 'quantity 0 is refused (INVALID_ITEMS)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 0)))$sql$,
+    'INVALID_ITEMS');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1.5))
-    );
-    perform test_assert(false, 'quantity 1.5 is refused (INVALID_ITEMS)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_ITEMS%', 'quantity 1.5 is refused (INVALID_ITEMS)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1.5)))$sql$,
+    'INVALID_ITEMS');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', '2'))
-    );
-    perform test_assert(false, 'quantity as the string "2" is refused (INVALID_ITEMS)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%INVALID_ITEMS%', 'quantity as the string "2" is refused (INVALID_ITEMS)');
-  end;
-end $$;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', '2')))$sql$,
+    'INVALID_ITEMS');
 
-do $$
-begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1))
-    );
-    perform test_assert(false, 'an equipment_id with no matching row is refused (UNKNOWN_EQUIPMENT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%UNKNOWN_EQUIPMENT%', 'an equipment_id with no matching row is refused (UNKNOWN_EQUIPMENT)');
-  end;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', gen_random_uuid(), 'quantity', 1)))$sql$,
+    'UNKNOWN_EQUIPMENT');
 end $$;
 
 do $$
 declare
   v_unpriced_id uuid;
+  v_zero_priced_id uuid;
 begin
   insert into public.equipment (price_per_day, price_per_week) values (null, null) returning id into v_unpriced_id;
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', v_unpriced_id, 'quantity', 1))
-    );
-    perform test_assert(false, 'equipment with a null price_per_day is refused (UNPRICED_EQUIPMENT)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%UNPRICED_EQUIPMENT%', 'equipment with a null price_per_day is refused (UNPRICED_EQUIPMENT)');
-  end;
+  insert into public.equipment (price_per_day, price_per_week) values (0, null) returning id into v_zero_priced_id;
+
+  perform test_assert_refused(
+    format($sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', %L::uuid, 'quantity', 1)))$sql$, v_unpriced_id),
+    'UNPRICED_EQUIPMENT');
+
+  -- price_per_day NOT NULL DEFAULT 0 on the real table (c66e439): a row
+  -- saved without a price reads as 0, not null, so this case - not just the
+  -- null one - is the one a real production row can actually hit.
+  perform test_assert_refused(
+    format($sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', %L::uuid, 'quantity', 1)))$sql$, v_zero_priced_id),
+    'UNPRICED_EQUIPMENT');
 end $$;
 
 -- 4. Only service_role may execute price_booking; anon and authenticated
@@ -291,30 +196,18 @@ end $$;
 set role anon;
 do $$
 begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', current_setting('app.price_booking_perm_equip_id')::uuid, 'quantity', 1))
-    );
-    perform test_assert(false, 'anon is refused EXECUTE on price_booking (permission denied)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%permission denied%', 'anon is refused EXECUTE on price_booking (permission denied)');
-  end;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', current_setting('app.price_booking_perm_equip_id')::uuid, 'quantity', 1)))$sql$,
+    'permission denied');
 end $$;
 reset role;
 
 set role authenticated;
 do $$
 begin
-  begin
-    perform public.price_booking(
-      jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'),
-      jsonb_build_array(jsonb_build_object('equipment_id', current_setting('app.price_booking_perm_equip_id')::uuid, 'quantity', 1))
-    );
-    perform test_assert(false, 'authenticated is refused EXECUTE on price_booking (permission denied)');
-  exception when others then
-    perform test_assert(sqlerrm ilike '%permission denied%', 'authenticated is refused EXECUTE on price_booking (permission denied)');
-  end;
+  perform test_assert_refused(
+    $sql$select public.price_booking(jsonb_build_object('start_date', '2026-11-02', 'end_date', '2026-11-05', 'fulfillment_method', 'pickup'), jsonb_build_array(jsonb_build_object('equipment_id', current_setting('app.price_booking_perm_equip_id')::uuid, 'quantity', 1)))$sql$,
+    'permission denied');
 end $$;
 reset role;
 
