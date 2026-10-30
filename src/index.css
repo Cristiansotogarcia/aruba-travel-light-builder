@@ -138,3 +138,32 @@
     border: 0;
   }
 }
+
+/* POS receipt (Done screen): 80mm thermal-printer friendly. Hides the rest
+   of the page (app shell sidebar/header, wizard controls) and prints only
+   the .pos-receipt card at 80mm width. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .pos-receipt,
+  .pos-receipt * {
+    visibility: visible;
+  }
+
+  .pos-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    max-width: 80mm;
+    box-shadow: none;
+    border: none;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+}

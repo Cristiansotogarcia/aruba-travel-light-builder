@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,7 @@ import { HandoverDialog } from '@/components/depot/HandoverDialog';
 import { ReturnDialog } from '@/components/depot/ReturnDialog';
 import QrScanner from '@/components/depot/QrScanner';
 import type { DepotPickup } from '@/components/depot/HandoverDialog';
-import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff, Plus } from 'lucide-react';
+import { Package, Phone, Calendar, Search, AlertCircle, QrCode, WifiOff, Plus, ShoppingCart } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useDepotSync } from '@/hooks/useDepotSync';
 import { cachePickups, getCachedPickups } from '@/lib/offline/depotDb';
@@ -21,9 +22,11 @@ import { STORE_PICKUP_LABEL, STORE_RETURN_LABEL } from '@/lib/fulfillmentLabels'
 
 const DEPOT_NAV: AppNavEntry[] = [
   { id: 'pickups', label: STORE_PICKUP_LABEL, icon: Package },
+  { id: 'pos', label: 'Point of Sale', icon: ShoppingCart },
 ];
 
 const Depot = () => {
+  const navigate = useNavigate();
   const [pickups, setPickups] = useState<DepotPickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -221,12 +224,20 @@ const Depot = () => {
 
   const showOfflineBanner = !isOnline || pendingCount > 0;
 
+  // Depot has one real local section ('pickups'); 'pos' is a cross-page link
+  // to the /pos counter-sale route, same pattern Admin uses for 'blog'.
+  const handleSectionChange = (id: string) => {
+    if (id === 'pos') {
+      navigate('/pos');
+    }
+  };
+
   return (
     <AppShell
       panelName="Depot"
       nav={DEPOT_NAV}
       activeSection="pickups"
-      onSectionChange={() => {}}
+      onSectionChange={handleSectionChange}
       contentClassName="max-w-4xl"
       pageTitle={STORE_PICKUP_LABEL}
       pageDescription={`Process equipment hand-overs and ${STORE_RETURN_LABEL.toLowerCase()}s for ${STORE_PICKUP_LABEL.toLowerCase()} bookings.`}

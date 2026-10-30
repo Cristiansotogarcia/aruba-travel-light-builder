@@ -12,6 +12,7 @@ import {
   Package,
   Search,
   Settings,
+  ShoppingCart,
   UserPlus,
   Users,
   type LucideIcon,
@@ -78,6 +79,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { id: 'tasks', label: 'My Tasks', icon: MapPin, permission: 'DriverTasks' },
       { id: 'taskmaster', label: 'Task Management', icon: CheckSquare, permission: 'TaskMaster' },
+      { id: 'pos', label: 'Point of Sale', icon: ShoppingCart, permission: null },
     ],
   },
   {
