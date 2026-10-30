@@ -54,7 +54,6 @@ const useBooking = () => {
         prev.startDate || prev.endDate ? prev : { ...prev, startDate: rdStart, endDate: rdEnd },
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rdStart, rdEnd]);
 
   useEffect(() => {

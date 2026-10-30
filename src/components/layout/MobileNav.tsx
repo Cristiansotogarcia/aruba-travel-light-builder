@@ -8,7 +8,7 @@ import { useCart } from '@/hooks/useCart';
 import { useCategories } from '@/hooks/useCategories';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { faqData } from '@/components/common/FaqAccordion';
+import { faqData } from '@/components/common/faqData';
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);

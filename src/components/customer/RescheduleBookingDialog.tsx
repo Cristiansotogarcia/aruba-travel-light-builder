@@ -72,7 +72,6 @@ export function RescheduleBookingDialog({
       setConflicts(null);
       setErrorMessage(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startDate, endDate]);
 
   const rescheduleMutation = useMutation({
