@@ -1,4 +1,4 @@
-import { Banknote, CreditCard, Trash2 } from 'lucide-react';
+import { AlertTriangle, Banknote, CreditCard, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,11 @@ interface PosStepPayProps {
   onPayLater: () => void;
   submitting: boolean;
   errorMessage: string | null;
+  /** Whether a cash drawer session is open (phase 3, contract:
+   * PLANS/TLB_POS_PHASE3_CONTRACT.md). Defaults to true (no warning) so
+   * callers that don't track the drawer, like existing tests, are unaffected.
+   * Shown as a non-blocking warning on a Cash line; it never disables Charge. */
+  drawerOpen?: boolean;
 }
 
 const METHOD_LABEL: Record<PosPaymentMethod, string> = { cash: 'Cash', card: 'Card', other: 'Other' };
@@ -37,6 +42,7 @@ export function PosStepPay({
   onPayLater,
   submitting,
   errorMessage,
+  drawerOpen = true,
 }: PosStepPayProps) {
   const validation = validatePaymentSet(lines, estimatedTotal);
   const payNowEnabled = isPayNowEnabled(lines, estimatedTotal) && !submitting;
@@ -146,6 +152,16 @@ export function PosStepPay({
                     </div>
                   ) : null}
                 </div>
+
+                {line.method === 'cash' && !drawerOpen && (
+                  <div
+                    className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"
+                    data-testid={`pos-pay-drawer-warning-${index}`}
+                  >
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>Drawer is not open.</span>
+                  </div>
+                )}
 
                 {line.method === 'cash' && (
                   <div

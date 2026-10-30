@@ -126,6 +126,40 @@ describe('PosStepPay', () => {
     expect(onPayLater).toHaveBeenCalledTimes(1);
   });
 
+  it('shows a non-blocking "Drawer is not open" warning on a cash line when drawerOpen is false', () => {
+    const lines: PosPaymentLine[] = [{ method: 'cash', amount: 40, tendered: 40 }];
+    render(
+      <PosStepPay
+        estimatedTotal={40}
+        lines={lines}
+        onLinesChange={noop}
+        onCharge={noop}
+        onPayLater={noop}
+        submitting={false}
+        errorMessage={null}
+        drawerOpen={false}
+      />,
+    );
+    expect(screen.getByTestId('pos-pay-drawer-warning-0')).toHaveTextContent('Drawer is not open.');
+    expect(screen.getByTestId('pos-pay-charge')).not.toBeDisabled();
+  });
+
+  it('shows no drawer warning when drawerOpen is true or omitted', () => {
+    const lines: PosPaymentLine[] = [{ method: 'cash', amount: 40, tendered: 40 }];
+    render(
+      <PosStepPay
+        estimatedTotal={40}
+        lines={lines}
+        onLinesChange={noop}
+        onCharge={noop}
+        onPayLater={noop}
+        submitting={false}
+        errorMessage={null}
+      />,
+    );
+    expect(screen.queryByTestId('pos-pay-drawer-warning-0')).not.toBeInTheDocument();
+  });
+
   it('disables both actions while submitting', () => {
     const lines: PosPaymentLine[] = [{ method: 'cash', amount: 40, tendered: 40 }];
     render(
