@@ -423,6 +423,10 @@ insert into public.bookings (id, customer_name, customer_email, customer_phone, 
   ('dddddddd-0000-0000-0000-000000000006', 'Report Office Excluded',     'r6@example.com', '0000', 'n/a', '2026-11-02', '2026-11-03', 500, 'confirmed', 'pickup'),
   ('dddddddd-0000-0000-0000-000000000007', 'Report Prior-Day Credit',    'r7@example.com', '0000', 'n/a', '2026-11-01', '2026-11-02', 999, 'confirmed', 'pickup');
 
+-- These are historical rows for the report, not counter payments taken now,
+-- so the NO_OPEN_DRAWER guard is off while they are written.
+alter table public.booking_payments disable trigger trg_booking_payments_pos_cash_needs_open_drawer;
+
 insert into public.booking_payments (booking_id, amount, method, channel, recorded_by, created_at) values
   ('dddddddd-0000-0000-0000-000000000001', 40,  'cash',  'pos',    '44444444-4444-4444-4444-444444444441', '2026-11-02 15:00:00+00'),
   ('dddddddd-0000-0000-0000-000000000003', 25,  'other', 'pos',    '55555555-5555-5555-5555-555555555552', '2026-11-02 17:00:00+00'),
@@ -432,6 +436,8 @@ insert into public.booking_payments (booking_id, amount, method, channel, record
 
 insert into public.booking_payments (booking_id, amount, method, reference, channel, recorded_by, created_at) values
   ('dddddddd-0000-0000-0000-000000000002', 60, 'card', 'CARD-REF-REPORT', 'pos', '44444444-4444-4444-4444-444444444441', '2026-11-02 16:00:00+00');
+
+alter table public.booking_payments enable trigger trg_booking_payments_pos_cash_needs_open_drawer;
 
 insert into public.credit_notes (booking_id, credit_number, amount, reason, created_by, created_at) values
   ('dddddddd-0000-0000-0000-000000000001', 'CN-2026-TEST01', 5,   'Partial refund, Staff One, 2026-11-02', '44444444-4444-4444-4444-444444444441', '2026-11-02 15:10:00+00'),

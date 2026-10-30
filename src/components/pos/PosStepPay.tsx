@@ -24,9 +24,10 @@ interface PosStepPayProps {
   submitting: boolean;
   errorMessage: string | null;
   /** Whether a cash drawer session is open (phase 3, contract:
-   * PLANS/TLB_POS_PHASE3_CONTRACT.md). Defaults to true (no warning) so
-   * callers that don't track the drawer, like existing tests, are unaffected.
-   * Shown as a non-blocking warning on a Cash line; it never disables Charge. */
+   * PLANS/TLB_POS_PHASE3_CONTRACT.md). Defaults to true so callers that
+   * don't track the drawer, like existing tests, are unaffected. With a Cash
+   * line and no open drawer, Charge is disabled: the server refuses that
+   * payment (NO_OPEN_DRAWER), since the cash would reach no close-out. */
   drawerOpen?: boolean;
 }
 
@@ -45,7 +46,8 @@ export function PosStepPay({
   drawerOpen = true,
 }: PosStepPayProps) {
   const validation = validatePaymentSet(lines, estimatedTotal);
-  const payNowEnabled = isPayNowEnabled(lines, estimatedTotal) && !submitting;
+  const cashWithoutDrawer = !drawerOpen && lines.some((l) => l.method === 'cash');
+  const payNowEnabled = isPayNowEnabled(lines, estimatedTotal) && !submitting && !cashWithoutDrawer;
 
   const updateLine = (index: number, patch: Partial<PosPaymentLine>) => {
     onLinesChange(lines.map((l, i) => (i === index ? { ...l, ...patch } : l)));
@@ -159,7 +161,7 @@ export function PosStepPay({
                     data-testid={`pos-pay-drawer-warning-${index}`}
                   >
                     <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span>Drawer is not open.</span>
+                    <span>Drawer is not open. Open it in the Drawer tab to take cash.</span>
                   </div>
                 )}
 

@@ -126,7 +126,7 @@ describe('PosStepPay', () => {
     expect(onPayLater).toHaveBeenCalledTimes(1);
   });
 
-  it('shows a non-blocking "Drawer is not open" warning on a cash line when drawerOpen is false', () => {
+  it('with a cash line and no open drawer, warns and disables Charge (the server refuses NO_OPEN_DRAWER)', () => {
     const lines: PosPaymentLine[] = [{ method: 'cash', amount: 40, tendered: 40 }];
     render(
       <PosStepPay
@@ -141,7 +141,7 @@ describe('PosStepPay', () => {
       />,
     );
     expect(screen.getByTestId('pos-pay-drawer-warning-0')).toHaveTextContent('Drawer is not open.');
-    expect(screen.getByTestId('pos-pay-charge')).not.toBeDisabled();
+    expect(screen.getByTestId('pos-pay-charge')).toBeDisabled();
   });
 
   it('shows no drawer warning when drawerOpen is true or omitted', () => {

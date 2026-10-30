@@ -55,6 +55,30 @@ CREATE UNIQUE INDEX idx_pos_cash_sessions_single_open
 CREATE INDEX IF NOT EXISTS idx_pos_cash_sessions_opened_at
   ON public.pos_cash_sessions (opened_at);
 
+-- Cash taken at the counter while no drawer is open would fall outside every
+-- session's [opened_at, closed_at) window and never reach any close-out's
+-- expected cash. Refused on the payment row itself, so every POS path that
+-- records a payment is covered. Card, other and office-channel payments are
+-- unaffected.
+CREATE OR REPLACE FUNCTION public.pos_cash_requires_open_drawer()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.channel = 'pos' AND NEW.method = 'cash'
+     AND NOT EXISTS (SELECT 1 FROM public.pos_cash_sessions WHERE status = 'open') THEN
+    RAISE EXCEPTION 'NO_OPEN_DRAWER: open the cash drawer before taking a cash payment at the counter';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_booking_payments_pos_cash_needs_open_drawer
+  BEFORE INSERT ON public.booking_payments
+  FOR EACH ROW EXECUTE FUNCTION public.pos_cash_requires_open_drawer();
+
 ALTER TABLE public.pos_cash_sessions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "PosCashSessions: staff can read" ON public.pos_cash_sessions;
