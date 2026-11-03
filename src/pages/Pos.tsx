@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { CalendarClock, FileBarChart, Lock, ShoppingCart } from 'lucide-react';
 import { AppShell, type AppNavEntry } from '@/components/layout/app-shell';
 import { PosWizard, TodayBoard, DrawerTab, ReportTab } from '@/components/pos';
@@ -44,8 +46,16 @@ const isPosSection = (id: string): id is PosSection => id === 'today' || id === 
  * PLANS/TLB_POS_PHASE3_CONTRACT.md). Role-gated in App.tsx to
  * StoreStaff/Booker/Admin/SuperUser, same as /depot. */
 const Pos = () => {
+  const { profile } = useAuth();
   const [section, setSection] = useState<PosSection>('sale');
   const copy = SECTION_COPY[section];
+
+  // Admin/SuperUser run POS inside the admin panel, so /pos (a bookmark or a
+  // login redirect) hands them back to /admin on its Point of Sale section.
+  if (profile?.role === 'Admin' || profile?.role === 'SuperUser') {
+    sessionStorage.setItem('admin:activeSection', 'pos');
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <AppShell
