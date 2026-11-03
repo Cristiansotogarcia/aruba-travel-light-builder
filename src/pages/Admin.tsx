@@ -19,6 +19,7 @@ import { SeoManager } from '@/components/admin/SeoManager';
 import AboutUsManagement from '@/components/admin/AboutUsManagement';
 import { PendingReservations } from '@/components/admin/PendingReservations';
 import { InvoicesList } from '@/components/admin/InvoicesList';
+import { PosPanel } from '@/components/pos';
 
 interface AdminNavigateEventDetail {
   section: string;
@@ -44,10 +45,6 @@ const Admin = () => {
   const handleSectionChange = (section: string) => {
     if (section === 'blog') {
       navigate('/blog-studio');
-      return;
-    }
-    if (section === 'pos') {
-      navigate('/pos');
       return;
     }
     setActiveSection(section);
@@ -134,6 +131,8 @@ const Admin = () => {
         return <Navigate to="/blog-studio" replace />;
       case 'settings':
         return <SiteSettings />;
+      case 'pos':
+        return <PosPanel />;
       default:
         return <AdminDashboard />;
     }
