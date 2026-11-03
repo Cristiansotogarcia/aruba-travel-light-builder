@@ -135,7 +135,10 @@ const App = () => {
 
                         <Route
                           element={
-                            <ProtectedRoute allowedRoles={["StoreStaff", "Booker", "Admin", "SuperUser"]} />
+                            <ProtectedRoute
+                              allowedRoles={["StoreStaff", "Booker", "Admin", "SuperUser"]}
+                              requireConfirmedEmail
+                            />
                           }
                         >
                           <Route path="/depot" element={<Depot />} />
