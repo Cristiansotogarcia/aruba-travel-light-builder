@@ -68,6 +68,8 @@ export const CreditNotesPanel = () => {
     setLoading(true);
 
     try {
+      // credit_notes is not yet in the generated Supabase types.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('credit_notes')
         .select('id, booking_id, credit_number, amount, reason, created_by, created_at, bookings(customer_name, customer_email, total_amount)')
@@ -200,6 +202,8 @@ export const CreditNotesPanel = () => {
 
     setSubmitting(true);
     try {
+      // create_credit_note is not yet in the generated Supabase types.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc('create_credit_note', {
         p_booking_id: selectedBooking.id,
         p_amount: parsedAmount,
@@ -216,11 +220,14 @@ export const CreditNotesPanel = () => {
       });
       handleOpenChange(false);
       fetchCreditNotes();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating credit note:', error);
       toast({
         title: 'Could not issue credit note',
-        description: error?.message || 'Unexpected error while creating the credit note.',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Unexpected error while creating the credit note.',
         variant: 'destructive',
       });
     } finally {

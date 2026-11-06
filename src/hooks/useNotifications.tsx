@@ -189,10 +189,9 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     notification: Omit<AdminNotification, 'id' | 'created_at'>
   ) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await supabase
         .from('admin_notifications')
-        .insert(notification as any);
+        .insert(notification);
 
       if (error) {
         console.error('Error creating notification:', error);

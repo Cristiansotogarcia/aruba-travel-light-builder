@@ -6,7 +6,7 @@ import { Equipment } from './types';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const getEquipment = async (userId: string): Promise<{ data: any; error: any }> => {
-  // @ts-ignore - Supabase query type instantiation is excessively deep
+  // @ts-expect-error - Supabase query type instantiation is excessively deep
   const result = await supabase
     .from('equipment')
     .select('*')
@@ -32,7 +32,7 @@ export const addEquipment = async (equipment: Omit<Equipment, 'id'>): Promise<{ 
 };
 
 export const updateEquipment = async (userId: string, updates: Partial<Equipment> & { id: string }): Promise<{ data: any; error: any }> => {
-  // @ts-ignore - Supabase query type instantiation is excessively deep
+  // @ts-expect-error - Supabase query type instantiation is excessively deep
   const result = await supabase
     .from('equipment')
     .update(updates)
@@ -46,7 +46,7 @@ export const updateEquipment = async (userId: string, updates: Partial<Equipment
 };
 
 export const deleteEquipment = async (userId: string, equipmentId: string): Promise<{ data: any; error: any }> => {
-  // @ts-ignore - Supabase query type instantiation is excessively deep
+  // @ts-expect-error - Supabase query type instantiation is excessively deep
   const result = await supabase
     .from('equipment')
     .delete()

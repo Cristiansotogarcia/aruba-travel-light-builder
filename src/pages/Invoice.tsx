@@ -111,7 +111,9 @@ const Invoice = () => {
       }
 
       // RLS restricts credit notes to Accounting/Admin/SuperUser; other viewers
-      // simply get an empty list.
+      // simply get an empty list. credit_notes is not yet in the generated
+      // Supabase types.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from('credit_notes')
         .select('id, credit_number, amount, reason, created_at')

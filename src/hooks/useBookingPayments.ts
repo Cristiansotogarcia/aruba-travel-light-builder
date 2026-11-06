@@ -14,6 +14,7 @@ export const useBookingPayments = (bookingId: string) => {
   return useQuery({
     queryKey: bookingPaymentsKey(bookingId),
     queryFn: async (): Promise<BookingPayment[]> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc('get_booking_payments', {
         p_booking_id: bookingId,
       });
@@ -44,6 +45,7 @@ export const useRecordBookingPayment = () => {
 
   return useMutation({
     mutationFn: async (input: RecordPaymentInput): Promise<RecordPaymentResult> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc('record_booking_payment', {
         p_booking_id: input.bookingId,
         p_amount: input.amount,
@@ -65,10 +67,10 @@ export const useRecordBookingPayment = () => {
         description: `Booking marked as ${result.payment_status}.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Could not record payment',
-        description: error?.message ?? 'Please try again.',
+        description: error.message ?? 'Please try again.',
         variant: 'destructive',
       });
     },
@@ -81,6 +83,7 @@ export const useDeleteBookingPayment = (bookingId: string) => {
 
   return useMutation({
     mutationFn: async (paymentId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc('delete_booking_payment', {
         p_payment_id: paymentId,
       });
@@ -95,10 +98,10 @@ export const useDeleteBookingPayment = (bookingId: string) => {
       queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
       toast({ title: 'Payment removed' });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Could not remove payment',
-        description: error?.message ?? 'Please try again.',
+        description: error.message ?? 'Please try again.',
         variant: 'destructive',
       });
     },
